@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:gameio;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  data:
+    redis:
+      repositories:
+        enabled: false
+
+gameio:
+  security:
+    jwt:
+      issuer: gameio-test
+      secret: test-secret-with-at-least-thirty-two-characters-long
+      access-token-ttl: 5m
+      refresh-token-ttl: 1d
+    refresh-cookie:
+      name: gameio_refresh
+      secure: false
+      same-site: Lax
+      domain:
+  cors:
+    allowed-origins: http://localhost:3000

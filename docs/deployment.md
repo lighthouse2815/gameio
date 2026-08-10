@@ -1,0 +1,188 @@
+# Production deployment
+
+Gameio separates the edge web portal from the stateful Java/WebSocket process:
+
+- frontend: Cloudflare Workers via `@opennextjs/cloudflare`;
+- backend: Railway, one continuously running Singapore replica with Serverless disabled;
+- data: PostgreSQL and Redis services in the same Railway project/private network.
+
+Railway is preferred to a free Render service because an authoritative multiplayer JVM and its WebSocket endpoint must not wait for a sleeping service to wake. A paid non-sleeping Render web service remains the fallback if Railway cannot be used.
+
+Deployment is complete only after both scripted live smoke flows and real browser QA pass. Provisioning services or receiving a platform URL is not sufficient evidence.
+
+## 1. Preflight
+
+Run from the repository root before deploying a commit:
+
+```powershell
+Set-Location backend
+cmd /c .\mvnw.cmd -B -ntp clean verify
+
+Set-Location ..\frontend
+npm ci --no-audit --no-fund
+npm run check
+npm run cf:build
+
+Set-Location ..
+docker compose config --quiet
+docker compose build
+git diff --check
+```
+
+Do not deploy if any command fails. Record the reviewed commit SHA for rollback.
+
+## 2. Provision Railway data services
+
+Create one Railway project and add PostgreSQL plus Redis. Keep both databases on private networking and do not publish their ports.
+
+Before real player data is accepted:
+
+1. configure PostgreSQL backups and retention;
+2. keep an off-platform recovery copy appropriate to the environment;
+3. perform a restore drill and record the result;
+4. treat Redis as disposable rather than as a backup of persistent data.
+
+Railway's database templates are application services rather than a guarantee of managed HA. Availability, backup and restore remain an operator responsibility.
+
+## 3. Deploy the Spring backend
+
+Use `backend` as the Railway service root. `backend/railway.toml` selects the Dockerfile, `/actuator/health`, a 180-second health timeout and bounded restart-on-failure behavior.
+
+Configure the service:
+
+- region: Singapore;
+- replicas: exactly one;
+- Serverless/sleep: disabled;
+- health path: `/actuator/health`;
+- public HTTPS domain enabled (also used as the WSS host).
+
+Set runtime variables in Railway's encrypted variable store or by service references:
+
+```text
+SPRING_PROFILES_ACTIVE=prod
+DATABASE_URL=<private PostgreSQL connection URL>
+REDIS_URL=<private Redis connection URL>
+JWT_SECRET=<at least 64 random bytes>
+JWT_ISSUER=gameio-api
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL=30d
+CORS_ALLOWED_ORIGINS=https://<cloudflare-worker-host>
+REFRESH_COOKIE_SECURE=true
+REFRESH_COOKIE_SAME_SITE=Lax
+REFRESH_COOKIE_DOMAIN=
+```
+
+Railway supplies `PORT`. Do not set `PORT` to a fixed value in production. The backend accepts `postgres://`, `postgresql://` and JDBC PostgreSQL URLs and extracts embedded credentials; `DB_URL`/`JDBC_DATABASE_URL`, `DB_USERNAME`/`PGUSER` and `DB_PASSWORD`/`PGPASSWORD` are supported alternatives.
+
+For Redis, `REDIS_URL` is preferred. When a provider does not supply it, configure `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD` and `REDIS_SSL` explicitly.
+
+The `prod` profile refuses a missing/default `JWT_SECRET`. Do not weaken that guard to make a failed deployment start.
+
+Verify the backend before building the frontend:
+
+```powershell
+Invoke-RestMethod https://<railway-host>/actuator/health
+```
+
+Expected result: `status` is `UP`, Flyway completed, and Railway reports the replica healthy.
+
+## 4. Configure the Cloudflare/OpenNext frontend
+
+The frontend is not a static Pages export. OpenNext builds a Worker that serves Next.js and the same-origin API proxy.
+
+At build time set:
+
+```text
+NEXT_PUBLIC_API_URL=/api
+NEXT_PUBLIC_WS_URL=wss://<railway-host>/ws
+```
+
+At Worker runtime set:
+
+```text
+BACKEND_ORIGIN=https://<railway-host>
+```
+
+`NEXT_PUBLIC_*` values are intentionally public browser configuration and are inlined during `next build`. `BACKEND_ORIGIN` is read only by the Worker route and must be a plain HTTPS origin without credentials, an application path, query or fragment. The proxy never accepts a caller-selected upstream.
+
+Build and deploy from `frontend`:
+
+```powershell
+Set-Location frontend
+$env:NEXT_PUBLIC_API_URL = "/api"
+$env:NEXT_PUBLIC_WS_URL = "wss://<railway-host>/ws"
+npm run deploy
+```
+
+Configure `BACKEND_ORIGIN` through the Worker environment before serving traffic. Keep preview and production bindings separate. A custom domain can be attached later, but the default `workers.dev` origin works with the same-origin BFF.
+
+After the final Worker hostname is known, set Railway `CORS_ALLOWED_ORIGINS` to that exact HTTPS origin and redeploy/restart the backend if required. No wildcard, localhost or broad subdomain pattern belongs in the production allow-list.
+
+## 5. Cookie, CORS and BFF contract
+
+Production browser REST flow:
+
+```text
+Browser https://gameio...workers.dev/api/*
+  -> Cloudflare fixed BACKEND_ORIGIN proxy
+  -> https://...railway.app/api/*
+```
+
+The proxy forwards the request method, query, body, authorization/CSRF headers and cookies; preserves `Set-Cookie`; strips hop-by-hop/host headers; follows no caller-controlled origin; rejects request bodies over 1 MiB; and uses `cache: no-store`. The browser therefore stores `gameio_refresh` as a first-party, host-only, `HttpOnly; Secure; SameSite=Lax; Path=/api/auth` cookie on the frontend host.
+
+WebSocket flow is direct:
+
+```text
+Browser -> wss://<railway-host>/ws
+```
+
+The backend validates the Cloudflare page Origin during that handshake. Access-token authentication uses WebSocket subprotocols, not a URL query parameter.
+
+## 6. Scripted live verification
+
+The scripts call the backend directly so they verify its health, credentialed CORS and cookie attributes. They never print access/refresh tokens or passwords.
+
+```powershell
+.\scripts\smoke.ps1 `
+  -BaseUrl https://<railway-host> `
+  -Origin https://<cloudflare-host> `
+  -SkipDockerServices
+
+.\scripts\realtime-smoke.ps1 `
+  -BaseUrl https://<railway-host> `
+  -WsUrl wss://<railway-host>/ws `
+  -Origin https://<cloudflare-host> `
+  -SkipDockerServices
+```
+
+The first script verifies health, registration, login, credentialed CORS, refresh-cookie rotation, logout and refresh rejection. The second uses two users and two sockets to verify JWT subprotocol negotiation, room create/join/ready/start, a deterministic authoritative Tic Tac Toe win and durable `WIN`/`LOSS` history.
+
+Both scripts create unique durable smoke accounts; the realtime script also creates match results. Use a production-safe test-account retention policy because Gameio intentionally has no destructive account-delete endpoint.
+
+## 7. Browser release gate
+
+Use the deployed Cloudflare URL, not localhost, and verify all of the following:
+
+- register, login, refresh after a page load and logout;
+- request cookies are first-party on the Cloudflare host and are not exposed to JavaScript;
+- no direct Railway REST call from the browser API client;
+- catalog, profiles, friends, rankings, light/dark mode and responsive navigation;
+- real 2048 and Snake input on desktop/mobile controls;
+- two isolated browser sessions completing Tic Tac Toe and Caro;
+- Tank Battle movement/shoot/state updates with two sessions;
+- reconnect UI, `ROOM_EXPIRED` handling and no blank canvas on socket failure;
+- no console errors, failed mixed-content requests, CSP violations or unexpected cached authenticated responses.
+
+Record the frontend/backend URLs, commit SHA, Flyway version, test timestamp and screenshots. Never record credentials or tokens.
+
+## 8. Rollback
+
+Keep the previous immutable backend deployment and frontend Worker version available. An application rollback must remain schema-compatible with all migrations already applied; Flyway migrations are not rolled back by redeploying old code. If a database restore is required, follow the tested restore runbook and reconcile any writes made after the recovery point before reopening traffic.
+
+Official platform references:
+
+- [Cloudflare Next.js on Workers](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)
+- [OpenNext Cloudflare environment variables](https://opennext.js.org/cloudflare/howtos/env-vars)
+- [Railway Serverless setting](https://docs.railway.com/deployments/serverless)
+- [Railway regions](https://docs.railway.com/deployments/regions)
+- [Railway Spring Boot guide](https://docs.railway.com/guides/spring-boot)

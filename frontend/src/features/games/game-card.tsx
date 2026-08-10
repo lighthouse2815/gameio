@@ -1,0 +1,94 @@
+import Link from "next/link";
+import { ArrowUpRight, Users } from "lucide-react";
+import type { GameSummary } from "@/features/games/types";
+import { getGameArtwork } from "@/games/core/artwork";
+
+type GameCardProps = {
+  game: GameSummary;
+  index?: number;
+  priority?: boolean;
+};
+
+function gameTypeLabel(type: GameSummary["gameType"]) {
+  if (type === "SINGLE_PLAYER") return "Solo";
+  if (type === "TURN_BASED_MULTIPLAYER") return "Turn / PVP";
+  return "Realtime / PVP";
+}
+
+export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
+  const artwork = getGameArtwork(game.slug, game.thumbnailUrl);
+  return (
+    <article className="group relative flex min-h-[300px] flex-col overflow-hidden bg-[var(--surface)]">
+      <Link
+        href={"/game/" + encodeURIComponent(game.slug)}
+        className="flex h-full flex-1 flex-col"
+        aria-label={"Open " + game.name}
+      >
+        <div className="relative h-36 overflow-hidden border-b border-[var(--line)] bg-[var(--surface-strong)]">
+          {artwork ? (
+            // Dynamic image hosts are controlled by the backend catalog.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={artwork}
+              alt=""
+              loading={priority ? "eager" : "lazy"}
+              className="h-full w-full object-cover grayscale transition-[filter,transform] duration-300 group-hover:scale-[1.02] group-hover:grayscale-0"
+            />
+          ) : (
+            <div className="grid h-full grid-cols-[1fr_auto]">
+              <span className="flex items-end p-4 text-7xl font-black leading-none tracking-[-0.08em] text-[var(--line-strong)]">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="font-telemetry flex w-10 items-center justify-center border-l border-[var(--line)] text-[8px] text-[var(--muted)] [writing-mode:vertical-rl]">
+                NO VISUAL SIGNAL
+              </span>
+            </div>
+          )}
+          <span className="font-telemetry absolute left-3 top-3 bg-[var(--accent)] px-2 py-1 text-[8px] font-bold text-white">
+            {game.category}
+          </span>
+        </div>
+        <div className="flex flex-1 flex-col p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="font-telemetry text-[8px] text-[var(--muted)]">
+                UNIT / {game.slug.toUpperCase()}
+              </p>
+              <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.045em]">
+                {game.name}
+              </h3>
+            </div>
+            <ArrowUpRight
+              size={18}
+              aria-hidden="true"
+              className="shrink-0 text-[var(--muted)] transition-colors group-hover:text-[var(--accent)]"
+            />
+          </div>
+          <p className="mt-3 line-clamp-2 text-xs leading-5 text-[var(--muted)]">
+            {game.description}
+          </p>
+          <div className="font-telemetry mt-auto grid grid-cols-2 gap-x-3 gap-y-2 pt-6 text-[8px]">
+            <span>{gameTypeLabel(game.gameType)}</span>
+            <span className="text-right text-[var(--muted)]">
+              {game.playsCount.toLocaleString()} PLAYS
+            </span>
+            <span className="text-[var(--muted)]">
+              <Users size={9} className="mr-1 inline" aria-hidden="true" />
+              {game.minPlayers}–{game.maxPlayers} PLAYERS
+            </span>
+            <span
+              className={
+                "text-right " +
+                (game.onlinePlayers > 0
+                  ? "status-online"
+                  : "text-[var(--muted)]")
+              }
+            >
+              {game.onlinePlayers.toLocaleString()} LIVE
+            </span>
+          </div>
+        </div>
+      </Link>
+    </article>
+  );
+}

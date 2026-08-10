@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: docker
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/gameio}
+    username: ${DB_USERNAME:gameio}
+    password: ${DB_PASSWORD:gameio}
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
