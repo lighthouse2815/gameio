@@ -4,6 +4,9 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-08",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "BACKEND_ORIGIN": "https://backend-production-6a6df.up.railway.app"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
