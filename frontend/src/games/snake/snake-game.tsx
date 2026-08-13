@@ -35,6 +35,17 @@ import {
 
 const BEST_SCORE_KEY = "gameio.snake.best";
 
+const KEYBOARD_DIRECTIONS: Partial<Record<string, SnakeDirection>> = {
+  ArrowUp: "up",
+  w: "up",
+  ArrowDown: "down",
+  s: "down",
+  ArrowLeft: "left",
+  a: "left",
+  ArrowRight: "right",
+  d: "right",
+};
+
 type RunDescriptor = {
   runToken: string;
   seed: number;
@@ -115,6 +126,21 @@ export default function SnakeGame() {
     return Number.isFinite(stored) && stored > 0 ? stored : 0;
   });
 
+  useEffect(() => {
+    if (!started || status !== "playing" || paused) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const direction = KEYBOARD_DIRECTIONS[event.key];
+      if (!direction) return;
+
+      event.preventDefault();
+      directionControl.current(direction);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paused, started, status]);
+
   const submitVerifiedResult = useCallback(async (runToken: string) => {
     const run = verifiedRun.current;
     if (!run || run.runToken !== runToken || run.submitted) return;
@@ -186,14 +212,6 @@ export default function SnakeGame() {
           directionControl.current = (direction) => this.change(direction);
           pauseControl.current = (value) => this.setRunPaused(value);
           this.telemetry = this.add.graphics();
-          this.input.keyboard?.on("keydown-UP", () => this.change("up"));
-          this.input.keyboard?.on("keydown-W", () => this.change("up"));
-          this.input.keyboard?.on("keydown-DOWN", () => this.change("down"));
-          this.input.keyboard?.on("keydown-S", () => this.change("down"));
-          this.input.keyboard?.on("keydown-LEFT", () => this.change("left"));
-          this.input.keyboard?.on("keydown-A", () => this.change("left"));
-          this.input.keyboard?.on("keydown-RIGHT", () => this.change("right"));
-          this.input.keyboard?.on("keydown-D", () => this.change("right"));
           this.drawState();
         }
 

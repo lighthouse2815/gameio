@@ -91,6 +91,37 @@ describe("Snake Phaser renderer", () => {
     expect(screen.getByRole("button", { name: "Move up" })).toBeEnabled();
   });
 
+  it("prevents direction keys from scrolling the page during an active run", async () => {
+    renderSnake();
+
+    const readyEvent = new KeyboardEvent("keydown", {
+      key: "ArrowUp",
+      cancelable: true,
+    });
+    window.dispatchEvent(readyEvent);
+    expect(readyEvent.defaultPrevented).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    await waitFor(() => {
+      expect(phaserHarness.gameConstructor).toHaveBeenCalledOnce();
+    });
+
+    const playingEvent = new KeyboardEvent("keydown", {
+      key: "ArrowUp",
+      cancelable: true,
+    });
+    window.dispatchEvent(playingEvent);
+    expect(playingEvent.defaultPrevented).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    const pausedEvent = new KeyboardEvent("keydown", {
+      key: "ArrowUp",
+      cancelable: true,
+    });
+    window.dispatchEvent(pausedEvent);
+    expect(pausedEvent.defaultPrevented).toBe(false);
+  });
+
   it("returns to ready state when the renderer cannot initialize", async () => {
     phaserHarness.shouldThrow = true;
     renderSnake();
