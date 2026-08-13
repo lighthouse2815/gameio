@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
 import { SettingsScreen } from "@/features/settings/settings-screen";
+import { localizedMetadata } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Settings" };
+export const generateMetadata = () => localizedMetadata("Settings");
 
 export default function SettingsPage() {
   return (

@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
 import SnakeGame from "@/games/snake/snake-game";
+import { I18nProvider } from "@/lib/i18n/i18n-provider";
 
 const phaserHarness = vi.hoisted(() => ({
   gameConstructor: vi.fn(),
@@ -60,11 +61,13 @@ function renderSnake() {
   });
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <SnakeGame />
-      </ToastProvider>
-    </QueryClientProvider>,
+    <I18nProvider initialLocale="en">
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <SnakeGame />
+        </ToastProvider>
+      </QueryClientProvider>
+    </I18nProvider>,
   );
 }
 

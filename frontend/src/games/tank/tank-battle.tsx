@@ -19,8 +19,10 @@ import {
   tankActionForKey,
   type TankAction,
 } from "@/games/tank/input";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export default function TankBattle({ roomId }: { roomId: string }) {
+  const { t } = useI18n();
   const controller = useRealtimeGame(roomId, "tank-battle");
   const snapshot = isTankSnapshot(controller.state.snapshot)
     ? controller.state.snapshot
@@ -129,7 +131,7 @@ export default function TankBattle({ roomId }: { roomId: string }) {
           <aside className="grid content-start gap-4">
             <section className="border border-[var(--line)] bg-[var(--surface)] p-4">
               <p className="font-telemetry text-[8px] text-[var(--muted)]">
-                [ PLAYER TELEMETRY ]
+                {t("[ PLAYER TELEMETRY ]")}
               </p>
               <p className="mt-4 text-3xl font-black tracking-[-0.05em]">
                 HP {ownTank?.hp ?? "—"}
@@ -142,15 +144,15 @@ export default function TankBattle({ roomId }: { roomId: string }) {
               </div>
               <dl className="font-telemetry mt-5 grid gap-2 text-[8px] text-[var(--muted)]">
                 <div className="flex justify-between">
-                  <dt>Kills</dt>
+                  <dt>{t("Kills")}</dt>
                   <dd>{ownTank?.kills ?? 0}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt>Input ACK</dt>
+                  <dt>{t("Input ACK")}</dt>
                   <dd>{ownTank?.lastInputSequence ?? "—"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt>Snapshot</dt>
+                  <dt>{t("Snapshot")}</dt>
                   <dd>{snapshot.sequence}</dd>
                 </div>
               </dl>
@@ -158,7 +160,7 @@ export default function TankBattle({ roomId }: { roomId: string }) {
 
             <section className="border border-[var(--line)] bg-[var(--surface)] p-4">
               <p className="font-telemetry text-[8px] text-[var(--muted)]">
-                [ INPUT ARRAY ]
+                {t("[ INPUT ARRAY ]")}
               </p>
               <div className="mx-auto mt-5 grid w-40 grid-cols-3 gap-2">
                 <span />
@@ -167,7 +169,7 @@ export default function TankBattle({ roomId }: { roomId: string }) {
                     key={action}
                     compact
                     variant="secondary"
-                    aria-label={label}
+                    aria-label={t(label)}
                     onPointerDown={() => sendAction(action)}
                     onPointerUp={() => sendAction("STOP")}
                     onPointerLeave={() => sendAction("STOP")}
@@ -181,7 +183,7 @@ export default function TankBattle({ roomId }: { roomId: string }) {
                     key={action}
                     compact
                     variant="secondary"
-                    aria-label={label}
+                    aria-label={t(label)}
                     onPointerDown={() => sendAction(action)}
                     onPointerUp={() => sendAction("STOP")}
                     onPointerLeave={() => sendAction("STOP")}
@@ -196,17 +198,16 @@ export default function TankBattle({ roomId }: { roomId: string }) {
                 disabled={!ownTank?.alive}
               >
                 <Crosshair size={14} aria-hidden="true" />
-                Shoot
+                {t("Shoot")}
               </Button>
               <p className="mt-4 text-xs leading-5 text-[var(--muted)]">
-                Keyboard: WASD/arrows, Space/Enter to shoot. Movement release
-                sends STOP.
+                {t("Keyboard: WASD/arrows, Space/Enter to shoot. Movement release sends STOP.")}
               </p>
             </section>
 
             <section className="border border-[var(--line)] bg-[var(--surface)]">
               <p className="font-telemetry border-b border-[var(--line)] p-3 text-[8px] text-[var(--muted)]">
-                [ COMBATANTS ]
+                {t("[ COMBATANTS ]")}
               </p>
               {snapshot.tanks.map((tank) => (
                 <div className="border-b border-[var(--line)] p-3 last:border-b-0" key={tank.userId}>
@@ -216,7 +217,7 @@ export default function TankBattle({ roomId }: { roomId: string }) {
                         ?.username ?? tank.userId.slice(0, 8)}
                     </span>
                     <span className={tank.alive ? "status-online" : "text-[var(--danger)]"}>
-                      {tank.alive ? tank.hp + " HP" : "DESTROYED"}
+                      {tank.alive ? tank.hp + " HP" : t("DESTROYED")}
                     </span>
                   </div>
                 </div>

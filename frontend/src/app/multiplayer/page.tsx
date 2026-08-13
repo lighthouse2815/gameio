@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
 import { MultiplayerScreen } from "@/features/multiplayer/multiplayer-screen";
+import { localizedMetadata } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Multiplayer" };
+export const generateMetadata = () => localizedMetadata("Multiplayer");
 
 export default async function MultiplayerPage({
   searchParams,

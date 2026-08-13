@@ -7,8 +7,10 @@ import {
   isTurnBasedSnapshot,
   markerForPlayer,
 } from "@/games/core/turn-based-helpers";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export default function CaroGame({ roomId }: { roomId: string }) {
+  const { t } = useI18n();
   const controller = useRealtimeGame(roomId, "caro");
   const snapshot = isTurnBasedSnapshot(controller.state.snapshot, 15)
     ? controller.state.snapshot
@@ -29,7 +31,7 @@ export default function CaroGame({ roomId }: { roomId: string }) {
                 gridTemplateColumns: "repeat(" + snapshot.board.length + ", minmax(38px, 1fr))",
               }}
               role="grid"
-              aria-label="Authoritative 15 by 15 Caro board"
+              aria-label={t("Authoritative 15 by 15 Caro board")}
             >
               {snapshot.board.flatMap((row, rowIndex) =>
                 row.map((marker, columnIndex) => {
@@ -54,16 +56,8 @@ export default function CaroGame({ roomId }: { roomId: string }) {
                       disabled={!enabled}
                       aria-label={
                         marker
-                          ? "Row " +
-                            (rowIndex + 1) +
-                            ", column " +
-                            (columnIndex + 1) +
-                            ": " +
-                            marker
-                          : "Place at row " +
-                            (rowIndex + 1) +
-                            ", column " +
-                            (columnIndex + 1)
+                          ? t("Row {row}, column {column}: {marker}", { row: rowIndex + 1, column: columnIndex + 1, marker })
+                          : t("Place at row {row}, column {column}", { row: rowIndex + 1, column: columnIndex + 1 })
                       }
                       onClick={() =>
                         controller.sendInput({
@@ -86,10 +80,10 @@ export default function CaroGame({ roomId }: { roomId: string }) {
           </div>
           <aside className="border border-[var(--line)] bg-[var(--surface)] p-5">
             <p className="font-telemetry text-[8px] text-[var(--muted)]">
-              [ TURN TELEMETRY ]
+              {t("[ TURN TELEMETRY ]")}
             </p>
             <p className="mt-5 text-3xl font-black uppercase tracking-[-0.05em]">
-              {snapshot.winnerId
+              {t(snapshot.winnerId
                 ? snapshot.winnerId === userId
                   ? "Five secured"
                   : "Line breached"
@@ -97,25 +91,24 @@ export default function CaroGame({ roomId }: { roomId: string }) {
                   ? "Grid draw"
                   : yourTurn
                     ? "Place piece"
-                    : "Opponent turn"}
+                    : "Opponent turn")}
             </p>
             <dl className="font-telemetry mt-7 grid gap-px border border-[var(--line)] bg-[var(--line)] text-[8px]">
               <div className="flex justify-between bg-[var(--background)] p-3">
-                <dt>Your marker</dt>
+                <dt>{t("Your marker")}</dt>
                 <dd className="text-[var(--accent)]">{ownMarker ?? "—"}</dd>
               </div>
               <div className="flex justify-between bg-[var(--background)] p-3">
-                <dt>Sequence</dt>
+                <dt>{t("Sequence")}</dt>
                 <dd>{snapshot.sequence}</dd>
               </div>
               <div className="flex justify-between bg-[var(--background)] p-3">
-                <dt>Board</dt>
+                <dt>{t("Board")}</dt>
                 <dd>{snapshot.board.length}×{snapshot.board.length}</dd>
               </div>
             </dl>
             <p className="mt-6 text-xs leading-5 text-[var(--muted)]">
-              Scroll the full tactical grid on smaller screens. Five contiguous
-              markers in any direction are evaluated by the server.
+              {t("Scroll the full tactical grid on smaller screens. Five contiguous markers in any direction are evaluated by the server.")}
             </p>
           </aside>
         </div>

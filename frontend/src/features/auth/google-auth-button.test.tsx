@@ -1,6 +1,8 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GoogleAuthButton } from "@/features/auth/google-auth-button";
+import { I18nProvider } from "@/lib/i18n/i18n-provider";
 import {
   resetGoogleIdentityForTests,
   type GoogleCredentialResponse,
@@ -11,6 +13,14 @@ function installGoogleApi(api: GoogleIdentityApi) {
   Object.defineProperty(window, "google", {
     configurable: true,
     value: { accounts: { id: api } },
+  });
+}
+
+function renderLocalized(ui: ReactNode) {
+  return render(ui, {
+    wrapper: ({ children }) => (
+      <I18nProvider initialLocale="en">{children}</I18nProvider>
+    ),
   });
 }
 
@@ -30,7 +40,7 @@ describe("GoogleAuthButton", () => {
   });
 
   it("shows an accessible disabled state when Google is unconfigured", () => {
-    render(
+    renderLocalized(
       <GoogleAuthButton
         mode="login"
         clientId=""
@@ -61,7 +71,7 @@ describe("GoogleAuthButton", () => {
     };
     installGoogleApi(api);
 
-    render(
+    renderLocalized(
       <GoogleAuthButton
         mode="register"
         clientId="client-id"
@@ -82,7 +92,7 @@ describe("GoogleAuthButton", () => {
   });
 
   it("announces loading failures and exposes a retry action", async () => {
-    render(
+    renderLocalized(
       <GoogleAuthButton
         mode="login"
         clientId="client-id"
@@ -111,7 +121,7 @@ describe("GoogleAuthButton", () => {
       }),
     };
     installGoogleApi(api);
-    const { rerender } = render(
+    const { rerender } = renderLocalized(
       <GoogleAuthButton
         mode="login"
         clientId="client-id"

@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
 import { FriendsScreen } from "@/features/friends/friends-screen";
+import { localizedMetadata } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Friends" };
+export const generateMetadata = () => localizedMetadata("Friends");
 
 export default function FriendsPage() {
   return (

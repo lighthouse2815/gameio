@@ -15,8 +15,10 @@ import {
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { LanguageToggle } from "@/components/layout/language-toggle";
 import { useLogout, useSession } from "@/features/auth/hooks";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 const NAVIGATION = [
   { href: "/games", label: "Games", icon: Gamepad2 },
@@ -25,6 +27,7 @@ const NAVIGATION = [
 ] as const;
 
 export function SiteHeader() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,7 +55,7 @@ export function SiteHeader() {
           <Link
             href="/"
             className="flex h-16 items-center gap-3 border-x border-[var(--line)] px-4 sm:px-5"
-            aria-label="Gameio home"
+            aria-label={t("Gameio home")}
           >
             <span className="grid h-7 w-7 place-items-center bg-[var(--accent)] font-mono text-xs font-black text-white">
               G
@@ -66,7 +69,7 @@ export function SiteHeader() {
           </Link>
 
           <div className="hidden min-w-0 grid-cols-[auto_minmax(180px,440px)] justify-between border-r border-[var(--line)] lg:grid">
-            <nav className="flex" aria-label="Primary navigation">
+            <nav className="flex" aria-label={t("Primary navigation")}>
               {NAVIGATION.map(({ href, label, icon: Icon }) => {
                 const active = pathname.startsWith(href);
                 return (
@@ -80,7 +83,7 @@ export function SiteHeader() {
                     )}
                   >
                     <Icon size={13} aria-hidden="true" />
-                    {label}
+                    {t(label)}
                   </Link>
                 );
               })}
@@ -91,19 +94,19 @@ export function SiteHeader() {
               onSubmit={submitSearch}
             >
               <label className="sr-only" htmlFor="site-search">
-                Search games
+                {t("Search games")}
               </label>
               <input
                 id="site-search"
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="SEARCH GAME INDEX..."
+                placeholder={t("SEARCH GAME INDEX...")}
                 className="font-telemetry min-w-0 bg-transparent px-4 text-[10px] outline-none placeholder:text-[var(--muted)] focus:bg-[var(--surface)]"
               />
               <button
                 type="submit"
-                aria-label="Search games"
+                aria-label={t("Search games")}
                 className="grid place-items-center border-l border-[var(--line)] text-[var(--muted)] hover:bg-[var(--surface)] hover:text-[var(--accent)]"
               >
                 <Search size={15} aria-hidden="true" />
@@ -116,7 +119,9 @@ export function SiteHeader() {
               <details className="group relative" ref={accountMenu}>
                 <summary
                   className="font-telemetry flex h-16 cursor-pointer list-none items-center gap-2 px-3 text-[9px] hover:bg-[var(--surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)] sm:px-4 [&::-webkit-details-marker]:hidden"
-                  aria-label={"Account menu for " + session.data.username}
+                  aria-label={t("Account menu for {username}", {
+                    username: session.data.username,
+                  })}
                 >
                   <UserRound size={15} aria-hidden="true" />
                   <span className="hidden max-w-24 truncate sm:block">
@@ -125,7 +130,7 @@ export function SiteHeader() {
                 </summary>
                 <nav
                   className="absolute right-0 top-full z-[60] grid w-56 gap-px border border-[var(--line-strong)] bg-[var(--line)] shadow-[8px_8px_0_rgba(0,0,0,0.18)]"
-                  aria-label="Account navigation"
+                  aria-label={t("Account navigation")}
                 >
                   {[
                     {
@@ -143,7 +148,7 @@ export function SiteHeader() {
                       href={href}
                       className="font-telemetry flex min-h-11 items-center justify-between bg-[var(--surface)] px-4 text-[9px] hover:text-[var(--accent)]"
                     >
-                      {label}
+                      {t(label)}
                       <Icon size={13} aria-hidden="true" />
                     </Link>
                   ))}
@@ -157,7 +162,7 @@ export function SiteHeader() {
                       })
                     }
                   >
-                    {logout.isPending ? "Closing session" : "Sign out"}
+                    {t(logout.isPending ? "Closing session" : "Sign out")}
                     <LogOut size={13} aria-hidden="true" />
                   </button>
                 </nav>
@@ -169,16 +174,17 @@ export function SiteHeader() {
               >
                 <UserRound size={15} aria-hidden="true" />
                 <span className="hidden max-w-24 truncate sm:block">
-                  Sign in
+                  {t("Sign in")}
                 </span>
               </Link>
             )}
+            <LanguageToggle />
             <ThemeToggle />
             <button
               type="button"
               className="grid h-16 w-12 place-items-center border-l border-[var(--line)] lg:hidden"
               onClick={() => setMenuOpen((open) => !open)}
-              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+              aria-label={t(menuOpen ? "Close navigation" : "Open navigation")}
               aria-expanded={menuOpen}
             >
               {menuOpen ? (
@@ -199,25 +205,25 @@ export function SiteHeader() {
             onSubmit={submitSearch}
           >
             <label className="sr-only" htmlFor="mobile-site-search">
-              Search games
+              {t("Search games")}
             </label>
             <input
               id="mobile-site-search"
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="SEARCH GAME INDEX..."
+              placeholder={t("SEARCH GAME INDEX...")}
               className="font-telemetry min-w-0 bg-[var(--surface)] px-4 text-[10px] outline-none"
             />
             <button
               type="submit"
-              aria-label="Search games"
+              aria-label={t("Search games")}
               className="grid h-12 place-items-center border-l border-[var(--line)]"
             >
               <Search size={15} aria-hidden="true" />
             </button>
           </form>
-          <nav className="grid gap-px bg-[var(--line)]" aria-label="Mobile navigation">
+          <nav className="grid gap-px bg-[var(--line)]" aria-label={t("Mobile navigation")}>
             {[...NAVIGATION, { href: "/friends", label: "Friends", icon: Users }].map(
               ({ href, label, icon: Icon }) => (
                 <Link
@@ -226,7 +232,7 @@ export function SiteHeader() {
                   onClick={() => setMenuOpen(false)}
                   className="font-telemetry flex min-h-12 items-center justify-between bg-[var(--surface)] px-4 text-[10px]"
                 >
-                  {label}
+                  {t(label)}
                   <Icon size={14} aria-hidden="true" />
                 </Link>
               ),

@@ -10,12 +10,14 @@ import { GameGrid } from "@/features/games/game-grid";
 import { useGames } from "@/features/games/hooks";
 import type { GameType } from "@/features/games/types";
 import { getErrorMessage } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 type CatalogProps = {
   initialQuery: string;
 };
 
 export function GamesCatalog({ initialQuery }: CatalogProps) {
+  const { t } = useI18n();
   const router = useRouter();
   const [draftQuery, setDraftQuery] = useState(initialQuery);
   const [query, setQuery] = useState(initialQuery);
@@ -46,7 +48,7 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
       >
         <label className="bg-[var(--surface)] p-4">
           <span className="font-telemetry mb-2 block text-[9px] text-[var(--muted)]">
-            Search index
+            {t("Search index")}
           </span>
           <span className="grid grid-cols-[1fr_36px] border border-[var(--line-strong)] bg-[var(--background)]">
             <input
@@ -54,46 +56,46 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
               value={draftQuery}
               onChange={(event) => setDraftQuery(event.target.value)}
               className="min-w-0 bg-transparent px-3 text-sm outline-none"
-              placeholder="Title or call sign"
+              placeholder={t("Title or call sign")}
             />
             <Search size={15} className="self-center text-[var(--muted)]" aria-hidden="true" />
           </span>
         </label>
         <div className="bg-[var(--surface)] p-4">
           <SelectField
-            label="Game mode"
+            label={t("Game mode")}
             value={gameType}
             onChange={(event) => {
               setGameType(event.target.value as GameType | "");
               setPage(0);
             }}
           >
-            <option value="">All modes</option>
-            <option value="SINGLE_PLAYER">Single player</option>
-            <option value="TURN_BASED_MULTIPLAYER">Turn-based PVP</option>
-            <option value="REALTIME_MULTIPLAYER">Realtime PVP</option>
+            <option value="">{t("All modes")}</option>
+            <option value="SINGLE_PLAYER">{t("Single player")}</option>
+            <option value="TURN_BASED_MULTIPLAYER">{t("Turn-based PVP")}</option>
+            <option value="REALTIME_MULTIPLAYER">{t("Realtime PVP")}</option>
           </SelectField>
         </div>
         <div className="bg-[var(--surface)] p-4">
           <SelectField
-            label="Classification"
+            label={t("Classification")}
             value={category}
             onChange={(event) => {
               setCategory(event.target.value);
               setPage(0);
             }}
           >
-            <option value="">All categories</option>
-            <option value="CASUAL">Casual</option>
-            <option value="PUZZLE">Puzzle</option>
-            <option value="ACTION">Action</option>
-            <option value="STRATEGY">Strategy</option>
-            <option value="ARCADE">Arcade</option>
+            <option value="">{t("All categories")}</option>
+            <option value="CASUAL">{t("Casual")}</option>
+            <option value="PUZZLE">{t("Puzzle")}</option>
+            <option value="ACTION">{t("Action")}</option>
+            <option value="STRATEGY">{t("Strategy")}</option>
+            <option value="ARCADE">{t("Arcade")}</option>
           </SelectField>
         </div>
         <div className="flex items-end bg-[var(--surface)] p-4">
           <Button className="w-full md:w-auto" type="submit">
-            Apply filter
+            {t("Apply filter")}
           </Button>
         </div>
       </form>
@@ -101,25 +103,25 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
       <div className="p-4 sm:p-6">
         <div className="font-telemetry mb-4 flex flex-wrap items-center justify-between gap-3 text-[9px] text-[var(--muted)]">
           <span>
-            [ RESULTS / {games.data?.totalElements ?? "—"} ]
+            [ {t("RESULTS")} / {games.data?.totalElements ?? "—"} ]
           </span>
           {games.isFetching && !games.isLoading ? (
-            <span className="text-[var(--accent)]">SYNCING ///</span>
+            <span className="text-[var(--accent)]">{t("SYNCING ///")}</span>
           ) : null}
         </div>
         {games.isLoading ? <LoadingGrid /> : null}
         {games.isError ? (
           <ErrorState
-            title="Game index unavailable"
-            description={getErrorMessage(games.error)}
+            title={t("Game index unavailable")}
+            description={t(getErrorMessage(games.error))}
             onAction={() => void games.refetch()}
           />
         ) : null}
         {games.data && !games.data.content.length ? (
           <EmptyState
-            title="No games match"
-            description="Change the search term or classification. Results come directly from the backend catalog."
-            actionLabel="Clear filters"
+            title={t("No games match")}
+            description={t("Change the search term or classification. Results come directly from the backend catalog.")}
+            actionLabel={t("Clear filters")}
             onAction={() => {
               setDraftQuery("");
               setQuery("");
@@ -141,10 +143,10 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
                 onClick={() => setPage((current) => Math.max(0, current - 1))}
               >
                 <ChevronLeft size={13} aria-hidden="true" />
-                Previous
+                {t("Previous")}
               </Button>
               <span className="font-telemetry text-[9px] text-[var(--muted)]">
-                PAGE {page + 1} / {Math.max(1, games.data.totalPages)}
+                {t("PAGE")} {page + 1} / {Math.max(1, games.data.totalPages)}
               </span>
               <Button
                 variant="ghost"
@@ -152,7 +154,7 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
                 disabled={page + 1 >= games.data.totalPages}
                 onClick={() => setPage((current) => current + 1)}
               >
-                Next
+                {t("Next")}
                 <ChevronRight size={13} aria-hidden="true" />
               </Button>
             </div>

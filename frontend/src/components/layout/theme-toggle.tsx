@@ -2,8 +2,10 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useThemeStore } from "@/stores/theme-store";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const mode = useThemeStore((state) => state.mode);
   const hydrated = useThemeStore((state) => state.hydrated);
   const toggle = useThemeStore((state) => state.toggle);
@@ -13,8 +15,8 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       className="grid h-11 w-11 place-items-center border-l border-[var(--line)] text-[var(--muted)] transition-colors hover:bg-[var(--surface-strong)] hover:text-[var(--foreground)]"
-      aria-label={"Switch to " + next + " theme"}
-      title={"Switch to " + next + " theme"}
+      aria-label={t("Switch to " + next + " theme")}
+      title={t("Switch to " + next + " theme")}
     >
       {!hydrated || mode === "dark" ? (
         <Sun size={16} aria-hidden="true" />

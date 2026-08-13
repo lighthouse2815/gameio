@@ -12,8 +12,10 @@ import { useToast } from "@/components/ui/toast";
 import { friendApi } from "@/features/friends/api";
 import { isUnauthenticated, useSession } from "@/features/auth/hooks";
 import { getErrorMessage } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function FriendsScreen() {
+  const { t, formatDate } = useI18n();
   const session = useSession();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -39,16 +41,16 @@ export function FriendsScreen() {
     onSuccess: () => {
       setUsername("");
       toast({
-        title: "Request transmitted",
-        description: "The backend accepted the friend request.",
+        title: t("Request transmitted"),
+        description: t("The backend accepted the friend request."),
         tone: "success",
       });
       void refresh();
     },
     onError: (error) =>
       toast({
-        title: "Request rejected",
-        description: getErrorMessage(error),
+        title: t("Request rejected"),
+        description: t(getErrorMessage(error)),
         tone: "error",
       }),
   });
@@ -56,19 +58,19 @@ export function FriendsScreen() {
     mutationFn: friendApi.accept,
     onSuccess: () => void refresh(),
     onError: (error) =>
-      toast({ title: "Accept failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Accept failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const reject = useMutation({
     mutationFn: friendApi.reject,
     onSuccess: () => void refresh(),
     onError: (error) =>
-      toast({ title: "Reject failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Reject failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const remove = useMutation({
     mutationFn: friendApi.remove,
     onSuccess: () => void refresh(),
     onError: (error) =>
-      toast({ title: "Remove failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Remove failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -79,7 +81,7 @@ export function FriendsScreen() {
 
   if (session.isLoading) return <Skeleton className="h-72" />;
   if (session.isError && isUnauthenticated(session.error)) {
-    return <LoginRequired title="Player network locked" />;
+    return <LoginRequired title={t("Player network locked")} />;
   }
   if (session.isError) {
     return (
@@ -96,10 +98,10 @@ export function FriendsScreen() {
       <section className="border border-[var(--line)] bg-[var(--surface)]">
         <header className="flex items-center justify-between border-b border-[var(--line)] p-5">
           <div>
-            <p className="font-telemetry text-[8px] text-[var(--muted)]">[ ACCEPTED LINKS ]</p>
-            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">Your network</h2>
+            <p className="font-telemetry text-[8px] text-[var(--muted)]">{t("[ ACCEPTED LINKS ]")}</p>
+            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Your network")}</h2>
           </div>
-          <span className="font-telemetry text-[9px] text-[var(--accent)]">{friends.data?.length ?? "—"} NODES</span>
+          <span className="font-telemetry text-[9px] text-[var(--accent)]">{friends.data?.length ?? "—"} {t("NODES")}</span>
         </header>
         {friends.isLoading ? <Skeleton className="m-5 h-64" /> : null}
         {friends.isError ? (
@@ -127,7 +129,7 @@ export function FriendsScreen() {
                   <div className="min-w-0">
                     <Link href={"/profile/" + friend.username} className="truncate font-bold hover:text-[var(--accent)]">{friend.username}</Link>
                     <p className={"font-telemetry mt-1 text-[8px] " + (friend.online ? "status-online" : "text-[var(--muted)]")}>
-                      {friend.online ? (friend.currentGameName ? "PLAYING " + friend.currentGameName : "ONLINE") : "OFFLINE"}
+                      {friend.online ? (friend.currentGameName ? t("PLAYING") + " " + t(friend.currentGameName) : t("ONLINE")) : t("OFFLINE")}
                     </p>
                   </div>
                 </div>
@@ -138,10 +140,10 @@ export function FriendsScreen() {
                       className="font-telemetry inline-flex min-h-9 items-center gap-2 border border-[var(--line-strong)] px-3 text-[8px] hover:border-[var(--accent)]"
                     >
                       <Radio size={12} aria-hidden="true" />
-                      Open same-game lobby
+                      {t("Open same-game lobby")}
                     </Link>
                   ) : null}
-                  <Button compact variant="danger" aria-label={"Remove " + friend.username} onClick={() => remove.mutate(friend.username)} busy={remove.isPending}>
+                  <Button compact variant="danger" aria-label={t("Remove {username}", { username: friend.username })} onClick={() => remove.mutate(friend.username)} busy={remove.isPending}>
                     <UserMinus size={13} aria-hidden="true" />
                   </Button>
                 </div>
@@ -154,41 +156,41 @@ export function FriendsScreen() {
       <aside className="grid content-start gap-6">
         <form className="border border-[var(--line)] bg-[var(--surface)] p-5" onSubmit={submit}>
           <UserPlus size={20} className="text-[var(--accent)]" aria-hidden="true" />
-          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">Add player</h2>
+          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">{t("Add player")}</h2>
           <div className="mt-5">
             <Field
-              label="Exact username"
+              label={t("Exact username")}
               name="friendUsername"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder="player_call_sign"
             />
           </div>
-          <Button className="mt-4 w-full" busy={send.isPending}>Transmit request</Button>
+          <Button className="mt-4 w-full" busy={send.isPending}>{t("Transmit request")}</Button>
         </form>
 
         <section className="border border-[var(--line)] bg-[var(--surface)]">
           <header className="border-b border-[var(--line)] p-5">
-            <p className="font-telemetry text-[8px] text-[var(--muted)]">[ INCOMING ]</p>
-            <h2 className="mt-1 text-xl font-black uppercase tracking-[-0.04em]">Requests</h2>
+            <p className="font-telemetry text-[8px] text-[var(--muted)]">{t("[ INCOMING ]")}</p>
+            <h2 className="mt-1 text-xl font-black uppercase tracking-[-0.04em]">{t("Requests")}</h2>
           </header>
           {requests.isLoading ? <Skeleton className="m-4 h-32" /> : null}
           {requests.isError ? (
-            <p className="p-4 text-xs leading-5 text-[var(--danger)]">{getErrorMessage(requests.error)}</p>
+            <p className="p-4 text-xs leading-5 text-[var(--danger)]">{t(getErrorMessage(requests.error))}</p>
           ) : null}
           {requests.data && !requests.data.length ? (
-            <p className="p-5 text-xs leading-5 text-[var(--muted)]">No pending requests.</p>
+            <p className="p-5 text-xs leading-5 text-[var(--muted)]">{t("No pending requests.")}</p>
           ) : null}
           {requests.data?.map((request) => (
             <div className="border-b border-[var(--line)] p-4 last:border-b-0" key={request.id}>
               <p className="font-bold">{request.sender.username}</p>
-              <p className="font-telemetry mt-1 text-[8px] text-[var(--muted)]">{new Date(request.createdAt).toLocaleDateString()}</p>
+              <p className="font-telemetry mt-1 text-[8px] text-[var(--muted)]">{formatDate(request.createdAt)}</p>
               <div className="mt-4 flex gap-2">
                 <Button compact onClick={() => accept.mutate(request.id)} busy={accept.isPending}>
-                  <Check size={13} aria-hidden="true" /> Accept
+                  <Check size={13} aria-hidden="true" /> {t("Accept")}
                 </Button>
                 <Button compact variant="ghost" onClick={() => reject.mutate(request.id)} busy={reject.isPending}>
-                  <X size={13} aria-hidden="true" /> Reject
+                  <X size={13} aria-hidden="true" /> {t("Reject")}
                 </Button>
               </div>
             </div>

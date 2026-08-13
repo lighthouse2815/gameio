@@ -5,6 +5,8 @@ import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ToastProvider } from "@/components/ui/toast";
 import { sessionQueryKey } from "@/features/auth/hooks";
+import { I18nProvider } from "@/lib/i18n/i18n-provider";
+import type { Locale } from "@/lib/i18n/types";
 import type { AuthChangeReason } from "@/lib/api/token-vault";
 import { createQueryClient } from "@/lib/query-client";
 import { gameSocketClient } from "@/lib/socket/game-socket-client";
@@ -38,17 +40,25 @@ function RuntimeBridge() {
   return null;
 }
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode;
+  initialLocale: Locale;
+}) {
   const [queryClient] = useState(createQueryClient);
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <RuntimeBridge />
-        {children}
-      </ToastProvider>
-      {process.env.NODE_ENV === "development" ? (
-        <ReactQueryDevtools initialIsOpen={false} />
-      ) : null}
-    </QueryClientProvider>
+    <I18nProvider initialLocale={initialLocale}>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <RuntimeBridge />
+          {children}
+        </ToastProvider>
+        {process.env.NODE_ENV === "development" ? (
+          <ReactQueryDevtools initialIsOpen={false} />
+        ) : null}
+      </QueryClientProvider>
+    </I18nProvider>
   );
 }

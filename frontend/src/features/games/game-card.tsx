@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowUpRight, Users } from "lucide-react";
 import type { GameSummary } from "@/features/games/types";
 import { getGameArtwork } from "@/games/core/artwork";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 type GameCardProps = {
   game: GameSummary;
@@ -16,13 +19,14 @@ function gameTypeLabel(type: GameSummary["gameType"]) {
 }
 
 export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
+  const { t, formatNumber } = useI18n();
   const artwork = getGameArtwork(game.slug, game.thumbnailUrl);
   return (
     <article className="group relative flex min-h-[300px] flex-col overflow-hidden bg-[var(--surface)]">
       <Link
         href={"/game/" + encodeURIComponent(game.slug)}
         className="flex h-full flex-1 flex-col"
-        aria-label={"Open " + game.name}
+        aria-label={t("Open {game}", { game: t(game.name) })}
       >
         <div className="relative h-36 overflow-hidden border-b border-[var(--line)] bg-[var(--surface-strong)]">
           {artwork ? (
@@ -40,12 +44,12 @@ export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
                 {String(index + 1).padStart(2, "0")}
               </span>
               <span className="font-telemetry flex w-10 items-center justify-center border-l border-[var(--line)] text-[8px] text-[var(--muted)] [writing-mode:vertical-rl]">
-                NO VISUAL SIGNAL
+                {t("NO VISUAL SIGNAL")}
               </span>
             </div>
           )}
           <span className="font-telemetry absolute left-3 top-3 bg-[var(--accent)] px-2 py-1 text-[8px] font-bold text-white">
-            {game.category}
+            {t(game.category)}
           </span>
         </div>
         <div className="flex flex-1 flex-col p-4 sm:p-5">
@@ -55,7 +59,7 @@ export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
                 UNIT / {game.slug.toUpperCase()}
               </p>
               <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.045em]">
-                {game.name}
+                {t(game.name)}
               </h3>
             </div>
             <ArrowUpRight
@@ -65,16 +69,16 @@ export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
             />
           </div>
           <p className="mt-3 line-clamp-2 text-xs leading-5 text-[var(--muted)]">
-            {game.description}
+            {t(game.description)}
           </p>
           <div className="font-telemetry mt-auto grid grid-cols-2 gap-x-3 gap-y-2 pt-6 text-[8px]">
-            <span>{gameTypeLabel(game.gameType)}</span>
+            <span>{t(gameTypeLabel(game.gameType))}</span>
             <span className="text-right text-[var(--muted)]">
-              {game.playsCount.toLocaleString()} PLAYS
+              {formatNumber(game.playsCount)} {t("PLAYS")}
             </span>
             <span className="text-[var(--muted)]">
               <Users size={9} className="mr-1 inline" aria-hidden="true" />
-              {game.minPlayers}–{game.maxPlayers} PLAYERS
+              {game.minPlayers}–{game.maxPlayers} {t("PLAYERS")}
             </span>
             <span
               className={
@@ -84,7 +88,7 @@ export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
                   : "text-[var(--muted)]")
               }
             >
-              {game.onlinePlayers.toLocaleString()} LIVE
+              {formatNumber(game.onlinePlayers)} {t("LIVE")}
             </span>
           </div>
         </div>

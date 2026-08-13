@@ -1,6 +1,9 @@
+"use client";
+
 import { AlertTriangle, Inbox, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function Skeleton({ className }: { className?: string }) {
   return (
@@ -15,10 +18,11 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 export function LoadingGrid({ count = 6 }: { count?: number }) {
+  const { t } = useI18n();
   return (
     <div
       className="grid grid-cols-1 gap-px bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-3"
-      aria-label="Loading data"
+      aria-label={t("Loading data")}
       aria-busy="true"
     >
       {Array.from({ length: count }).map((_, index) => (
@@ -51,6 +55,7 @@ export function EmptyState({
   onAction,
   className,
 }: StateProps) {
+  const { t } = useI18n();
   return (
     <div
       className={cn(
@@ -60,17 +65,17 @@ export function EmptyState({
     >
       <Inbox aria-hidden="true" className="mb-5 text-[var(--accent)]" />
       <p className="font-telemetry mb-2 text-[10px] text-[var(--muted)]">
-        [ NO RECORDS ]
+        {t("[ NO RECORDS ]")}
       </p>
       <h2 className="text-2xl font-black uppercase tracking-[-0.04em]">
-        {title}
+        {t(title)}
       </h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--muted)]">
-        {description}
+        {t(description)}
       </p>
       {actionLabel && onAction ? (
         <Button className="mt-6" onClick={onAction}>
-          {actionLabel}
+          {t(actionLabel)}
         </Button>
       ) : null}
     </div>
@@ -84,6 +89,7 @@ export function ErrorState({
   onAction,
   className,
 }: StateProps) {
+  const { t } = useI18n();
   return (
     <div
       className={cn(
@@ -97,18 +103,18 @@ export function ErrorState({
         className="mb-5 text-[var(--danger)]"
       />
       <p className="font-telemetry mb-2 text-[10px] text-[var(--danger)]">
-        [ LINK FAILURE ]
+        {t("[ LINK FAILURE ]")}
       </p>
       <h2 className="text-2xl font-black uppercase tracking-[-0.04em]">
-        {title}
+        {t(title)}
       </h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--muted)]">
-        {description}
+        {t(description)}
       </p>
       {onAction ? (
         <Button className="mt-6" onClick={onAction} variant="secondary">
           <RotateCw size={14} aria-hidden="true" />
-          {actionLabel}
+          {t(actionLabel)}
         </Button>
       ) : null}
     </div>

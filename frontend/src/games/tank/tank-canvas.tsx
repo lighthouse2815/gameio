@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type {
   TankSnapshot,
 } from "@/features/multiplayer/realtime/types";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function TankCanvas({
   snapshot,
@@ -12,6 +13,7 @@ export function TankCanvas({
   snapshot: TankSnapshot;
   userId?: string;
 }) {
+  const { t } = useI18n();
   const hostRef = useRef<HTMLDivElement>(null);
   const renderRef = useRef<(next: TankSnapshot, currentUser?: string) => void>(
     () => {},
@@ -140,7 +142,7 @@ export function TankCanvas({
     <div
       ref={hostRef}
       className="game-canvas aspect-square w-full bg-[#0d0d0d]"
-      aria-label="Authoritative Tank Battle renderer"
+      aria-label={t("Authoritative Tank Battle renderer")}
     />
   );
 }

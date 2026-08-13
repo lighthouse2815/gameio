@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { LeaderboardEntry } from "@/features/leaderboard/types";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function LeaderboardTable({
   entries,
@@ -8,15 +11,16 @@ export function LeaderboardTable({
   entries: LeaderboardEntry[];
   compact?: boolean;
 }) {
+  const { t, formatNumber } = useI18n();
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border-collapse text-left">
         <thead className="font-telemetry text-[8px] text-[var(--muted)]">
           <tr className="border-b border-[var(--line)]">
-            <th className="w-20 px-4 py-3 font-medium">Rank</th>
-            <th className="px-4 py-3 font-medium">Player</th>
-            <th className="px-4 py-3 text-right font-medium">Score</th>
-            <th className="px-4 py-3 text-right font-medium">Wins</th>
+            <th className="w-20 px-4 py-3 font-medium">{t("Rank")}</th>
+            <th className="px-4 py-3 font-medium">{t("Player")}</th>
+            <th className="px-4 py-3 text-right font-medium">{t("Score")}</th>
+            <th className="px-4 py-3 text-right font-medium">{t("Wins")}</th>
           </tr>
         </thead>
         <tbody>
@@ -65,10 +69,10 @@ export function LeaderboardTable({
                 </Link>
               </td>
               <td className="font-telemetry px-4 py-4 text-right text-[10px]">
-                {entry.score.toLocaleString()}
+                {formatNumber(entry.score)}
               </td>
               <td className="font-telemetry px-4 py-4 text-right text-[10px] text-[var(--muted)]">
-                {entry.wins.toLocaleString()}
+                {formatNumber(entry.wins)}
               </td>
             </tr>
           ))}
@@ -76,7 +80,7 @@ export function LeaderboardTable({
       </table>
       {!compact ? (
         <div className="font-telemetry border-t border-[var(--line)] px-4 py-3 text-[8px] text-[var(--muted)]">
-          RANKS ARE SERVER-VERIFIED / CLIENT CLAIMS REJECTED
+          {t("RANKS ARE SERVER-VERIFIED / CLIENT CLAIMS REJECTED")}
         </div>
       ) : null}
     </div>

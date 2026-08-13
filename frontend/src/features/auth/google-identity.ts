@@ -24,6 +24,7 @@ export type GoogleIdentityApi = {
       shape: "rectangular";
       logo_alignment: "left";
       width: number;
+      locale?: string;
     },
   ) => void;
 };
@@ -136,6 +137,7 @@ export function renderGoogleIdentityButton(
   parent: HTMLElement,
   text: GoogleButtonText,
   width: number,
+  locale?: string,
 ) {
   parent.replaceChildren();
   api.renderButton(parent, {
@@ -146,5 +148,6 @@ export function renderGoogleIdentityButton(
     shape: "rectangular",
     logo_alignment: "left",
     width,
+    locale,
   });
 }

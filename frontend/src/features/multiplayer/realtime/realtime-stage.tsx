@@ -18,6 +18,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { isUnauthenticated } from "@/features/auth/hooks";
 import type { RealtimeGameController } from "@/features/multiplayer/realtime/use-realtime-game";
 import { getErrorMessage } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function RealtimeStage({
   controller,
@@ -28,6 +29,7 @@ export function RealtimeStage({
   title: string;
   children: ReactNode;
 }) {
+  const { t, formatNumber } = useI18n();
   const { session, state } = controller;
   if (session.isLoading) {
     return <Skeleton className="h-[560px]" />;
@@ -35,8 +37,8 @@ export function RealtimeStage({
   if (session.isError && isUnauthenticated(session.error)) {
     return (
       <LoginRequired
-        title="Realtime identity required"
-        description="Sign in before joining an authoritative game room."
+        title={t("Realtime identity required")}
+        description={t("Sign in before joining an authoritative game room.")}
       />
     );
   }
@@ -44,7 +46,7 @@ export function RealtimeStage({
     return (
       <ErrorState
         title="Identity link unavailable"
-        description={getErrorMessage(session.error)}
+        description={t(getErrorMessage(session.error))}
         onAction={() => void session.refetch()}
       />
     );
@@ -71,10 +73,10 @@ export function RealtimeStage({
       <header className="grid gap-px border-b border-[var(--line)] bg-[var(--line)] sm:grid-cols-[1fr_auto]">
         <div className="bg-[var(--surface)] p-4">
           <p className="font-telemetry text-[8px] text-[var(--accent)]">
-            [ AUTHORITATIVE MATCH ]
+            {t("[ AUTHORITATIVE MATCH ]")}
           </p>
           <h3 className="mt-1 text-xl font-black uppercase tracking-[-0.04em]">
-            {title}
+            {t(title)}
           </h3>
         </div>
         <div className="font-telemetry flex min-w-52 items-center justify-between gap-5 bg-[var(--surface)] px-4 py-3 text-[8px]">
@@ -85,7 +87,7 @@ export function RealtimeStage({
                 : "text-[var(--danger)]"
             }
           >
-            {state.connection}
+            {t(state.connection)}
           </span>
           <span className="text-[var(--muted)]">
             {room?.roomCode ?? controller.roomId.slice(0, 8)}
@@ -102,16 +104,16 @@ export function RealtimeStage({
                 {state.error.code}
               </p>
               <p className="mt-1 text-xs leading-5 text-[var(--muted)]">
-                {state.error.message}
+                {t(state.error.message)}
               </p>
             </div>
           </div>
           {fatalRoomError ? (
             <Link href="/multiplayer" className={buttonStyles("secondary")}>
-              Return to lobby
+              {t("Return to lobby")}
             </Link>
           ) : (
-            <button type="button" aria-label="Dismiss realtime error" onClick={controller.clearError}>
+            <button type="button" aria-label={t("Dismiss realtime error")} onClick={controller.clearError}>
               <X size={14} aria-hidden="true" />
             </button>
           )}
@@ -121,7 +123,7 @@ export function RealtimeStage({
       {state.opponentDisconnected ? (
         <div className="font-telemetry flex items-center gap-3 border-b border-[var(--accent)] px-4 py-3 text-[9px] text-[var(--accent)]">
           <WifiOff size={14} aria-hidden="true" />
-          OPPONENT DISCONNECTED / SERVER RECONNECT GRACE ACTIVE
+          {t("OPPONENT DISCONNECTED / SERVER RECONNECT GRACE ACTIVE")}
         </div>
       ) : null}
 
@@ -137,13 +139,13 @@ export function RealtimeStage({
             <p className="font-telemetry text-[8px]">
               {state.connection === "connecting" ||
               state.connection === "reconnecting"
-                ? "RESTORING ROOM + REQUESTING SERVER SNAPSHOT"
-                : "REALTIME LINK DISCONNECTED"}
+                ? t("RESTORING ROOM + REQUESTING SERVER SNAPSHOT")
+                : t("REALTIME LINK DISCONNECTED")}
             </p>
           </div>
           <Button compact variant="secondary" onClick={controller.reconnect}>
             <RotateCw size={13} aria-hidden="true" />
-            Reconnect
+            {t("Reconnect")}
           </Button>
         </div>
       ) : null}
@@ -151,8 +153,8 @@ export function RealtimeStage({
       {!room && !state.snapshot && !fatalRoomError ? (
         <div className="p-5">
           <EmptyState
-            title="Waiting for room state"
-            description="The client has joined by room UUID and is waiting for the server membership snapshot."
+            title={t("Waiting for room state")}
+            description={t("The client has joined by room UUID and is waiting for the server membership snapshot.")}
           />
         </div>
       ) : null}
@@ -161,23 +163,23 @@ export function RealtimeStage({
         <div className="grid gap-6 p-5 lg:grid-cols-[1fr_280px]">
           <div>
             <p className="font-telemetry text-[9px] text-[var(--muted)]">
-              [ ROOM ASSEMBLY ]
+              {t("[ ROOM ASSEMBLY ]")}
             </p>
             <ul className="mt-4 grid gap-px border border-[var(--line)] bg-[var(--line)]">
               {room.players.map((player) => (
                 <li className="flex items-center justify-between bg-[var(--surface)] p-4" key={player.id}>
                   <div>
                     <p className="font-bold">
-                      {player.owner ? "[OWNER] " : ""}
+                      {player.owner ? `[${t("OWNER")}] ` : ""}
                       {player.username}
                     </p>
                     <p className="font-telemetry mt-1 text-[8px] text-[var(--muted)]">
-                      {player.id === session.data?.id ? "THIS CLIENT" : "REMOTE PLAYER"}
+                      {t(player.id === session.data?.id ? "THIS CLIENT" : "REMOTE PLAYER")}
                     </p>
                   </div>
                   <span className={"font-telemetry text-[8px] " + (player.ready ? "text-[var(--online)]" : "text-[var(--muted)]")}>
                     {player.ready ? <Check size={12} className="mr-1 inline" aria-hidden="true" /> : null}
-                    {player.ready ? "READY" : "STANDBY"}
+                    {t(player.ready ? "READY" : "STANDBY")}
                   </span>
                 </li>
               ))}
@@ -186,15 +188,14 @@ export function RealtimeStage({
           <aside className="border border-[var(--line)] bg-[var(--surface)] p-4">
             <Radio className="text-[var(--accent)]" size={20} aria-hidden="true" />
             <h4 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">
-              Waiting room
+              {t("Waiting room")}
             </h4>
             <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-              Every player must signal ready. Only the room owner may issue
-              ROOM_START.
+              {t("Every player must signal ready. Only the room owner may issue ROOM_START.")}
             </p>
             {!currentPlayer?.ready ? (
               <Button className="mt-5 w-full" onClick={controller.ready}>
-                Signal ready
+                {t("Signal ready")}
               </Button>
             ) : null}
             {currentPlayer?.owner ? (
@@ -204,7 +205,7 @@ export function RealtimeStage({
                 onClick={controller.start}
                 disabled={!allReady}
               >
-                Start match
+                {t("Start match")}
               </Button>
             ) : null}
           </aside>
@@ -216,7 +217,7 @@ export function RealtimeStage({
           <div className="text-center">
             <LoaderCircle className="mx-auto animate-spin text-[var(--accent)]" aria-hidden="true" />
             <p className="font-telemetry mt-4 text-[9px] text-[var(--muted)]">
-              REQUESTING AUTHORITATIVE SNAPSHOT
+              {t("REQUESTING AUTHORITATIVE SNAPSHOT")}
             </p>
           </div>
         </div>
@@ -229,15 +230,15 @@ export function RealtimeStage({
           <div className="mx-auto max-w-xl text-center">
             <ShieldCheck className="mx-auto text-[var(--accent)]" size={28} aria-hidden="true" />
             <p className="font-telemetry mt-5 text-[9px] text-[var(--accent)]">
-              [ SERVER RECORDED RESULT ]
+              {t("[ SERVER RECORDED RESULT ]")}
             </p>
             <h4 className="mt-2 text-4xl font-black uppercase tracking-[-0.055em]">
-              {progression?.result ?? "Match over"}
+              {t(progression?.result ?? "Match over")}
             </h4>
             {progression ? (
               <p className="font-telemetry mt-4 text-[9px] text-[var(--muted)]">
-                SCORE {progression.score} / +{progression.expAwarded} EXP /
-                LEVEL {progression.level}
+                {t("SCORE")} {formatNumber(progression.score)} / +{formatNumber(progression.expAwarded)} EXP /
+                {t("LEVEL")} {progression.level}
               </p>
             ) : null}
             <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -250,10 +251,10 @@ export function RealtimeStage({
                 }
                 className={buttonStyles("primary")}
               >
-                Open a new room
+                {t("Open a new room")}
               </Link>
               <Link href="/games" className={buttonStyles("secondary")}>
-                Back to games
+                {t("Back to games")}
               </Link>
             </div>
           </div>

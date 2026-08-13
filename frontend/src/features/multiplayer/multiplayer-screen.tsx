@@ -19,8 +19,10 @@ import {
   gameSocketClient,
   type SocketStatus,
 } from "@/lib/socket/game-socket-client";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string }) {
+  const { t } = useI18n();
   const session = useSession();
   const games = useGames({ page: 0, size: 100 });
   const toast = useToast();
@@ -158,11 +160,11 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
     onSuccess: (room) => {
       setActiveRoom(room);
       gameSocketClient.joinRoom(room.roomId);
-      toast({ title: "Room allocated", description: "Code: " + room.roomCode, tone: "success" });
+      toast({ title: t("Room allocated"), description: t("Code") + ": " + room.roomCode, tone: "success" });
       void refreshRooms();
     },
     onError: (error) =>
-      toast({ title: "Room creation failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Room creation failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const joinRoom = useMutation({
     mutationFn: (code: string) => multiplayerApi.joinRoom(code),
@@ -170,11 +172,11 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
       setActiveRoom(room);
       gameSocketClient.joinRoom(room.roomId);
       setRoomCode("");
-      toast({ title: "Room joined", description: "Server membership validated.", tone: "success" });
+      toast({ title: t("Room joined"), description: t("Server membership validated."), tone: "success" });
       void refreshRooms();
     },
     onError: (error) =>
-      toast({ title: "Join failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Join failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const quickMatch = useMutation({
     mutationFn: () => multiplayerApi.quickMatch(effectiveGameId),
@@ -186,10 +188,10 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
           queryKey: ["rooms", "member", ticket.roomId],
         });
       }
-      toast({ title: "Queue joined", description: "Waiting for a server match.", tone: "success" });
+      toast({ title: t("Queue joined"), description: t("Waiting for a server match."), tone: "success" });
     },
     onError: (error) =>
-      toast({ title: "Queue rejected", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Queue rejected"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const leaveQueue = useMutation({
     mutationFn: multiplayerApi.leaveQueue,
@@ -198,19 +200,19 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
       queryClient.setQueryData(["matchmaking", "current"], null);
     },
     onError: (error) =>
-      toast({ title: "Queue leave failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Queue leave failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const readyRoom = useMutation({
     mutationFn: (roomId: string) => multiplayerApi.ready(roomId),
     onSuccess: (room) => setActiveRoom(room),
     onError: (error) =>
-      toast({ title: "Ready signal rejected", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Ready signal rejected"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const startRoom = useMutation({
     mutationFn: (roomId: string) => multiplayerApi.start(roomId),
     onSuccess: (room) => setActiveRoom(room),
     onError: (error) =>
-      toast({ title: "Start rejected", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Start rejected"), description: t(getErrorMessage(error)), tone: "error" }),
   });
   const leaveRoom = useMutation({
     mutationFn: (roomId: string) => multiplayerApi.leaveRoom(roomId),
@@ -228,7 +230,7 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
       await refreshRooms();
     },
     onError: (error) =>
-      toast({ title: "Leave failed", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Leave failed"), description: t(getErrorMessage(error)), tone: "error" }),
   });
 
   function submitCode(event: FormEvent<HTMLFormElement>) {
@@ -245,13 +247,13 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
 
   if (session.isLoading || games.isLoading) return <Skeleton className="h-96" />;
   if (session.isError && isUnauthenticated(session.error)) {
-    return <LoginRequired title="Multiplayer link locked" description="Sign in before creating rooms, joining queues, or opening a realtime connection." />;
+    return <LoginRequired title={t("Multiplayer link locked")} description={t("Sign in before creating rooms, joining queues, or opening a realtime connection.")} />;
   }
   if (session.isError) {
-    return <ErrorState title="Identity link unavailable" description={getErrorMessage(session.error)} onAction={() => void session.refetch()} />;
+    return <ErrorState title={t("Identity link unavailable")} description={t(getErrorMessage(session.error))} onAction={() => void session.refetch()} />;
   }
   if (!onlineGames.length) {
-    return <EmptyState title="No multiplayer games enabled" description="The backend catalog has no enabled multiplayer records." />;
+    return <EmptyState title={t("No multiplayer games enabled")} description={t("The backend catalog has no enabled multiplayer records.")} />;
   }
 
   return (
@@ -259,16 +261,16 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
       <section className="border border-[var(--line)] bg-[var(--surface)]">
         <header className="grid gap-4 border-b border-[var(--line)] p-5 sm:grid-cols-[1fr_260px] sm:items-end">
           <div>
-            <p className="font-telemetry text-[8px] text-[var(--muted)]">[ PUBLIC LOBBY ]</p>
-            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">Waiting rooms</h2>
+            <p className="font-telemetry text-[8px] text-[var(--muted)]">{t("[ PUBLIC LOBBY ]")}</p>
+            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Waiting rooms")}</h2>
           </div>
           <SelectField
-            label="Operation"
+            label={t("Operation")}
             value={effectiveGameId}
             onChange={(event) => selectGame(event.target.value)}
           >
             {onlineGames.map((game) => (
-              <option value={game.id} key={game.id}>{game.name}</option>
+              <option value={game.id} key={game.id}>{t(game.name)}</option>
             ))}
           </SelectField>
         </header>
@@ -276,15 +278,15 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
         {rooms.isError ? (
           <div className="p-5">
             <ErrorState
-              title="Room module unavailable"
-              description={getErrorMessage(rooms.error)}
+              title={t("Room module unavailable")}
+              description={t(getErrorMessage(rooms.error))}
               onAction={() => void rooms.refetch()}
             />
           </div>
         ) : null}
         {rooms.data && !rooms.data.content.length ? (
           <div className="p-5">
-            <EmptyState title="No public waiting rooms" description="Create a room, join by private code, or enter the matchmaking queue." />
+            <EmptyState title={t("No public waiting rooms")} description={t("Create a room, join by private code, or enter the matchmaking queue.")} />
           </div>
         ) : null}
         {rooms.data?.content.length ? (
@@ -295,11 +297,11 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
                   <p className="font-telemetry text-[8px] text-[var(--accent)]">{room.roomCode} / {room.status}</p>
                   <p className="mt-2 font-bold uppercase">{room.gameSlug}</p>
                   <p className="font-telemetry mt-2 text-[8px] text-[var(--muted)]">
-                    {room.players.length} / {room.maxPlayers} PLAYERS
+                    {room.players.length} / {room.maxPlayers} {t("PLAYERS")}
                   </p>
                 </div>
                 <Button compact onClick={() => joinRoom.mutate(room.roomCode)} busy={joinRoom.isPending}>
-                  Join room
+                  {t("Join room")}
                 </Button>
               </li>
             ))}
@@ -311,17 +313,17 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
         {displayedRoom ? (
           <section className="border border-[var(--accent)] bg-[var(--surface)] p-5">
             <ShieldCheck size={20} className="text-[var(--accent)]" aria-hidden="true" />
-            <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">[ ACTIVE MEMBERSHIP ]</p>
+            <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ ACTIVE MEMBERSHIP ]")}</p>
             <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{displayedRoom.roomCode}</h2>
             <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
-              Room membership exists. The game interface opens only after server GAME_START.
+              {t("Room membership exists. The game interface opens only after server GAME_START.")}
             </p>
             <ul className="mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)]">
               {displayedRoom.players.map((player) => (
                 <li className="font-telemetry flex items-center justify-between bg-[var(--background)] px-3 py-2 text-[8px]" key={player.id}>
-                  <span>{player.owner ? "[OWNER] " : ""}{player.username}</span>
+                  <span>{player.owner ? `[${t("OWNER")}] ` : ""}{player.username}</span>
                   <span className={player.connected ? "status-online" : "text-[var(--muted)]"}>
-                    {player.ready ? "READY" : player.connected ? "CONNECTED" : "DISCONNECTED"}
+                    {t(player.ready ? "READY" : player.connected ? "CONNECTED" : "DISCONNECTED")}
                   </span>
                 </li>
               ))}
@@ -333,7 +335,7 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
                   onClick={() => readyRoom.mutate(displayedRoom.roomId)}
                   busy={readyRoom.isPending}
                 >
-                  Signal ready
+                  {t("Signal ready")}
                 </Button>
               ) : null}
               {displayedRoom.status === "WAITING" &&
@@ -344,7 +346,7 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
                   busy={startRoom.isPending}
                   disabled={!displayedRoomReady}
                 >
-                  Start room
+                  {t("Start room")}
                 </Button>
               ) : null}
               <Link
@@ -356,7 +358,7 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
                 }
                 className={buttonStyles("secondary") + " w-full"}
               >
-                Open room stage
+                {t("Open room stage")}
               </Link>
               <Button
                 variant="ghost"
@@ -364,7 +366,7 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
                 onClick={() => leaveRoom.mutate(displayedRoom.roomId)}
                 busy={leaveRoom.isPending}
               >
-                Leave room
+                {t("Leave room")}
               </Button>
             </div>
           </section>
@@ -372,44 +374,44 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
 
         <section className="border border-[var(--line)] bg-[var(--surface)] p-5">
           <Radio size={20} className="text-[var(--accent)]" aria-hidden="true" />
-          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">Quick match</h2>
+          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">{t("Quick match")}</h2>
           <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-            Queue for the selected operation. Match state remains server-authoritative.
+            {t("Queue for the selected operation. Match state remains server-authoritative.")}
           </p>
           {activeTicketId ? (
             <div className="mt-5 border border-[var(--accent)] p-4">
               <p className="font-telemetry text-[8px] text-[var(--accent)]">
-                MATCHMAKING / {currentMatch.data?.status ?? "QUEUED"}
+                {t("MATCHMAKING")} / {t(currentMatch.data?.status ?? "QUEUED")}
               </p>
               <p className="font-telemetry mt-2 break-all text-[8px] text-[var(--muted)]">{activeTicketId}</p>
-              <Button className="mt-4 w-full" variant="ghost" compact onClick={() => leaveQueue.mutate()} busy={leaveQueue.isPending}>Leave queue</Button>
+              <Button className="mt-4 w-full" variant="ghost" compact onClick={() => leaveQueue.mutate()} busy={leaveQueue.isPending}>{t("Leave queue")}</Button>
             </div>
           ) : (
-            <Button className="mt-5 w-full" onClick={() => quickMatch.mutate()} busy={quickMatch.isPending}>Join queue</Button>
+            <Button className="mt-5 w-full" onClick={() => quickMatch.mutate()} busy={quickMatch.isPending}>{t("Join queue")}</Button>
           )}
           <p className="font-telemetry mt-4 text-[8px] text-[var(--muted)]">
-            REALTIME / {socketStatus}
+            {t("REALTIME")} / {t(socketStatus)}
           </p>
         </section>
 
         <section className="border border-[var(--line)] bg-[var(--surface)] p-5">
           <Users size={20} className="text-[var(--accent)]" aria-hidden="true" />
-          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">Create room</h2>
+          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">{t("Create room")}</h2>
           <div className="mt-5 grid gap-4">
-            <SelectField label="Capacity" value={maxPlayers} onChange={(event) => setMaxPlayers(Number(event.target.value))}>
-              {capacityOptions.map((count) => <option value={count} key={count}>{count} players</option>)}
+            <SelectField label={t("Capacity")} value={maxPlayers} onChange={(event) => setMaxPlayers(Number(event.target.value))}>
+              {capacityOptions.map((count) => <option value={count} key={count}>{t("{count} players", { count })}</option>)}
             </SelectField>
             <label className="font-telemetry flex items-center gap-3 text-[9px]">
               <input type="checkbox" checked={privateRoom} onChange={(event) => setPrivateRoom(event.target.checked)} className="h-4 w-4 accent-[var(--accent)]" />
-              Private room code
+              {t("Private room code")}
             </label>
-            <Button onClick={() => createRoom.mutate()} busy={createRoom.isPending}>Allocate room</Button>
+            <Button onClick={() => createRoom.mutate()} busy={createRoom.isPending}>{t("Allocate room")}</Button>
           </div>
         </section>
 
         <form className="border border-[var(--line)] bg-[var(--surface)] p-5" onSubmit={submitCode}>
-          <Field label="Private room code" name="roomCode" value={roomCode} onChange={(event) => setRoomCode(event.target.value.toUpperCase())} maxLength={8} placeholder="A7FK2D" />
-          <Button className="mt-4 w-full" variant="secondary" busy={joinRoom.isPending}>Join by code</Button>
+          <Field label={t("Private room code")} name="roomCode" value={roomCode} onChange={(event) => setRoomCode(event.target.value.toUpperCase())} maxLength={8} placeholder="A7FK2D" />
+          <Button className="mt-4 w-full" variant="secondary" busy={joinRoom.isPending}>{t("Join by code")}</Button>
         </form>
       </aside>
     </div>

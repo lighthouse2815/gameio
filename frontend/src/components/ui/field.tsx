@@ -1,9 +1,12 @@
+"use client";
+
 import {
   forwardRef,
   type InputHTMLAttributes,
   type SelectHTMLAttributes,
 } from "react";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -15,12 +18,13 @@ export const Field = forwardRef<HTMLInputElement, InputProps>(function Field(
   { label, error, hint, id, className, ...props },
   ref,
 ) {
+  const { t } = useI18n();
   const inputId = id ?? props.name;
   const detailId = inputId ? inputId + "-detail" : undefined;
   return (
     <label className="block" htmlFor={inputId}>
       <span className="font-telemetry mb-2 block text-[10px] text-[var(--muted)]">
-        {label}
+        {t(label)}
       </span>
       <input
         ref={ref}
@@ -33,6 +37,7 @@ export const Field = forwardRef<HTMLInputElement, InputProps>(function Field(
         aria-invalid={Boolean(error)}
         aria-describedby={error || hint ? detailId : undefined}
         {...props}
+        placeholder={props.placeholder ? t(String(props.placeholder)) : undefined}
       />
       {error || hint ? (
         <span
@@ -42,7 +47,7 @@ export const Field = forwardRef<HTMLInputElement, InputProps>(function Field(
             error ? "text-[var(--danger)]" : "text-[var(--muted)]",
           )}
         >
-          {error ?? hint}
+          {t(error ?? hint ?? "")}
         </span>
       ) : null}
     </label>
@@ -54,11 +59,12 @@ type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
 };
 
 export function SelectField({ label, id, children, ...props }: SelectProps) {
+  const { t } = useI18n();
   const selectId = id ?? props.name;
   return (
     <label className="block" htmlFor={selectId}>
       <span className="font-telemetry mb-2 block text-[10px] text-[var(--muted)]">
-        {label}
+        {t(label)}
       </span>
       <select
         id={selectId}

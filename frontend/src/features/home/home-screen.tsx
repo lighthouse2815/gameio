@@ -18,6 +18,7 @@ import { LeaderboardTable } from "@/features/leaderboard/leaderboard-table";
 import { selectOfflineGames } from "@/features/home/offline-games";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { getGameArtwork } from "@/games/core/artwork";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 function CatalogFailure({
   message,
@@ -38,6 +39,7 @@ function CatalogFailure({
 }
 
 export function HomeScreen() {
+  const { t, formatDate, formatNumber } = useI18n();
   const catalog = useGames({ page: 0, size: 18 });
   const session = useSession();
   const recent = useRecentGames(Boolean(session.data));
@@ -72,46 +74,45 @@ export function HomeScreen() {
         <div className="relative flex min-h-[520px] flex-col justify-between overflow-hidden bg-[var(--surface)] p-5 sm:p-9 lg:p-12">
           <div className="flex items-start justify-between">
             <p className="font-telemetry text-[9px] text-[var(--accent)]">
-              PLAY NETWORK / REV 1.0
+              {t("PLAY NETWORK / REV 1.0")}
             </p>
             <p className="font-telemetry text-right text-[8px] leading-4 text-[var(--muted)]">
               VN-SGN-01
               <br />
-              WEB CHANNEL
+              {t("WEB CHANNEL")}
             </p>
           </div>
           <div>
             <h1 className="macro-title max-w-5xl">
-              Your next
+              {t("Your next")}
               <br />
-              <span className="text-[var(--accent)]">run</span> starts.
+              <span className="text-[var(--accent)]">{t("run")}</span> {t("starts.")}
             </h1>
             <p className="mt-8 max-w-xl text-sm leading-6 text-[var(--muted)] sm:text-base sm:leading-7">
-              Solo puzzles, live rooms, server-verified rankings. One compact
-              game network built for fast sessions and honest competition.
+              {t("Solo puzzles, live rooms, server-verified rankings. One compact game network built for fast sessions and honest competition.")}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/games" className={buttonStyles("primary")}>
-                Enter game index
+                {t("Enter game index")}
                 <ArrowRight size={14} aria-hidden="true" />
               </Link>
               <Link href="/multiplayer" className={buttonStyles("secondary")}>
                 <Radio size={14} aria-hidden="true" />
-                Find live match
+                {t("Find live match")}
               </Link>
             </div>
           </div>
           <div className="font-telemetry flex flex-wrap gap-x-8 gap-y-2 border-t border-[var(--line)] pt-4 text-[8px] text-[var(--muted)]">
-            <span>[ KEYBOARD + TOUCH ]</span>
-            <span>[ AUTHORITATIVE SERVER ]</span>
-            <span>[ DARK / LIGHT ]</span>
+            <span>{t("[ KEYBOARD + TOUCH ]")}</span>
+            <span>{t("[ AUTHORITATIVE SERVER ]")}</span>
+            <span>{t("[ DARK / LIGHT ]")}</span>
           </div>
         </div>
 
         <aside className="flex flex-col border-t border-[var(--line)] bg-[var(--background)] lg:border-l lg:border-t-0">
           <div className="font-telemetry flex items-center justify-between border-b border-[var(--line)] p-4 text-[8px]">
-            <span>[ FEATURED OPERATION ]</span>
-            <span className="status-online">CATALOG LIVE</span>
+            <span>{t("[ FEATURED OPERATION ]")}</span>
+            <span className="status-online">{t("CATALOG LIVE")}</span>
           </div>
           {catalog.isLoading ? (
             <div className="flex flex-1 flex-col p-5">
@@ -150,7 +151,7 @@ export function HomeScreen() {
                   </span>
                 )}
                 <span className="font-telemetry absolute left-3 top-3 bg-[var(--accent)] px-2 py-1 text-[8px] text-white">
-                  {featured.category}
+                  {t(featured.category)}
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
@@ -158,15 +159,15 @@ export function HomeScreen() {
                   UNIT / {featured.slug.toUpperCase()}
                 </p>
                 <h2 className="mt-3 text-3xl font-black uppercase tracking-[-0.05em] group-hover:text-[var(--accent)]">
-                  {featured.name}
+                  {t(featured.name)}
                 </h2>
                 <p className="mt-3 line-clamp-3 text-xs leading-5 text-[var(--muted)]">
-                  {featured.description}
+                  {t(featured.description)}
                 </p>
                 <span className="font-telemetry mt-auto flex items-center justify-between pt-8 text-[9px]">
                   <span>
-                    {featured.playsCount.toLocaleString()} PLAYS /{" "}
-                    {featured.onlinePlayers.toLocaleString()} LIVE
+                    {formatNumber(featured.playsCount)} {t("PLAYS")} /{" "}
+                    {formatNumber(featured.onlinePlayers)} {t("LIVE")}
                   </span>
                   <ArrowRight size={13} aria-hidden="true" />
                 </span>
@@ -243,17 +244,17 @@ export function HomeScreen() {
               {recent.data.content.map((run) => (
                 <li className="bg-[var(--surface)] p-5" key={run.id}>
                   <p className="font-telemetry text-[8px] text-[var(--accent)]">
-                    {run.result} / {new Date(run.playedAt).toLocaleDateString()}
+                    {t(run.result)} / {formatDate(run.playedAt)}
                   </p>
                   <Link
                     href={"/game/" + encodeURIComponent(run.gameSlug)}
                     className="mt-3 block text-2xl font-black uppercase tracking-[-0.04em] hover:text-[var(--accent)]"
                   >
-                    {run.gameName}
+                    {t(run.gameName)}
                   </Link>
                   <div className="font-telemetry mt-7 flex justify-between text-[8px] text-[var(--muted)]">
-                    <span>{run.score.toLocaleString()} PTS</span>
-                    <span>{run.durationSeconds} SEC</span>
+                    <span>{formatNumber(run.score)} {t("PTS")}</span>
+                    <span>{formatNumber(run.durationSeconds)} {t("SEC")}</span>
                   </div>
                 </li>
               ))}
@@ -361,18 +362,17 @@ export function HomeScreen() {
           />
           <div className="my-20">
             <p className="font-telemetry text-[9px] text-[var(--muted)]">
-              [ TRUST MODEL ]
+              {t("[ TRUST MODEL ]")}
             </p>
             <h2 className="mt-3 text-4xl font-black uppercase tracking-[-0.055em]">
-              Server decides.
+              {t("Server decides.")}
             </h2>
             <p className="mt-5 text-sm leading-6 text-[var(--muted)]">
-              Multiplayer clients send actions, never authoritative positions,
-              health, turns, or results.
+              {t("Multiplayer clients send actions, never authoritative positions, health, turns, or results.")}
             </p>
           </div>
           <p className="font-telemetry text-[8px] text-[var(--muted)]">
-            POLICY / ZERO-TRUST-GAME-CLIENT
+            {t("POLICY / ZERO-TRUST-GAME-CLIENT")}
           </p>
         </aside>
       </div>

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Check, Info, X, XCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 type ToastTone = "success" | "error" | "info";
 type ToastInput = {
@@ -22,6 +23,7 @@ type ToastItem = ToastInput & { id: number };
 const ToastContext = createContext<((toast: ToastInput) => void) | null>(null);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [items, setItems] = useState<ToastItem[]>([]);
 
   const push = useCallback((toast: ToastInput) => {
@@ -39,7 +41,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         className="fixed bottom-4 right-4 z-[80] grid w-[min(390px,calc(100vw-2rem))] gap-2"
         aria-live="polite"
-        aria-label="Notifications"
+        aria-label={t("Notifications")}
       >
         {items.map((item) => {
           const Icon =
@@ -80,7 +82,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               </div>
               <button
                 type="button"
-                aria-label="Dismiss notification"
+                aria-label={t("Dismiss notification")}
                 className="grid h-7 w-7 place-items-center text-[var(--muted)] hover:text-[var(--foreground)]"
                 onClick={() =>
                   setItems((current) =>

@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
 import { HomeScreen } from "@/features/home/home-screen";
+import { localizedMetadata } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Play Network" };
+export const generateMetadata = () => localizedMetadata("Play Network");
 
 export default function HomePage() {
   return <HomeScreen />;

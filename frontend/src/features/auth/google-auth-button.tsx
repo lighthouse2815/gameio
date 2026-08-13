@@ -8,6 +8,7 @@ import {
   renderGoogleIdentityButton,
   type GoogleIdentityApi,
 } from "@/features/auth/google-identity";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 type GoogleAuthButtonProps = {
   mode: "login" | "register";
@@ -26,6 +27,7 @@ export function GoogleAuthButton({
   disabled = false,
   clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
 }: GoogleAuthButtonProps) {
+  const { locale, t } = useI18n();
   const normalizedClientId = clientId?.trim() ?? "";
   const [state, setState] = useState<LoadState>("loading");
   const [message, setMessage] = useState(
@@ -105,6 +107,7 @@ export function GoogleAuthButton({
         host,
         mode === "login" ? "signin_with" : "signup_with",
         width,
+        locale === "vi" ? "vi" : "en",
       );
     };
     render();
@@ -113,7 +116,7 @@ export function GoogleAuthButton({
     const observer = new ResizeObserver(render);
     observer.observe(host);
     return () => observer.disconnect();
-  }, [busy, disabled, effectiveState, mode]);
+  }, [busy, disabled, effectiveState, locale, mode]);
 
   const placeholderLabel = busy
     ? "Connecting Google identity"
@@ -132,7 +135,7 @@ export function GoogleAuthButton({
         aria-hidden="true"
       >
         <span className="h-px flex-1 bg-[var(--line)]" />
-        Alternative identity provider
+        {t("Alternative identity provider")}
         <span className="h-px flex-1 bg-[var(--line)]" />
       </div>
 
@@ -142,7 +145,7 @@ export function GoogleAuthButton({
           className="flex min-h-11 w-full justify-center overflow-hidden"
           role="group"
           aria-label={
-            mode === "login" ? "Sign in with Google" : "Sign up with Google"
+            t(mode === "login" ? "Sign in with Google" : "Sign up with Google")
           }
         />
       ) : (
@@ -169,7 +172,7 @@ export function GoogleAuthButton({
           >
             G
           </span>
-          {placeholderLabel}
+          {t(placeholderLabel)}
         </Button>
       )}
 
@@ -186,7 +189,7 @@ export function GoogleAuthButton({
         }
         aria-live="polite"
       >
-        {busy ? "Google identity is being verified." : message}
+        {t(busy ? "Google identity is being verified." : message)}
       </p>
     </div>
   );

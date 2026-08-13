@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { LockKeyhole } from "lucide-react";
 import { buttonStyles } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function LoginRequired({
   title = "Player session required",
@@ -9,6 +12,7 @@ export function LoginRequired({
   title?: string;
   description?: string;
 }) {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-72 flex-col items-start justify-center border border-[var(--line-strong)] bg-[var(--surface)] p-7">
       <LockKeyhole
@@ -17,16 +21,16 @@ export function LoginRequired({
         aria-hidden="true"
       />
       <p className="font-telemetry text-[9px] text-[var(--muted)]">
-        [ ACCESS RESTRICTED ]
+        {t("[ ACCESS RESTRICTED ]")}
       </p>
       <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.05em]">
-        {title}
+        {t(title)}
       </h2>
       <p className="mt-3 max-w-lg text-sm leading-6 text-[var(--muted)]">
-        {description}
+        {t(description)}
       </p>
       <Link href="/login" className={buttonStyles("primary") + " mt-7"}>
-        Establish session
+        {t("Establish session")}
       </Link>
     </div>
   );

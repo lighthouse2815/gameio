@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthForm } from "@/features/auth/auth-form";
+import { I18nProvider } from "@/lib/i18n/i18n-provider";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -16,11 +17,13 @@ function renderForm(mode: "login" | "register") {
     },
   });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthForm mode={mode} />
-      </ToastProvider>
-    </QueryClientProvider>,
+    <I18nProvider initialLocale="en">
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthForm mode={mode} />
+        </ToastProvider>
+      </QueryClientProvider>
+    </I18nProvider>,
   );
 }
 

@@ -21,6 +21,7 @@ import {
   type VerifiedSnakeAction,
 } from "@/features/games/game-results-api";
 import { getErrorMessage } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 import {
   cloneSnakeState,
   createSnakeState,
@@ -95,6 +96,7 @@ export default function SnakeGame() {
   const session = useSession();
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { t, formatNumber } = useI18n();
   const [started, setStarted] = useState(false);
   const [runId, setRunId] = useState(0);
   const [status, setStatus] = useState<"ready" | "playing" | "over" | "won">(
@@ -129,13 +131,13 @@ export default function SnakeGame() {
       });
       setVerification("accepted");
       toast({
-        title: "Snake replay verified",
+        title: t("Snake replay verified"),
         description:
-          "Score " +
-          result.score +
+          t("Score") + " " +
+          formatNumber(result.score) +
           " / +" +
-          result.expAwarded +
-          " EXP / level " +
+          formatNumber(result.expAwarded) +
+          " EXP / " + t("level") + " " +
           result.resultingLevel,
         tone: "success",
       });
@@ -145,12 +147,12 @@ export default function SnakeGame() {
     } catch (error) {
       setVerification("rejected");
       toast({
-        title: "Snake verification failed",
-        description: getErrorMessage(error),
+        title: t("Snake verification failed"),
+        description: t(getErrorMessage(error)),
         tone: "error",
       });
     }
-  }, [queryClient, toast]);
+  }, [formatNumber, queryClient, t, toast]);
 
   useEffect(() => {
     const descriptor = runDescriptor.current;
@@ -293,8 +295,8 @@ export default function SnakeGame() {
       setPaused(false);
       setMode("local");
       toast({
-        title: "Snake engine unavailable",
-        description: getErrorMessage(error),
+        title: t("Snake engine unavailable"),
+        description: t(getErrorMessage(error)),
         tone: "error",
       });
     });
@@ -306,7 +308,7 @@ export default function SnakeGame() {
       game?.destroy(true);
       host.replaceChildren();
     };
-  }, [runId, started, submitVerifiedResult, toast]);
+  }, [runId, started, submitVerifiedResult, t, toast]);
 
   const beginRun = useCallback((descriptor: RunDescriptor) => {
     runDescriptor.current = descriptor;
@@ -362,15 +364,15 @@ export default function SnakeGame() {
       }
     } catch (error) {
       toast({
-        title: "Snake session unavailable",
-        description: getErrorMessage(error),
+        title: t("Snake session unavailable"),
+        description: t(getErrorMessage(error)),
         tone: "error",
       });
     } finally {
       startingRef.current = false;
       setStarting(false);
     }
-  }, [beginRun, session.data, session.isLoading, toast]);
+  }, [beginRun, session.data, session.isLoading, t, toast]);
 
   function togglePause() {
     const next = !paused;
@@ -397,10 +399,10 @@ export default function SnakeGame() {
           ].map(([label, value]) => (
             <dl className="bg-[var(--surface)] p-3" key={label}>
               <dt className="font-telemetry text-[8px] text-[var(--muted)]">
-                {label}
+                {t(String(label))}
               </dt>
               <dd className="mt-1 truncate font-mono text-sm font-bold uppercase">
-                {value}
+                {typeof value === "number" ? formatNumber(value) : t(String(value))}
               </dd>
             </dl>
           ))}
@@ -412,30 +414,30 @@ export default function SnakeGame() {
               <div>
                 <p className="font-telemetry text-[9px] text-[var(--accent)]">
                   {!started
-                    ? "[ PHASER ENGINE / READY ]"
+                    ? t("[ PHASER ENGINE / READY ]")
                     : status === "won"
-                      ? "[ GRID CLEARED ]"
-                      : "[ COLLISION ]"}
+                      ? t("[ GRID CLEARED ]")
+                      : t("[ COLLISION ]")}
                 </p>
                 <h3 className="mt-3 text-4xl font-black uppercase tracking-[-0.055em]">
                   {!started
                     ? "Snake"
                     : status === "won"
-                      ? "Perfect run"
-                      : "Run over"}
+                      ? t("Perfect run")
+                      : t("Run over")}
                 </h3>
                 <p className="mt-3 text-xs leading-5 text-[#97938d]">
                   {mode === "verified" && started
                     ? verification === "accepted"
-                      ? "The server replay matched and the result is recorded."
+                      ? t("The server replay matched and the result is recorded.")
                       : verification === "submitting"
-                        ? "The terminal replay is being verified by the server."
+                        ? t("The terminal replay is being verified by the server.")
                         : verification === "rejected"
-                          ? "The server rejected this replay; no rank was recorded."
-                          : "Every effective direction is recorded once per simulation tick."
+                          ? t("The server rejected this replay; no rank was recorded.")
+                          : t("Every effective direction is recorded once per simulation tick.")
                     : session.data
-                      ? "Start a seeded run. The server derives the final score from its replay."
-                      : "Local practice is available; sign in for verified rankings and EXP."}
+                      ? t("Start a seeded run. The server derives the final score from its replay.")
+                      : t("Local practice is available; sign in for verified rankings and EXP.")}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-3">
                   <Button
@@ -443,10 +445,10 @@ export default function SnakeGame() {
                     busy={starting || session.isLoading}
                   >
                     {started ? <RotateCw size={14} aria-hidden="true" /> : null}
-                    {started ? "Start another run" : "Start run"}
+                    {t(started ? "Start another run" : "Start run")}
                   </Button>
                   <Link href="/games" className={buttonStyles("secondary")}>
-                    Back to games
+                    {t("Back to games")}
                   </Link>
                 </div>
               </div>
@@ -454,7 +456,7 @@ export default function SnakeGame() {
           ) : null}
           {paused && status === "playing" ? (
             <div className="font-telemetry absolute inset-0 grid place-items-center bg-[#0d0d0d]/90 text-xs text-white">
-              [ RUN PAUSED ]
+              {t("[ RUN PAUSED ]")}
             </div>
           ) : null}
         </div>
@@ -462,7 +464,7 @@ export default function SnakeGame() {
 
       <aside className="border border-[var(--line)] bg-[var(--surface)] p-4">
         <p className="font-telemetry text-[9px] text-[var(--muted)]">
-          [ INPUT ARRAY ]
+          {t("[ INPUT ARRAY ]")}
         </p>
         <div className="mx-auto mt-6 grid w-40 grid-cols-3 gap-2">
           <span />
@@ -472,7 +474,7 @@ export default function SnakeGame() {
               <Button
                 compact
                 variant="secondary"
-                aria-label={label}
+                aria-label={t(label)}
                 disabled={status !== "playing" || paused}
                 onClick={() => directionControl.current(direction)}
               >
@@ -485,7 +487,7 @@ export default function SnakeGame() {
             <Button
               compact
               variant="secondary"
-              aria-label={label}
+              aria-label={t(label)}
               key={direction}
               disabled={status !== "playing" || paused}
               onClick={() => directionControl.current(direction)}
@@ -495,14 +497,14 @@ export default function SnakeGame() {
           ))}
         </div>
         <p className="mt-7 text-xs leading-5 text-[var(--muted)]">
-          Keyboard: arrow keys or WASD. Touch: use the direction array.
+          {t("Keyboard: arrow keys or WASD. Touch: use the direction array.")}
         </p>
         <div className="mt-6 border border-[var(--line)] p-3">
           <ShieldCheck size={15} className="text-[var(--accent)]" aria-hidden="true" />
           <p className="font-telemetry mt-3 text-[8px] text-[var(--muted)]">
             {mode === "verified"
-              ? "SERVER-SEED / REPLAY VERIFIED"
-              : "LOCAL PRACTICE / NO RANK"}
+              ? t("SERVER-SEED / REPLAY VERIFIED")
+              : t("LOCAL PRACTICE / NO RANK")}
           </p>
         </div>
         {started && status === "playing" ? (
@@ -513,7 +515,7 @@ export default function SnakeGame() {
               ) : (
                 <Pause size={13} aria-hidden="true" />
               )}
-              {paused ? "Resume" : "Pause"}
+              {t(paused ? "Resume" : "Pause")}
             </Button>
             <Button
               variant="ghost"
@@ -522,7 +524,7 @@ export default function SnakeGame() {
               busy={starting || session.isLoading}
             >
               <RotateCw size={13} aria-hidden="true" />
-              Restart
+              {t("Restart")}
             </Button>
           </div>
         ) : null}

@@ -19,6 +19,7 @@ import {
 } from "@/features/games/game-results-api";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { getTileAppearance } from "@/games/game2048/tile-appearance";
+import { useI18n } from "@/lib/i18n/use-i18n";
 import {
   createInitialBoardSeeded,
   createEmptyBoard,
@@ -36,6 +37,7 @@ import {
 const BEST_SCORE_KEY = "gameio.2048.best";
 
 export default function Game2048() {
+  const { t, formatNumber } = useI18n();
   const toast = useToast();
   const session = useSession();
   const queryClient = useQueryClient();
@@ -97,14 +99,14 @@ export default function Game2048() {
       setStatus(gameSession.initialState.gameOver ? "over" : "playing");
     } catch (error) {
       toast({
-        title: "Verified session unavailable",
-        description: getErrorMessage(error),
+        title: t("Verified session unavailable"),
+        description: t(getErrorMessage(error)),
         tone: "error",
       });
     } finally {
       setStarting(false);
     }
-  }, [session.data, session.isLoading, startLocal, toast]);
+  }, [session.data, session.isLoading, startLocal, t, toast]);
 
   const submitVerifiedResult = useCallback(
     async (actions: VerifiedAction[]) => {
@@ -122,9 +124,9 @@ export default function Game2048() {
         });
         setVerification("accepted");
         toast({
-          title: "Result verified",
+          title: t("Result verified"),
           description:
-            "+" + result.expAwarded + " EXP / level " + result.resultingLevel,
+            "+" + formatNumber(result.expAwarded) + " EXP / " + t("level") + " " + result.resultingLevel,
           tone: "success",
         });
         void queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
@@ -133,13 +135,13 @@ export default function Game2048() {
       } catch (error) {
         setVerification("rejected");
         toast({
-          title: "Result verification failed",
-          description: getErrorMessage(error),
+          title: t("Result verification failed"),
+          description: t(getErrorMessage(error)),
           tone: "error",
         });
       }
     },
-    [queryClient, toast],
+    [formatNumber, queryClient, t, toast],
   );
 
   const move = useCallback(
@@ -167,8 +169,8 @@ export default function Game2048() {
       if (!won && hasWon(nextBoard)) {
         setWon(true);
         toast({
-          title: "2048 reached",
-          description: "The run continues. Push the grid further.",
+          title: t("2048 reached"),
+          description: t("The run continues. Push the grid further."),
           tone: "success",
         });
       }
@@ -179,7 +181,7 @@ export default function Game2048() {
         }
       }
     },
-    [best, board, mode, score, status, submitVerifiedResult, toast, won],
+    [best, board, mode, score, status, submitVerifiedResult, t, toast, won],
   );
 
   useEffect(() => {
@@ -216,10 +218,10 @@ export default function Game2048() {
           ].map(([label, value]) => (
             <dl className="bg-[var(--surface)] p-3" key={label}>
               <dt className="font-telemetry text-[8px] text-[var(--muted)]">
-                {label}
+                {t(String(label))}
               </dt>
               <dd className="mt-1 truncate font-mono text-sm font-bold uppercase">
-                {value}
+                {typeof value === "number" ? formatNumber(value) : t(String(value))}
               </dd>
             </dl>
           ))}
@@ -243,7 +245,7 @@ export default function Game2048() {
               move(deltaY > 0 ? "down" : "up");
             }
           }}
-          aria-label="2048 game board"
+          aria-label={t("2048 game board")}
         >
           <div className="grid h-full grid-cols-4 gap-2 sm:gap-3">
             {board.flatMap((row, rowIndex) =>
@@ -264,35 +266,35 @@ export default function Game2048() {
                 <p className="font-telemetry text-[9px] text-[var(--accent)]">
                   {status === "over"
                     ? verification === "accepted"
-                      ? "[ RESULT VERIFIED ]"
+                      ? t("[ RESULT VERIFIED ]")
                       : verification === "submitting"
-                        ? "[ VERIFYING RESULT ]"
-                        : "[ GRID LOCKED ]"
+                        ? t("[ VERIFYING RESULT ]")
+                        : t("[ GRID LOCKED ]")
                     : session.data
-                      ? "[ VERIFIED ENGINE READY ]"
-                      : "[ LOCAL ENGINE ]"}
+                      ? t("[ VERIFIED ENGINE READY ]")
+                      : t("[ LOCAL ENGINE ]")}
                 </p>
                 <h3 className="mt-3 text-4xl font-black uppercase tracking-[-0.055em]">
-                  {status === "over" ? "Run over" : "2048"}
+                  {status === "over" ? t("Run over") : "2048"}
                 </h3>
                 <p className="mt-3 text-xs leading-5 text-[var(--muted)]">
                   {status === "over"
-                    ? "No legal movement remains."
-                    : "Merge matching units. Reach 2048."}
+                    ? t("No legal movement remains.")
+                    : t("Merge matching units. Reach 2048.")}
                 </p>
                 <Button className="mt-6" onClick={() => void start()} busy={session.isLoading || starting || verification === "submitting"}>
                   {status === "over" ? (
                     <RotateCw size={14} aria-hidden="true" />
                   ) : null}
                   {status === "over"
-                    ? "Restart run"
+                    ? t("Restart run")
                     : session.data
-                      ? "Start verified run"
-                      : "Start local run"}
+                      ? t("Start verified run")
+                      : t("Start local run")}
                 </Button>
                 {session.data && status === "ready" ? (
                   <Button className="ml-2 mt-6" variant="ghost" onClick={startLocal}>
-                    Local only
+                    {t("Local only")}
                   </Button>
                 ) : null}
               </div>
@@ -303,42 +305,41 @@ export default function Game2048() {
 
       <aside className="border border-[var(--line)] bg-[var(--surface)] p-4">
         <p className="font-telemetry text-[9px] text-[var(--muted)]">
-          [ INPUT ARRAY ]
+          {t("[ INPUT ARRAY ]")}
         </p>
         <div className="mx-auto mt-6 grid w-40 grid-cols-3 gap-2">
           <span />
-          <Button compact variant="secondary" aria-label="Move up" onClick={() => move("up")}>
+          <Button compact variant="secondary" aria-label={t("Move up")} onClick={() => move("up")}>
             <ArrowUp size={18} aria-hidden="true" />
           </Button>
           <span />
-          <Button compact variant="secondary" aria-label="Move left" onClick={() => move("left")}>
+          <Button compact variant="secondary" aria-label={t("Move left")} onClick={() => move("left")}>
             <ArrowLeft size={18} aria-hidden="true" />
           </Button>
-          <Button compact variant="secondary" aria-label="Move down" onClick={() => move("down")}>
+          <Button compact variant="secondary" aria-label={t("Move down")} onClick={() => move("down")}>
             <ArrowDown size={18} aria-hidden="true" />
           </Button>
-          <Button compact variant="secondary" aria-label="Move right" onClick={() => move("right")}>
+          <Button compact variant="secondary" aria-label={t("Move right")} onClick={() => move("right")}>
             <ArrowRight size={18} aria-hidden="true" />
           </Button>
         </div>
         <p className="mt-7 text-xs leading-5 text-[var(--muted)]">
-          Keyboard: arrow keys or WASD. Touch: swipe the grid or use the
-          direction array.
+          {t("Keyboard: arrow keys or WASD. Touch: swipe the grid or use the direction array.")}
         </p>
         {status === "playing" ? (
           <Button className="mt-6 w-full" variant="ghost" compact onClick={() => void start()} busy={session.isLoading || starting}>
             <RotateCw size={13} aria-hidden="true" />
-            Restart
+            {t("Restart")}
           </Button>
         ) : null}
         <div className="font-telemetry mt-6 border-t border-[var(--line)] pt-4 text-[8px] leading-5 text-[var(--muted)]">
           {mode === "verified" ? (
             <span className="flex items-start gap-2 text-[var(--foreground)]">
               <ShieldCheck size={13} className="mt-0.5 text-[var(--accent)]" aria-hidden="true" />
-              SEEDED ACTION REPLAY / SERVER VERIFIES FINAL RESULT
+              {t("SEEDED ACTION REPLAY / SERVER VERIFIES FINAL RESULT")}
             </span>
           ) : (
-            "LOCAL RUN / BEST SCORE REMAINS IN THIS BROWSER"
+            t("LOCAL RUN / BEST SCORE REMAINS IN THIS BROWSER")
           )}
         </div>
       </aside>

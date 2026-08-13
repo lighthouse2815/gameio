@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
 import { LeaderboardScreen } from "@/features/leaderboard/leaderboard-screen";
+import { localizedMetadata } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Leaderboard" };
+export const generateMetadata = () => localizedMetadata("Leaderboard");
 
 export default function LeaderboardPage() {
   return (

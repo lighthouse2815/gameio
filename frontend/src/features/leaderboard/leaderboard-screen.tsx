@@ -12,8 +12,10 @@ import {
 } from "@/features/leaderboard/hooks";
 import { LeaderboardTable } from "@/features/leaderboard/leaderboard-table";
 import { getErrorMessage } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function LeaderboardScreen() {
+  const { t } = useI18n();
   const [gameId, setGameId] = useState("");
   const [page, setPage] = useState(0);
   const games = useGames({ page: 0, size: 100 });
@@ -25,7 +27,7 @@ export function LeaderboardScreen() {
     <section className="border-x border-b border-[var(--line)] p-4 sm:p-7">
       <div className="mb-5 grid items-end gap-4 border border-[var(--line)] bg-[var(--surface)] p-4 md:grid-cols-[1fr_auto]">
         <SelectField
-          label="Ranking channel"
+          label={t("Ranking channel")}
           value={gameId}
           onChange={(event) => {
             setGameId(event.target.value);
@@ -33,15 +35,15 @@ export function LeaderboardScreen() {
           }}
           disabled={games.isLoading}
         >
-          <option value="">Global operations</option>
+          <option value="">{t("Global operations")}</option>
           {games.data?.content.map((game) => (
             <option value={game.id} key={game.id}>
-              {game.name}
+              {t(game.name)}
             </option>
           ))}
         </SelectField>
         <p className="font-telemetry pb-3 text-[8px] text-[var(--muted)]">
-          REFRESH WINDOW / 30 SEC
+          {t("REFRESH WINDOW / 30 SEC")}
         </p>
       </div>
 
@@ -54,15 +56,15 @@ export function LeaderboardScreen() {
       ) : null}
       {ranking.isError ? (
         <ErrorState
-          title="Rank channel offline"
-          description={getErrorMessage(ranking.error)}
+          title={t("Rank channel offline")}
+          description={t(getErrorMessage(ranking.error))}
           onAction={() => void ranking.refetch()}
         />
       ) : null}
       {ranking.data && !ranking.data.content.length ? (
         <EmptyState
-          title="No verified scores"
-          description="This channel has not received a validated game result yet."
+          title={t("No verified scores")}
+          description={t("This channel has not received a validated game result yet.")}
         />
       ) : null}
       {ranking.data?.content.length ? (
@@ -76,10 +78,10 @@ export function LeaderboardScreen() {
               onClick={() => setPage((current) => Math.max(0, current - 1))}
             >
               <ChevronLeft size={13} aria-hidden="true" />
-              Previous
+              {t("Previous")}
             </Button>
             <span className="font-telemetry text-[9px] text-[var(--muted)]">
-              PAGE {page + 1} / {Math.max(1, ranking.data.totalPages)}
+              {t("PAGE")} {page + 1} / {Math.max(1, ranking.data.totalPages)}
             </span>
             <Button
               compact
@@ -87,7 +89,7 @@ export function LeaderboardScreen() {
               disabled={page + 1 >= ranking.data.totalPages}
               onClick={() => setPage((current) => current + 1)}
             >
-              Next
+              {t("Next")}
               <ChevronRight size={13} aria-hidden="true" />
             </Button>
           </div>

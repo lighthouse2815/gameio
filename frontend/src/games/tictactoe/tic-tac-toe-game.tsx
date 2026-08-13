@@ -8,8 +8,10 @@ import {
   isTurnBasedSnapshot,
   markerForPlayer,
 } from "@/games/core/turn-based-helpers";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export default function TicTacToeGame({ roomId }: { roomId: string }) {
+  const { t } = useI18n();
   const controller = useRealtimeGame(roomId, "tic-tac-toe");
   const snapshot = isTurnBasedSnapshot(controller.state.snapshot, 3)
     ? controller.state.snapshot
@@ -26,7 +28,7 @@ export default function TicTacToeGame({ roomId }: { roomId: string }) {
           <div
             className="grid aspect-square grid-cols-3 gap-px border border-[var(--line-strong)] bg-[var(--line-strong)]"
             role="grid"
-            aria-label="Authoritative Tic Tac Toe board"
+            aria-label={t("Authoritative Tic Tac Toe board")}
           >
             {snapshot.board.flatMap((row, rowIndex) =>
               row.map((marker, columnIndex) => {
@@ -46,16 +48,8 @@ export default function TicTacToeGame({ roomId }: { roomId: string }) {
                     disabled={!enabled}
                     aria-label={
                       marker
-                        ? "Row " +
-                          (rowIndex + 1) +
-                          ", column " +
-                          (columnIndex + 1) +
-                          ": " +
-                          marker
-                        : "Place at row " +
-                          (rowIndex + 1) +
-                          ", column " +
-                          (columnIndex + 1)
+                        ? t("Row {row}, column {column}: {marker}", { row: rowIndex + 1, column: columnIndex + 1, marker })
+                        : t("Place at row {row}, column {column}", { row: rowIndex + 1, column: columnIndex + 1 })
                     }
                     onClick={() =>
                       controller.sendInput({
@@ -89,10 +83,10 @@ export default function TicTacToeGame({ roomId }: { roomId: string }) {
           </div>
           <aside className="border border-[var(--line)] bg-[var(--surface)] p-5">
             <p className="font-telemetry text-[8px] text-[var(--muted)]">
-              [ TURN TELEMETRY ]
+              {t("[ TURN TELEMETRY ]")}
             </p>
             <p className="mt-6 text-4xl font-black uppercase tracking-[-0.05em]">
-              {snapshot.winnerId
+              {t(snapshot.winnerId
                 ? snapshot.winnerId === userId
                   ? "You win"
                   : "Opponent wins"
@@ -100,25 +94,24 @@ export default function TicTacToeGame({ roomId }: { roomId: string }) {
                   ? "Draw"
                   : yourTurn
                     ? "Your turn"
-                    : "Stand by"}
+                    : "Stand by")}
             </p>
             <dl className="font-telemetry mt-8 grid gap-px border border-[var(--line)] bg-[var(--line)] text-[8px]">
               <div className="flex justify-between bg-[var(--background)] p-3">
-                <dt>Your marker</dt>
+                <dt>{t("Your marker")}</dt>
                 <dd className="text-[var(--accent)]">{ownMarker ?? "—"}</dd>
               </div>
               <div className="flex justify-between bg-[var(--background)] p-3">
-                <dt>Server sequence</dt>
+                <dt>{t("Server sequence")}</dt>
                 <dd>{snapshot.sequence}</dd>
               </div>
               <div className="flex justify-between bg-[var(--background)] p-3">
-                <dt>Pending input</dt>
-                <dd>{pending ? "YES" : "NO"}</dd>
+                <dt>{t("Pending input")}</dt>
+                <dd>{t(pending ? "YES" : "NO")}</dd>
               </div>
             </dl>
             <p className="mt-6 text-xs leading-5 text-[var(--muted)]">
-              A cell becomes interactive only when the server names this
-              player as the current turn holder.
+              {t("A cell becomes interactive only when the server names this player as the current turn holder.")}
             </p>
           </aside>
         </div>

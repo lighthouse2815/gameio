@@ -10,8 +10,10 @@ import { useRecentGames } from "@/features/games/hooks";
 import { profileApi } from "@/features/profile/api";
 import { calculateLevelProgress } from "@/features/profile/level-progress";
 import { getErrorMessage, isApiError } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function ProfileScreen({ username }: { username: string }) {
+  const { t, formatDate, formatDateTime, formatNumber } = useI18n();
   const session = useSession();
   const isOwnProfile = session.data?.username === username;
   const recent = useRecentGames(Boolean(isOwnProfile), 10);
@@ -37,7 +39,7 @@ export function ProfileScreen({ username }: { username: string }) {
               ? "Player not found"
               : "Profile channel unavailable"
           }
-          description={getErrorMessage(profile.error)}
+          description={t(getErrorMessage(profile.error))}
           onAction={() => void profile.refetch()}
         />
       </div>
@@ -73,7 +75,7 @@ export function ProfileScreen({ username }: { username: string }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={player.avatarUrl}
-              alt={player.username + " avatar"}
+              alt={t("{username} avatar", { username: player.username })}
               className="aspect-square w-full max-w-48 border border-[var(--line-strong)] object-cover grayscale"
             />
           ) : (
@@ -91,7 +93,7 @@ export function ProfileScreen({ username }: { username: string }) {
           </div>
           <div className="mt-14">
             <div className="font-telemetry mb-2 flex justify-between text-[8px] text-[var(--muted)]">
-              <span>LEVEL {player.level} / EXP {player.exp}</span>
+              <span>{t("LEVEL")} {player.level} / EXP {formatNumber(player.exp)}</span>
               <span>{progress}%</span>
             </div>
             <div className="h-3 border border-[var(--line-strong)] bg-[var(--background)] p-[2px]">
@@ -105,8 +107,8 @@ export function ProfileScreen({ username }: { username: string }) {
         {profileStats.map(({ label, value, icon: Icon }) => (
           <div className="bg-[var(--background)] p-5 sm:p-7" key={label}>
             <Icon size={18} className="text-[var(--accent)]" aria-hidden="true" />
-            <dt className="font-telemetry mt-8 text-[8px] text-[var(--muted)]">{label}</dt>
-            <dd className="mt-1 text-4xl font-black tracking-[-0.05em]">{value}</dd>
+            <dt className="font-telemetry mt-8 text-[8px] text-[var(--muted)]">{t(label)}</dt>
+            <dd className="mt-1 text-4xl font-black tracking-[-0.05em]">{formatNumber(value)}</dd>
           </div>
         ))}
       </dl>
@@ -114,8 +116,8 @@ export function ProfileScreen({ username }: { username: string }) {
       <section className="mt-20 grid border-x border-t border-[var(--line)] lg:grid-cols-[1fr_360px]">
         <div className="border-b border-[var(--line)] bg-[var(--surface)] lg:border-b-0 lg:border-r">
           <header className="border-b border-[var(--line)] p-5 sm:p-7">
-            <p className="font-telemetry text-[8px] text-[var(--muted)]">[ MATCH LOG ]</p>
-            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.05em]">Recent history</h2>
+            <p className="font-telemetry text-[8px] text-[var(--muted)]">{t("[ MATCH LOG ]")}</p>
+            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.05em]">{t("Recent history")}</h2>
           </header>
           {isOwnProfile && recent.isLoading ? (
             <Skeleton className="m-5 h-64" />
@@ -123,8 +125,8 @@ export function ProfileScreen({ username }: { username: string }) {
           {isOwnProfile && recent.isError ? (
             <div className="p-5">
               <ErrorState
-                title="Match history unavailable"
-                description={getErrorMessage(recent.error)}
+                title={t("Match history unavailable")}
+                description={t(getErrorMessage(recent.error))}
                 onAction={() => void recent.refetch()}
               />
             </div>
@@ -135,14 +137,14 @@ export function ProfileScreen({ username }: { username: string }) {
                 <li className="grid gap-4 border-b border-[var(--line)] p-5 last:border-b-0 sm:grid-cols-[1fr_auto_auto] sm:items-center" key={match.id}>
                   <div>
                     <Link href={"/game/" + match.gameSlug} className="font-bold uppercase hover:text-[var(--accent)]">
-                      {match.gameName}
+                      {t(match.gameName)}
                     </Link>
                     <p className="font-telemetry mt-1 text-[8px] text-[var(--muted)]">
-                      {new Date(match.playedAt).toLocaleString()}
+                      {formatDateTime(match.playedAt)}
                     </p>
                   </div>
-                  <span className="font-telemetry text-[9px]">{match.score.toLocaleString()} PTS</span>
-                  <span className="font-telemetry border border-[var(--line-strong)] px-2 py-1 text-[8px]">{match.result}</span>
+                  <span className="font-telemetry text-[9px]">{formatNumber(match.score)} {t("PTS")}</span>
+                  <span className="font-telemetry border border-[var(--line-strong)] px-2 py-1 text-[8px]">{t(match.result)}</span>
                 </li>
               ))}
             </ul>
@@ -156,31 +158,31 @@ export function ProfileScreen({ username }: { username: string }) {
           ) : null}
         </div>
         <aside className="bg-[var(--background)] p-6">
-          <p className="font-telemetry text-[8px] text-[var(--muted)]">[ ACHIEVEMENT LOG ]</p>
-          <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em]">Unlocked</h2>
+          <p className="font-telemetry text-[8px] text-[var(--muted)]">{t("[ ACHIEVEMENT LOG ]")}</p>
+          <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em]">{t("Unlocked")}</h2>
           {player.achievements.length ? (
             <ul className="mt-6 grid gap-px border border-[var(--line)] bg-[var(--line)]">
               {player.achievements.map((achievement) => (
                 <li className="bg-[var(--surface)] p-4" key={achievement.id}>
                   <p className="font-telemetry text-[8px] text-[var(--accent)]">{achievement.code}</p>
-                  <p className="mt-2 text-sm font-bold uppercase">{achievement.name}</p>
-                  <p className="mt-2 text-xs leading-5 text-[var(--muted)]">{achievement.description}</p>
+                  <p className="mt-2 text-sm font-bold uppercase">{t(achievement.name)}</p>
+                  <p className="mt-2 text-xs leading-5 text-[var(--muted)]">{t(achievement.description)}</p>
                 </li>
               ))}
             </ul>
           ) : (
             <div className="mt-6 border border-dashed border-[var(--line-strong)] p-5 text-xs leading-5 text-[var(--muted)]">
-              No achievements unlocked.
+              {t("No achievements unlocked.")}
             </div>
           )}
           {player.createdAt ? (
             <p className="font-telemetry mt-8 flex items-center gap-2 text-[8px] text-[var(--muted)]">
               <Calendar size={12} aria-hidden="true" />
-              JOINED {new Date(player.createdAt).toLocaleDateString()}
+              {t("JOINED")} {formatDate(player.createdAt)}
             </p>
           ) : null}
           <Link href="/friends" className={buttonStyles("secondary") + " mt-6 w-full"}>
-            Player network
+            {t("Player network")}
           </Link>
         </aside>
       </section>

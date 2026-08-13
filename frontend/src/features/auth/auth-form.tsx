@@ -18,6 +18,7 @@ import {
   validateRegister,
 } from "@/features/auth/validation";
 import { getErrorMessage, isApiError } from "@/lib/api/api-error";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 type AuthFormProps = {
   mode: "login" | "register";
@@ -36,6 +37,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const login = useLogin();
   const register = useRegister();
   const googleLogin = useGoogleLogin();
+  const { locale, t } = useI18n();
   const [loginInput, setLoginInput] = useState(EMPTY_LOGIN);
   const [registerInput, setRegisterInput] = useState(EMPTY_REGISTER);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -46,8 +48,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     event.preventDefault();
     const nextErrors =
       mode === "login"
-        ? validateLogin(loginInput)
-        : validateRegister(registerInput);
+        ? validateLogin(loginInput, locale)
+        : validateRegister(registerInput, locale);
     setErrors(nextErrors as Record<string, string>);
     if (Object.keys(nextErrors).length) {
       return;
@@ -59,8 +61,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         await register.mutateAsync(registerInput);
       }
       toast({
-        title: mode === "login" ? "Link established" : "Identity created",
-        description: "Your player session is active.",
+        title: t(mode === "login" ? "Link established" : "Identity created"),
+        description: t("Your player session is active."),
         tone: "success",
       });
       router.replace("/");
@@ -70,8 +72,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         setErrors(remoteErrors);
       }
       toast({
-        title: "Authentication failed",
-        description: getErrorMessage(error),
+        title: t("Authentication failed"),
+        description: t(getErrorMessage(error)),
         tone: "error",
       });
     }
@@ -82,16 +84,16 @@ export function AuthForm({ mode }: AuthFormProps) {
     try {
       await googleLogin.mutateAsync({ idToken });
       toast({
-        title: "Google link established",
-        description: "Your player session is active.",
+        title: t("Google link established"),
+        description: t("Your player session is active."),
         tone: "success",
       });
       router.replace("/");
     } catch (error) {
-      const description = getErrorMessage(error);
+      const description = t(getErrorMessage(error));
       setGoogleError(description);
       toast({
-        title: "Google authentication failed",
+        title: t("Google authentication failed"),
         description,
         tone: "error",
       });
@@ -103,7 +105,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       {mode === "register" ? (
         <>
           <Field
-            label="Player call sign"
+            label={t("Player call sign")}
             name="username"
             autoComplete="username"
             value={registerInput.username}
@@ -117,7 +119,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             }
           />
           <Field
-            label="Email channel"
+            label={t("Email channel")}
             name="email"
             type="email"
             autoComplete="email"
@@ -134,7 +136,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         </>
       ) : (
         <Field
-          label="Call sign or email"
+          label={t("Call sign or email")}
           name="login"
           autoComplete="username"
           value={loginInput.login}
@@ -149,7 +151,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         />
       )}
       <Field
-        label="Passphrase"
+        label={t("Passphrase")}
         name="password"
         type="password"
         autoComplete={mode === "login" ? "current-password" : "new-password"}
@@ -171,7 +173,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         busy={mutation.isPending}
         disabled={googleLogin.isPending}
       >
-        {mode === "login" ? "Enter Gameio" : "Create player"}
+        {t(mode === "login" ? "Enter Gameio" : "Create player")}
       </Button>
       <GoogleAuthButton
         mode={mode}
@@ -188,12 +190,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         </p>
       ) : null}
       <p className="text-center text-xs leading-5 text-[var(--muted)]">
-        {mode === "login" ? "No identity on file?" : "Already registered?"}{" "}
+        {t(mode === "login" ? "No identity on file?" : "Already registered?")}{" "}
         <Link
           href={mode === "login" ? "/register" : "/login"}
           className="font-telemetry text-[10px] text-[var(--accent)] hover:underline"
         >
-          {mode === "login" ? "Create one" : "Sign in"}
+          {t(mode === "login" ? "Create one" : "Sign in")}
         </Link>
       </p>
     </form>

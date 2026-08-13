@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/page-header";
+import { LocalizedText } from "@/components/i18n/localized-text";
 import { GamesCatalog } from "@/features/games/catalog";
+import { localizedMetadata } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Game index" };
+export const generateMetadata = () => localizedMetadata("Game index");
 
 export default async function GamesPage({
   searchParams,
@@ -20,11 +21,11 @@ export default async function GamesPage({
         aside={
           <dl className="font-telemetry grid h-full content-between gap-5 text-[9px]">
             <div>
-              <dt className="text-[var(--muted)]">Registry</dt>
+              <dt className="text-[var(--muted)]"><LocalizedText text="Registry" /></dt>
               <dd className="mt-1">API / LIVE</dd>
             </div>
             <div>
-              <dt className="text-[var(--muted)]">Local engines</dt>
+              <dt className="text-[var(--muted)]"><LocalizedText text="Local engines" /></dt>
               <dd className="mt-1 text-[var(--accent)]">2048 + SNAKE</dd>
             </div>
           </dl>

@@ -6,6 +6,7 @@ import { Radio, ShieldCheck } from "lucide-react";
 import { buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/states";
 import { getRegisteredGame } from "@/games/core/game-registry";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 const TicTacToeGame = dynamic(
   () => import("@/games/tictactoe/tic-tac-toe-game"),
@@ -25,12 +26,13 @@ export function GameRuntime({
   slug: string;
   roomId?: string;
 }) {
+  const { t } = useI18n();
   const registration = getRegisteredGame(slug);
   if (!registration) {
     return (
       <EmptyState
-        title="Web engine not installed"
-        description="This catalog record exists, but the current frontend build has no registered renderer for it."
+        title={t("Web engine not installed")}
+        description={t("This catalog record exists, but the current frontend build has no registered renderer for it.")}
       />
     );
   }
@@ -55,22 +57,20 @@ export function GameRuntime({
             aria-hidden="true"
           />
           <p className="font-telemetry mt-6 text-[9px] text-[var(--muted)]">
-            [ AUTHORITATIVE MULTIPLAYER ]
+            {t("[ AUTHORITATIVE MULTIPLAYER ]")}
           </p>
           <h3 className="mt-3 text-4xl font-black uppercase tracking-[-0.055em]">
-            Room required
+            {t("Room required")}
           </h3>
           <p className="mt-4 text-sm leading-6 text-[var(--muted)]">
-            This game starts from a server-created room or matchmaking result.
-            Open the room link carrying its UUID; no local simulation is shown
-            before validated membership exists.
+            {t("This game starts from a server-created room or matchmaking result. Open the room link carrying its UUID; no local simulation is shown before validated membership exists.")}
           </p>
           <Link
             href={"/multiplayer?game=" + encodeURIComponent(slug)}
             className={buttonStyles("primary") + " mt-7"}
           >
             <ShieldCheck size={14} aria-hidden="true" />
-            Open multiplayer lobby
+            {t("Open multiplayer lobby")}
           </Link>
         </div>
       </div>

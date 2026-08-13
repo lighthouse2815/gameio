@@ -18,6 +18,7 @@ import {
 import { profileApi } from "@/features/profile/api";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { useThemeStore, type ThemeMode } from "@/stores/theme-store";
+import { useI18n } from "@/lib/i18n/use-i18n";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export function SettingsScreen() {
   const logout = useLogout();
   const mode = useThemeStore((state) => state.mode);
   const setMode = useThemeStore((state) => state.setMode);
+  const { t } = useI18n();
   const [avatarOverride, setAvatarOverride] = useState<string | null>(null);
   const avatarUrl = avatarOverride ?? session.data?.avatarUrl ?? "";
 
@@ -37,17 +39,17 @@ export function SettingsScreen() {
       setAvatarOverride(user.avatarUrl ?? "");
       queryClient.setQueryData(sessionQueryKey, user);
       void queryClient.invalidateQueries({ queryKey: ["profile", user.username] });
-      toast({ title: "Profile updated", description: "Avatar record synchronized.", tone: "success" });
+      toast({ title: t("Profile updated"), description: t("Avatar record synchronized."), tone: "success" });
     },
     onError: (error) =>
-      toast({ title: "Update rejected", description: getErrorMessage(error), tone: "error" }),
+      toast({ title: t("Update rejected"), description: t(getErrorMessage(error)), tone: "error" }),
   });
 
   function saveAvatar(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const value = avatarUrl.trim();
     if (value && !value.startsWith("https://")) {
-      toast({ title: "Invalid avatar URL", description: "Use an HTTPS image URL or leave the field empty.", tone: "error" });
+      toast({ title: t("Invalid avatar URL"), description: t("Use an HTTPS image URL or leave the field empty."), tone: "error" });
       return;
     }
     updateProfile.mutate();
@@ -56,15 +58,15 @@ export function SettingsScreen() {
   async function signOut() {
     await logout.mutateAsync().catch(() => undefined);
     router.replace("/");
-    toast({ title: "Session closed", description: "Refresh cookie and runtime token cleared.", tone: "info" });
+    toast({ title: t("Session closed"), description: t("Refresh cookie and runtime token cleared."), tone: "info" });
   }
 
   if (session.isLoading) return <Skeleton className="h-96" />;
   if (session.isError && isUnauthenticated(session.error)) {
-    return <LoginRequired title="Settings locked" />;
+    return <LoginRequired title={t("Settings locked")} />;
   }
   if (session.isError) {
-    return <ErrorState title="Identity link unavailable" description={getErrorMessage(session.error)} onAction={() => void session.refetch()} />;
+    return <ErrorState title={t("Identity link unavailable")} description={t(getErrorMessage(session.error))} onAction={() => void session.refetch()} />;
   }
 
   return (
@@ -72,22 +74,22 @@ export function SettingsScreen() {
       <section className="border border-[var(--line)] bg-[var(--surface)]">
         <header className="border-b border-[var(--line)] p-5">
           <UserRound size={20} className="text-[var(--accent)]" aria-hidden="true" />
-          <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">[ PLAYER RECORD ]</p>
-          <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">Identity</h2>
+          <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ PLAYER RECORD ]")}</p>
+          <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Identity")}</h2>
         </header>
         <form className="grid gap-5 p-5" onSubmit={saveAvatar}>
-          <Field label="Username" value={session.data?.username ?? ""} disabled readOnly />
-          <Field label="Email" type="email" value={session.data?.email ?? ""} disabled readOnly hint="Email changes are not exposed by the current backend contract." />
+          <Field label={t("Username")} value={session.data?.username ?? ""} disabled readOnly />
+          <Field label={t("Email")} type="email" value={session.data?.email ?? ""} disabled readOnly hint={t("Email changes are not exposed by the current backend contract.")} />
           <Field
-            label="Avatar HTTPS URL"
+            label={t("Avatar HTTPS URL")}
             name="avatarUrl"
             type="url"
             value={avatarUrl}
             onChange={(event) => setAvatarOverride(event.target.value)}
             placeholder="https://..."
-            hint="Leave empty to remove the custom avatar."
+            hint={t("Leave empty to remove the custom avatar.")}
           />
-          <Button busy={updateProfile.isPending}>Save player record</Button>
+          <Button busy={updateProfile.isPending}>{t("Save player record")}</Button>
         </form>
       </section>
 
@@ -95,8 +97,8 @@ export function SettingsScreen() {
         <section className="border border-[var(--line)] bg-[var(--surface)]">
           <header className="border-b border-[var(--line)] p-5">
             <MonitorCog size={20} className="text-[var(--accent)]" aria-hidden="true" />
-            <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">[ DISPLAY SUBSTRATE ]</p>
-            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">Interface theme</h2>
+            <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ DISPLAY SUBSTRATE ]")}</p>
+            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Interface theme")}</h2>
           </header>
           <div className="grid gap-px bg-[var(--line)] sm:grid-cols-2">
             {(["dark", "light"] as ThemeMode[]).map((theme) => (
@@ -110,9 +112,9 @@ export function SettingsScreen() {
                 }
                 aria-pressed={mode === theme}
               >
-                <span className="font-telemetry text-[9px] text-[var(--muted)]">[ {theme} ]</span>
+                <span className="font-telemetry text-[9px] text-[var(--muted)]">[ {t(theme)} ]</span>
                 <span className="mt-12 flex items-center justify-between text-xl font-black uppercase">
-                  {theme} substrate
+                  {t("{theme} substrate", { theme: t(theme) })}
                   <span className={"h-3 w-3 " + (mode === theme ? "bg-[var(--accent)]" : "border border-[var(--line-strong)]")} />
                 </span>
               </button>
@@ -122,12 +124,12 @@ export function SettingsScreen() {
 
         <section className="border border-[var(--danger)] bg-[var(--surface)] p-5">
           <LogOut size={20} className="text-[var(--danger)]" aria-hidden="true" />
-          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">Close session</h2>
+          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">{t("Close session")}</h2>
           <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-            Revokes the server refresh cookie and clears the access token held in runtime memory.
+            {t("Revokes the server refresh cookie and clears the access token held in runtime memory.")}
           </p>
           <Button className="mt-5" variant="danger" onClick={signOut} busy={logout.isPending}>
-            Sign out
+            {t("Sign out")}
           </Button>
         </section>
       </div>
