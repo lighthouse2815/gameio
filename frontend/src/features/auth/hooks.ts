@@ -1,13 +1,41 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from "@tanstack/react-query";
 import { authApi } from "@/features/auth/api";
-import type { LoginInput, RegisterInput } from "@/features/auth/types";
+import type {
+  AuthResponse,
+  GoogleLoginInput,
+  LoginInput,
+  RegisterInput,
+} from "@/features/auth/types";
 import { isApiError } from "@/lib/api/api-error";
 import { tokenVault } from "@/lib/api/token-vault";
 import { gameSocketClient } from "@/lib/socket/game-socket-client";
 
 export const sessionQueryKey = ["session"] as const;
+
+export function applyAuthSession(
+  queryClient: QueryClient,
+  response: AuthResponse,
+) {
+  tokenVault.setAccessToken(response.accessToken);
+  queryClient.setQueryData(sessionQueryKey, response.user);
+}
+
+function useAuthSessionMutation<Input>(
+  mutationFn: (input: Input) => Promise<AuthResponse>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: (response) => applyAuthSession(queryClient, response),
+  });
+}
 
 export function useSession() {
   return useQuery({
@@ -19,25 +47,15 @@ export function useSession() {
 }
 
 export function useLogin() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input: LoginInput) => authApi.login(input),
-    onSuccess: (response) => {
-      tokenVault.setAccessToken(response.accessToken);
-      queryClient.setQueryData(sessionQueryKey, response.user);
-    },
-  });
+  return useAuthSessionMutation<LoginInput>(authApi.login);
 }
 
 export function useRegister() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input: RegisterInput) => authApi.register(input),
-    onSuccess: (response) => {
-      tokenVault.setAccessToken(response.accessToken);
-      queryClient.setQueryData(sessionQueryKey, response.user);
-    },
-  });
+  return useAuthSessionMutation<RegisterInput>(authApi.register);
+}
+
+export function useGoogleLogin() {
+  return useAuthSessionMutation<GoogleLoginInput>(authApi.google);
 }
 
 export function useLogout() {

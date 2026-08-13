@@ -26,5 +26,8 @@ gameio:
       secure: false
       same-site: Lax
       domain:
+    google:
+      client-id: gameio-test.apps.googleusercontent.com
+      jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
   cors:
     allowed-origins: http://localhost:3000

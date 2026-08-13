@@ -28,8 +28,13 @@ for (const candidate of [
   const origin = absoluteOrigin(candidate);
   if (origin) connectSources.add(origin);
 }
+connectSources.add("https://accounts.google.com/gsi/");
 
-const scriptSources = ["'self'", "'unsafe-inline'"];
+const scriptSources = [
+  "'self'",
+  "'unsafe-inline'",
+  "https://accounts.google.com/gsi/client",
+];
 if (process.env.NODE_ENV === "development") {
   scriptSources.push("'unsafe-eval'");
 }
@@ -41,9 +46,10 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self'",
   "script-src " + scriptSources.join(" "),
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
+  "frame-src https://accounts.google.com/gsi/",
   "connect-src " + [...connectSources].join(" "),
   "worker-src 'self' blob:",
   "manifest-src 'self'",
@@ -54,7 +60,10 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  {
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin-allow-popups",
+  },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
   { key: "Origin-Agent-Cluster", value: "?1" },
   {

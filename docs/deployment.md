@@ -66,6 +66,7 @@ JWT_SECRET=<at least 64 random bytes>
 JWT_ISSUER=gameio-api
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=30d
+GOOGLE_CLIENT_ID=<google-web-client-id>.apps.googleusercontent.com
 CORS_ALLOWED_ORIGINS=https://<cloudflare-worker-host>
 REFRESH_COOKIE_SECURE=true
 REFRESH_COOKIE_SAME_SITE=Lax
@@ -95,6 +96,7 @@ At build time set:
 ```text
 NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_WS_URL=wss://<railway-host>/ws
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=<same-google-web-client-id>.apps.googleusercontent.com
 ```
 
 At Worker runtime set:
@@ -111,12 +113,17 @@ Build and deploy from `frontend`:
 Set-Location frontend
 $env:NEXT_PUBLIC_API_URL = "/api"
 $env:NEXT_PUBLIC_WS_URL = "wss://<railway-host>/ws"
+$env:NEXT_PUBLIC_GOOGLE_CLIENT_ID = "<same-google-web-client-id>.apps.googleusercontent.com"
 npm run deploy
 ```
 
 Configure `BACKEND_ORIGIN` through the Worker environment before serving traffic. Keep preview and production bindings separate. A custom domain can be attached later, but the default `workers.dev` origin works with the same-origin BFF.
 
 After the final Worker hostname is known, set Railway `CORS_ALLOWED_ORIGINS` to that exact HTTPS origin and redeploy/restart the backend if required. No wildcard, localhost or broad subdomain pattern belongs in the production allow-list.
+
+Create separate Google Cloud projects/clients for development and production. Use an OAuth 2.0 client of type **Web application**, complete its consent/branding configuration, and add the exact frontend origin under **Authorized JavaScript origins**. Add `http://localhost:3000` only to the development client. This callback-based Google Identity Services flow does not require an Authorized redirect URI. The public client ID must be identical in the frontend build variable and Railway backend variable; changing the frontend value requires a new build.
+
+Before opening Google sign-in to the public, attach a custom domain owned by the Gameio operator rather than relying on the shared `workers.dev` provider domain. Verify that domain through Google Search Console, host a public Gameio home page and an accurate privacy policy on it, then publish/verify the OAuth brand as required. Google requires production JavaScript origins and app-domain links to use domains the operator can verify; the development client can remain in Testing status with explicitly listed test users until this release gate is complete.
 
 ## 5. Cookie, CORS and BFF contract
 
@@ -163,7 +170,8 @@ Both scripts create unique durable smoke accounts; the realtime script also crea
 
 Use the deployed Cloudflare URL, not localhost, and verify all of the following:
 
-- register, login, refresh after a page load and logout;
+- password register/login, first-time Google registration, returning Google login, refresh after a page load and logout;
+- Google account chooser popup/FedCM completion on both `/login` and `/register`, including an invalid-token response and an existing-email collision case;
 - request cookies are first-party on the Cloudflare host and are not exposed to JavaScript;
 - no direct Railway REST call from the browser API client;
 - catalog, profiles, friends, rankings, light/dark mode and responsive navigation;

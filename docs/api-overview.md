@@ -32,10 +32,13 @@ Bean Validation failures also include a `fieldErrors` object. Unexpected product
 | --- | --- | --- | --- |
 | `POST` | `/auth/register` | Public | `{username,email,password}`; `201`, access token/user JSON and refresh cookie |
 | `POST` | `/auth/login` | Public | `{login,password}` where login is username or email; access token/user JSON and refresh cookie |
+| `POST` | `/auth/google` | Public | `{idToken}` from Google Identity Services; signs in or creates the linked player and returns the normal access token/user JSON plus refresh cookie |
 | `POST` | `/auth/refresh` | Refresh cookie | Rotates the one-time refresh token and returns a new access token |
 | `POST` | `/auth/logout` | Refresh cookie when present | Revokes the active family and expires the cookie; `204` |
 
 Passwords must be 10-72 characters and are stored with BCrypt, never plaintext. The JSON auth response contains `tokenType`, `accessToken`, `accessExpiresAt` and `user`; it never contains the raw refresh token.
+
+Google authentication uses the browser's Google Identity Services button rather than an OAuth redirect handled by Gameio. The backend accepts only the returned ID token, verifies its Google signature, issuer, expiry, configured web-client audience and verified-email claim, then resolves the durable Google subject mapping. A first-time Google identity creates a provider-only player; later requests for the same immutable subject use the same account even if Google's email claim changes. No unauthenticated email-based linking is allowed: any email already owned by a Gameio account returns `GOOGLE_ACCOUNT_LINK_REQUIRED`. A future linking flow must first authenticate the existing Gameio account so a pre-registered email cannot turn into a shared or hijacked account.
 
 ## Users and profile
 

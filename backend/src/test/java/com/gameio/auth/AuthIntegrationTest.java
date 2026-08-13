@@ -14,7 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -23,6 +27,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(AuthIntegrationTest.GoogleVerifierTestConfiguration.class)
 class AuthIntegrationTest {
     private static final String CSRF_HEADER = "X-Gameio-CSRF";
 
@@ -128,6 +133,90 @@ class AuthIntegrationTest {
                 .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
     }
 
+    @Test
+    void googleSignInCreatesProviderOnlyAccountAndReusesItByStableSubject() throws Exception {
+        MvcResult first = googleLogin("new-google-player")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.email").value("new-google-player@gmail.com"))
+                .andExpect(jsonPath("$.user.username").value("new_google_player"))
+                .andReturn();
+        Cookie refreshCookie = first.getResponse().getCookie("gameio_refresh");
+        assertThat(refreshCookie).isNotNull();
+        assertThat(refreshCookie.isHttpOnly()).isTrue();
+        String firstUserId = JsonPath.read(first.getResponse().getContentAsString(), "$.user.id");
+
+        googleLogin("returning-google-player-changed-email")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.id").value(firstUserId))
+                .andExpect(jsonPath("$.user.email").value("new-google-player@gmail.com"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .header(CSRF_HEADER, "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"login":"new-google-player@gmail.com","password":"StrongPassword123!"}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
+    }
+
+    @Test
+    void googleSignInNeverAutoLinksAnExistingPasswordAccountByEmail() throws Exception {
+        register("GoogleLinked", "google-linked@gmail.com");
+        googleLogin("link-existing-gmail")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("GOOGLE_ACCOUNT_LINK_REQUIRED"));
+    }
+
+    @Test
+    void googleSignInDoesNotAutoLinkExistingThirdPartyEmail() throws Exception {
+        register("ExternalEmail", "external-link@example.com");
+
+        googleLogin("third-party-existing-email")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("GOOGLE_ACCOUNT_LINK_REQUIRED"));
+    }
+
+    @Test
+    void googleSignInGeneratesBoundedDeterministicUsernameOnCollision() throws Exception {
+        register("collisionplayer", "collision-owner@example.com");
+
+        MvcResult first = googleLogin("username-collision")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.username").value(
+                        org.hamcrest.Matchers.matchesPattern("collisionplayer_[a-f0-9]{6}")))
+                .andReturn();
+        String generatedUsername = JsonPath.read(first.getResponse().getContentAsString(), "$.user.username");
+        assertThat(generatedUsername).hasSizeLessThanOrEqualTo(24);
+
+        googleLogin("username-collision")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.username").value(generatedUsername));
+    }
+
+    @Test
+    void googleEndpointValidatesCredentialAndReturnsControlledTokenFailure() throws Exception {
+        mockMvc.perform(post("/api/auth/google")
+                        .header(CSRF_HEADER, "1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"idToken\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.idToken").exists());
+
+        googleLogin("invalid-google-token")
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_GOOGLE_ID_TOKEN"));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions googleLogin(String credential) throws Exception {
+        return mockMvc.perform(post("/api/auth/google")
+                .header(CSRF_HEADER, "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"idToken":"%s"}
+                        """.formatted(credential)));
+    }
+
     private MvcResult register(String username, String email) throws Exception {
         return mockMvc.perform(post("/api/auth/register")
                         .header(CSRF_HEADER, "1")
@@ -139,5 +228,27 @@ class AuthIntegrationTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.accessToken").isString())
                 .andReturn();
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class GoogleVerifierTestConfiguration {
+        @Bean
+        @Primary
+        GoogleIdTokenVerifier testGoogleIdTokenVerifier() {
+            return credential -> switch (credential) {
+                case "new-google-player" -> new VerifiedGoogleIdentity(
+                        "google-subject-new", "new-google-player@gmail.com");
+                case "returning-google-player-changed-email" -> new VerifiedGoogleIdentity(
+                        "google-subject-new", "changed-google-address@gmail.com");
+                case "link-existing-gmail" -> new VerifiedGoogleIdentity(
+                        "google-subject-linked", "google-linked@gmail.com");
+                case "third-party-existing-email" -> new VerifiedGoogleIdentity(
+                        "google-subject-third-party", "external-link@example.com");
+                case "username-collision" -> new VerifiedGoogleIdentity(
+                        "google-subject-collision", "collisionplayer@gmail.com");
+                default -> throw new com.gameio.common.error.UnauthorizedException(
+                        "INVALID_GOOGLE_ID_TOKEN", "Google ID token is invalid");
+            };
+        }
     }
 }

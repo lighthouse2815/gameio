@@ -38,6 +38,8 @@ Controllers accept validated DTOs and derive the authenticated player from the v
 
 Access tokens are short-lived JWTs. Refresh tokens are random opaque values stored only as hashes in PostgreSQL; the raw value exists only in an HttpOnly cookie. Refresh rotates the token under a database lock, and reuse revokes the family. The access token is intentionally not persisted in browser storage.
 
+Google Identity Services is an additional identity entry point, not a second session model. The browser sends the Google ID token to `/api/auth/google`; Spring validates the Google signature and claims, resolves the immutable provider subject stored in PostgreSQL, and then issues the same Gameio access-token/refresh-cookie pair used by password authentication. Provider-only accounts have no usable local password hash. Email is used only for first-link policy and display; subsequent identity resolution uses the provider subject rather than a mutable address.
+
 ## Backend modules
 
 Packages under `backend/src/main/java/com/gameio` are grouped by feature:

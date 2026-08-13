@@ -30,7 +30,7 @@ public class UserAccount {
     @Column(name = "email_normalized", nullable = false, length = 254, unique = true)
     private String emailNormalized;
 
-    @Column(name = "password_hash", nullable = false, length = 100)
+    @Column(name = "password_hash", length = 100)
     private String passwordHash;
 
     @Column(name = "avatar_url", length = 500)
@@ -77,6 +77,10 @@ public class UserAccount {
         return new UserAccount(UUID.randomUUID(), username.trim(), email.trim(), passwordHash, now);
     }
 
+    public static UserAccount createProviderOnly(String username, String email, Instant now) {
+        return new UserAccount(UUID.randomUUID(), username.trim(), email.trim(), null, now);
+    }
+
     public static String normalize(String value) {
         return value.trim().toLowerCase(Locale.ROOT);
     }
@@ -109,6 +113,10 @@ public class UserAccount {
 
     public String getPasswordHash() {
         return passwordHash;
+    }
+
+    public boolean hasPassword() {
+        return passwordHash != null;
     }
 
     public String getAvatarUrl() {

@@ -6,7 +6,7 @@ The implementation deliberately keeps one application backend instead of introdu
 
 ## What is implemented
 
-- Registration, login, short-lived JWT access tokens, rotating opaque refresh tokens, logout and refresh-token reuse protection.
+- Registration plus password or Google sign-in, short-lived JWT access tokens, rotating opaque refresh tokens, logout and refresh-token reuse protection.
 - Public profiles, avatar update, match history, EXP/levels, achievements, global and per-game leaderboards.
 - Friends, incoming/outgoing requests, accept/reject/remove and Redis-backed online/current-game presence.
 - Catalog search/filters, real persisted play counts and active-room/session-derived online counts, responsive light/dark portal UI, loading/error/empty states and local generated game artwork.
@@ -137,6 +137,7 @@ That frontend example uses the local same-origin `/api` BFF with `BACKEND_ORIGIN
 | --- | --- | --- | --- |
 | `NEXT_PUBLIC_API_URL` | `/api` | `/api` | Same-origin namespace used by the centralized browser API client |
 | `NEXT_PUBLIC_WS_URL` | `ws://localhost:8080/ws` | `wss://<railway-host>/ws` | Direct realtime endpoint |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google Web client ID or empty | Google Web client ID | Public audience used by the official Google Identity Services button |
 
 `NEXT_PUBLIC_*` values are public and are embedded at build time. They must never contain credentials.
 
@@ -158,6 +159,7 @@ That frontend example uses the local same-origin `/api` BFF with `BACKEND_ORIGIN
 | `JWT_ISSUER` | Stable issuer, normally `gameio-api` | Must remain consistent for issued and decoded access tokens |
 | `JWT_ACCESS_TTL` | For example `15m` | Keep short; an access token remains valid until expiry |
 | `JWT_REFRESH_TTL` | For example `30d` | Rotating refresh-family lifetime |
+| `GOOGLE_CLIENT_ID` | Same Google Web client ID embedded in the frontend | Required audience for backend Google ID-token validation; this public identifier is not a client secret |
 | `CORS_ALLOWED_ORIGINS` | Exact Cloudflare HTTPS origin | Used by REST CORS and WebSocket Origin validation; comma-separated when multiple exact origins are required |
 | `REFRESH_COOKIE_SECURE` | `true` | Required over HTTPS |
 | `REFRESH_COOKIE_SAME_SITE` | `Lax` | Correct for the same-origin Cloudflare BFF |
@@ -174,7 +176,7 @@ PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog me
 
 ## Authentication and WebSocket model
 
-The browser keeps the access token in memory. The refresh token is an HttpOnly cookie scoped to `/api/auth`; refresh rotates the token and logout revokes its family. Auth POST requests require `X-Gameio-CSRF: 1`.
+The browser keeps the access token in memory. The refresh token is an HttpOnly cookie scoped to `/api/auth`; refresh rotates the token and logout revokes its family. Auth POST requests require `X-Gameio-CSRF: 1`. Google Identity Services returns an ID token to the browser; the backend validates its signature and claims, resolves the durable Google subject, and then issues the same Gameio session pair as password authentication.
 
 WebSocket clients open `/ws` with these subprotocols:
 

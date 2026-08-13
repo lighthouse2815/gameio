@@ -21,7 +21,9 @@ Production and verification commands:
     npm run deploy
 
 NEXT_PUBLIC_API_URL points to the backend REST base and NEXT_PUBLIC_WS_URL points
-to the realtime endpoint.
+to the realtime endpoint. NEXT_PUBLIC_GOOGLE_CLIENT_ID is the public Web client
+ID used by Google Identity Services; leave it empty to render a controlled
+unavailable state, or set it to the same value as backend GOOGLE_CLIENT_ID.
 
 ## UI source model
 

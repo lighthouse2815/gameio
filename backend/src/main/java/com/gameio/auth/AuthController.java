@@ -43,6 +43,13 @@ public class AuthController {
         return withRefreshCookie(result, HttpStatus.OK);
     }
 
+    @PostMapping("/google")
+    ResponseEntity<AuthResponse> google(
+            @Valid @RequestBody GoogleLoginRequest request, HttpServletRequest servletRequest) {
+        AuthResult result = authService.loginWithGoogle(request, servletRequest.getRemoteAddr());
+        return withRefreshCookie(result, HttpStatus.OK);
+    }
+
     @PostMapping("/refresh")
     ResponseEntity<AuthResponse> refresh(HttpServletRequest request) {
         AuthResult result = authService.refresh(readRefreshCookie(request));

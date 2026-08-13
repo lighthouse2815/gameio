@@ -24,3 +24,7 @@ export type RegisterInput = {
   email: string;
   password: string;
 };
+
+export type GoogleLoginInput = {
+  idToken: string;
+};

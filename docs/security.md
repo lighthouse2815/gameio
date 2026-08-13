@@ -29,6 +29,11 @@ Run this checklist for production and every internet-accessible preview. Preview
 - [ ] Verify refresh rotation, used-token rejection and family revocation on logout against production.
 - [ ] Keep access-token lifetime short. Logout revokes the refresh family, but a captured access token remains cryptographically valid until expiry.
 - [ ] On logout, the browser must clear its in-memory token/query cache and close the active WebSocket. The backend independently closes established sockets when their token expires.
+- [ ] Keep `GOOGLE_CLIENT_ID` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` equal to the same Web application client ID. The value is a public identifier, not a secret; never configure a client secret in the browser or backend for this ID-token flow.
+- [ ] Register every exact frontend scheme/host/port under Google Authorized JavaScript origins, and remove obsolete preview/localhost origins from the production client when they are no longer needed.
+- [ ] Keep development and production in separate Google Cloud projects. For public production, use a custom domain the operator owns and can verify, host an accurate home/privacy surface there, and complete Google OAuth brand publication before enabling the client ID for all users.
+- [ ] Verify Google ID-token signature, issuer, expiry, audience and `email_verified` on the backend. Resolve returning users by the immutable Google `sub`; never trust browser-decoded profile fields.
+- [ ] Never link a Google identity to an existing account from an unauthenticated email match, including Gmail or Workspace. Require an already-authenticated account-link flow and explicit confirmation if linking is implemented later.
 
 ## Cloudflare BFF
 
@@ -44,10 +49,10 @@ Run this checklist for production and every internet-accessible preview. Preview
 ## Frontend response headers
 
 - [ ] Verify production responses include CSP, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, frame denial, opener/resource policies and a restrictive Permissions Policy.
-- [ ] Confirm production CSP `connect-src` includes only self and the exact WSS backend origin required by the build.
+- [ ] Confirm production CSP `connect-src` includes only self, the exact WSS backend origin required by the build and the Google Identity Services parent URL; restrict Google `script-src`, `style-src` and `frame-src` allowances to the documented GIS endpoints.
 - [ ] Keep `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'` and `form-action 'self'`.
 - [ ] `unsafe-eval` is permitted only during development. Next.js currently requires an inline-script/style allowance; do not broaden other directives to compensate for a CSP error.
-- [ ] Test Phaser, local fonts, Web Workers, images and Next hydration under the deployed CSP rather than assuming the header is compatible.
+- [ ] Keep `Cross-Origin-Opener-Policy: same-origin-allow-popups` while the GIS popup fallback is supported, and test Phaser, local fonts, Web Workers, images, Next hydration and the Google account chooser under the deployed headers.
 
 ## WebSocket and authoritative gameplay
 
