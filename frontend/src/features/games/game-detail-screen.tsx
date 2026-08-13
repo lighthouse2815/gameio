@@ -218,7 +218,7 @@ export function GameDetailScreen({
       </section>
 
       <section className="grid border-x border-t border-[var(--line)] lg:grid-cols-[1fr_360px]">
-        <div className="border-b border-[var(--line)] bg-[var(--surface)] lg:border-b-0 lg:border-r">
+        <div className="min-w-0 border-b border-[var(--line)] bg-[var(--surface)] lg:border-b-0 lg:border-r">
           <header className="flex items-center justify-between border-b border-[var(--line)] px-5 py-5">
             <div>
               <p className="font-telemetry text-[8px] text-[var(--muted)]">{t("[ SCORE CHANNEL ]")}</p>

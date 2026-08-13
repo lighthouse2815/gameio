@@ -1,6 +1,6 @@
 # Gameio artwork prompt set
 
-All five project assets were generated with the built-in image generation tool in `stylized-concept` mode. Shared direction: horizontal game-card artwork for a premium industrial/tactical gaming portal; near-black and charcoal substrate, phosphor ivory, one aviation-red accent; Swiss technical print and tactical telemetry; crisp halftone degradation; no gradients, neon, rounded UI, logo or watermark.
+All six project assets were generated with the built-in image generation tool in `stylized-concept` mode. Shared direction: horizontal game-card artwork for a premium industrial/tactical gaming portal; near-black and charcoal substrate, phosphor ivory, one aviation-red accent; Swiss technical print and tactical telemetry; crisp halftone degradation; no gradients, neon, rounded UI, logo or watermark.
 
 ## 2048
 
@@ -9,6 +9,10 @@ Top-down mechanical 2048 arena: a four-by-four graphite board with large embosse
 ## Snake
 
 A segmented ivory mechanical snake with graphite joints navigating a rigid tactical maze toward one small red target during a tense near-collision turn. Use a sweeping S-path, plotting-grid backdrop and safe crop margins. Avoid cute cartoon styling, green palettes and glossy mobile-game rendering.
+
+## Flappy Bird
+
+A compact ivory mechanical bird with graphite joints flying through the narrow opening between two severe industrial pipe towers. Use a side-view flight path, tactical plotting-grid void, safe crop margins and one restrained red target at the opening. Avoid green pipes, copyrighted pixel sprites, cute cartoon styling and glossy mobile-game rendering.
 
 ## Tic Tac Toe
 

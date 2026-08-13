@@ -75,7 +75,8 @@ class PostgresCatalogIntegrationTest {
     void productionCatalogWorksWithAbsentSearchAndReportsPostgresPlayCount() throws Exception {
         MvcResult catalog = mockMvc.perform(get("/api/games").param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(5))
+                .andExpect(jsonPath("$.totalElements").value(6))
+                .andExpect(jsonPath("$.content[?(@.slug == 'flappy-bird')]").exists())
                 .andReturn();
 
         List<Map<String, Object>> snakeEntries = JsonPath.read(

@@ -125,6 +125,8 @@ export const featureVietnameseMessages = {
   Capacity: "Sức chứa",
   "Combine matching tiles and build the highest value before the board fills.": "Ghép các ô cùng giá trị và tạo số lớn nhất trước khi bàn đầy.",
   "Guide a growing snake, collect food, and survive at increasing speed.": "Điều khiển rắn lớn dần, thu thập thức ăn và sống sót khi tốc độ tăng lên.",
+  "Thread a mechanical bird through shifting gates in offline practice or a server-verified ranked run.":
+    "Điều khiển chim máy vượt qua các cổng trong lượt luyện tập ngoại tuyến hoặc lượt xếp hạng do máy chủ xác thực.",
   "A quick server-authoritative strategy match for two players.": "Trận đấu chiến thuật nhanh cho hai người do máy chủ điều khiển.",
   "Place five pieces in a row on a 15 by 15 board before your opponent.": "Xếp năm quân liên tiếp trên bàn 15 x 15 trước đối thủ.",
   "Pilot a tank in a compact real-time arena for two to four players.": "Điều khiển xe tăng trong đấu trường thời gian thực dành cho hai đến bốn người.",

@@ -7,7 +7,6 @@ export const gameVietnameseMessages = {
   "Result verification failed": "Xác thực kết quả thất bại",
   "2048 reached": "Đã đạt 2048",
   "The run continues. Push the grid further.": "Lượt chơi vẫn tiếp tục. Hãy đẩy bàn cờ xa hơn nữa.",
-  Score: "Điểm",
   Best: "Kỷ lục",
   State: "Trạng thái",
   Channel: "Chế độ",
@@ -56,8 +55,48 @@ export const gameVietnameseMessages = {
   "Keyboard: arrow keys or WASD. Touch: use the direction array.": "Bàn phím: phím mũi tên hoặc WASD. Cảm ứng: dùng bộ điều khiển hướng.",
   "SERVER-SEED / REPLAY VERIFIED": "HẠT GIỐNG MÁY CHỦ / PHÁT LẠI ĐƯỢC XÁC THỰC",
   "LOCAL PRACTICE / NO RANK": "LUYỆN TẬP CỤC BỘ / KHÔNG XẾP HẠNG",
-  Resume: "Tiếp tục",
   Pause: "Tạm dừng",
+  online: "trực tuyến",
+  offline: "ngoại tuyến",
+  "Flappy Bird online session unavailable": "Không thể mở phiên Flappy Bird trực tuyến",
+  "The server returned an inconsistent seeded Flappy Bird state.":
+    "Máy chủ trả về trạng thái Flappy Bird theo hạt giống không nhất quán.",
+  "Flappy Bird score verified": "Điểm Flappy Bird đã được xác thực",
+  "Flappy Bird verification failed": "Xác thực Flappy Bird thất bại",
+  "Flappy Bird flight area": "Khu vực bay Flappy Bird",
+  "Flappy Bird requires canvas support.": "Flappy Bird cần trình duyệt hỗ trợ canvas.",
+  "[ FLIGHT ENGINE / READY ]": "[ BỘ MÁY BAY / SẴN SÀNG ]",
+  "[ SCORE VERIFIED ]": "[ ĐIỂM ĐÃ XÁC THỰC ]",
+  "[ VERIFYING FLIGHT ]": "[ ĐANG XÁC THỰC ĐƯỜNG BAY ]",
+  "[ VERIFICATION FAILED ]": "[ XÁC THỰC THẤT BẠI ]",
+  "[ IMPACT DETECTED ]": "[ PHÁT HIỆN VA CHẠM ]",
+  "Flight ended": "Chuyến bay kết thúc",
+  "Tap, click, or press Space to hold altitude through each gate.":
+    "Chạm, nhấp hoặc nhấn Space để giữ độ cao khi bay qua từng cổng.",
+  "The server reproduced the flight and recorded its score.":
+    "Máy chủ đã tái hiện đường bay và ghi nhận điểm số.",
+  "The server is replaying every fixed simulation tick.":
+    "Máy chủ đang phát lại từng nhịp mô phỏng cố định.",
+  "This flight was not added to the online ranking.":
+    "Chuyến bay này không được thêm vào bảng xếp hạng trực tuyến.",
+  "Clear another route and push the local best higher.":
+    "Hãy vượt thêm một đường bay và nâng kỷ lục trên máy này.",
+  "Play online": "Chơi trực tuyến",
+  "Retry online": "Thử lại trực tuyến",
+  "Play offline": "Chơi ngoại tuyến",
+  "Retry offline": "Thử lại ngoại tuyến",
+  "Sign in for online rank": "Đăng nhập để xếp hạng trực tuyến",
+  "Flight ended with score {score}.": "Chuyến bay kết thúc với {score} điểm.",
+  "[ ALTITUDE CONTROL ]": "[ ĐIỀU KHIỂN ĐỘ CAO ]",
+  Flap: "Vỗ cánh",
+  "Keyboard: Space, W, or Arrow Up. Touch/click the flight area or use the Flap button.":
+    "Bàn phím: Space, W hoặc mũi tên lên. Chạm/nhấp vùng bay hoặc dùng nút Vỗ cánh.",
+  Route: "Đường bay",
+  Signal: "Tín hiệu",
+  "Online runs use a server seed and verified replay for ranks and EXP.":
+    "Lượt trực tuyến dùng hạt giống máy chủ và replay được xác thực để tính hạng và EXP.",
+  "Offline runs stay in this browser and never require an account.":
+    "Lượt ngoại tuyến chỉ lưu trong trình duyệt này và không cần tài khoản.",
   "Authoritative Tic Tac Toe board": "Bàn Tic Tac Toe do máy chủ điều khiển",
   "Authoritative 15 by 15 Caro board": "Bàn Caro 15 x 15 do máy chủ điều khiển",
   "Row {row}, column {column}: {marker}": "Hàng {row}, cột {column}: {marker}",

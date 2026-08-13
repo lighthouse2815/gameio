@@ -21,10 +21,27 @@ const SnakeGame = dynamic(() => import("@/games/snake/snake-game"), {
   ),
 });
 
+const FlappyBirdGame = dynamic(
+  () => import("@/games/flappy-bird/flappy-bird-game"),
+  {
+    ssr: false,
+    loading: () => (
+      <p className="font-telemetry p-8 text-[10px] text-[var(--muted)]">
+        LOADING FLIGHT ENGINE ///
+      </p>
+    ),
+  },
+);
+
 export type RegisteredGame = {
   slug: string;
   engine: "react" | "phaser" | "server-multiplayer";
-  controlProfile: "swipe-keys" | "direction-pad" | "turn-grid" | "combat";
+  controlProfile:
+    | "swipe-keys"
+    | "direction-pad"
+    | "single-action"
+    | "turn-grid"
+    | "combat";
   component?: ComponentType;
 };
 
@@ -40,6 +57,12 @@ export const GAME_REGISTRY: Readonly<Record<string, RegisteredGame>> = {
     engine: "phaser",
     controlProfile: "direction-pad",
     component: SnakeGame,
+  },
+  "flappy-bird": {
+    slug: "flappy-bird",
+    engine: "react",
+    controlProfile: "single-action",
+    component: FlappyBirdGame,
   },
   "tic-tac-toe": {
     slug: "tic-tac-toe",

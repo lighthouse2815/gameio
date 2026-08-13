@@ -27,6 +27,7 @@ describe("offline game selection", () => {
     const games = [
       game("2048", { name: "2048", playsCount: 4 }),
       game("snake", { name: "Snake", playsCount: 12 }),
+      game("flappy-bird", { name: "Flappy Bird", playsCount: 8 }),
       game("tic-tac-toe", {
         gameType: "TURN_BASED_MULTIPLAYER",
         minPlayers: 2,
@@ -46,6 +47,7 @@ describe("offline game selection", () => {
 
     expect(selectOfflineGames(games).map(({ slug }) => slug)).toEqual([
       "snake",
+      "flappy-bird",
       "2048",
     ]);
   });

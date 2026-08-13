@@ -35,9 +35,10 @@ accessibility behavior; the current controls use semantic browser primitives.
 ## Game Registry
 
 src/games/core/game-registry.tsx is the only mapping between a catalog slug and
-its browser engine. 2048 uses a deterministic React rule engine; Snake uses
-Phaser. Server-authoritative multiplayer games route through the room lobby
-instead of simulating trusted state in the browser.
+its browser engine. 2048 uses a deterministic React rule engine, Snake uses
+Phaser, and Flappy Bird uses a fixed-tick React Canvas engine with offline and
+server-verified online runs. Server-authoritative multiplayer games route
+through the room lobby instead of simulating trusted state in the browser.
 
 To add a game, implement its isolated engine, add unit tests for pure rules, and
 register its slug, engine type, control profile, and component in the registry.

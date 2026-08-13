@@ -6,6 +6,10 @@ import type {
   SnakeDirection,
   SnakeState,
 } from "@/games/snake/engine";
+import type {
+  FlappyAction,
+  FlappyState,
+} from "@/games/flappy-bird/engine";
 import { apiClient } from "@/lib/api/client";
 
 export type Game2048InitialState = {
@@ -18,6 +22,7 @@ export type Game2048InitialState = {
 export type GameSessionInitialStates = {
   "2048": Game2048InitialState;
   snake: SnakeState;
+  "flappy-bird": FlappyState;
 };
 
 export type GameSessionResponse<
@@ -32,7 +37,10 @@ export type GameSessionResponse<
 
 export type VerifiedAction = Uppercase<MoveDirection>;
 export type VerifiedSnakeAction = Uppercase<SnakeDirection>;
-export type VerifiedReplayAction = VerifiedAction | VerifiedSnakeAction;
+export type VerifiedReplayAction =
+  | VerifiedAction
+  | VerifiedSnakeAction
+  | FlappyAction;
 
 export const gameResultsApi = {
   createSession: <Slug extends keyof GameSessionInitialStates>(

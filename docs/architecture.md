@@ -89,6 +89,7 @@ games/
 |-- core/          registry, runtime and shared artwork mapping
 |-- game2048/      React rules/rendering
 |-- snake/         Phaser scene and controls
+|-- flappy-bird/   fixed-tick rules and React Canvas rendering
 |-- tictactoe/     authoritative snapshot UI
 |-- caro/          authoritative snapshot UI
 `-- tank/          Phaser snapshot renderer and input mapping

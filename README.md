@@ -20,6 +20,7 @@ The implementation deliberately keeps one application backend instead of introdu
 | --- | --- | --- |
 | 2048 | React/TypeScript | Seeded session and server replay verification before persistence |
 | Snake | Phaser | Server-seeded deterministic run and replay verification before persistence |
+| Flappy Bird | React Canvas/TypeScript | Offline browser practice or server-seeded fixed-tick replay verification for ranked runs |
 | Tic Tac Toe | Spring authoritative engine | Server validates turns and a 3 by 3 win/draw |
 | Caro | Spring authoritative engine | Server validates turns and five-in-a-row on a 15 by 15 board |
 | Tank Battle | Phaser renderer + Spring tick engine | Client sends movement/shoot actions; server owns positions, rotation, bullets, HP and game over |
@@ -170,7 +171,7 @@ See [deployment](docs/deployment.md) for the deployment order and complete prefl
 
 ## Database
 
-Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, five catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
+Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, six catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
 
 PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, progression, achievements and friendships. Redis is disposable: it stores presence, queues, room metadata and a 30-second versioned leaderboard response cache. A cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
 
