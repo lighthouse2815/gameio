@@ -1,5 +1,6 @@
 import { GameCard } from "@/features/games/game-card";
 import type { GameSummary } from "@/features/games/types";
+import { cn } from "@/lib/cn";
 
 export function GameGrid({
   games,
@@ -10,10 +11,10 @@ export function GameGrid({
 }) {
   return (
     <div
-      className={
-        "grid gap-px bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-3 " +
-        (className ?? "")
-      }
+      className={cn(
+        "grid gap-px bg-[var(--line)] sm:grid-cols-2 xl:grid-cols-3",
+        className,
+      )}
     >
       {games.map((game, index) => (
         <GameCard

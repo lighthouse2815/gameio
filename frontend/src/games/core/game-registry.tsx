@@ -61,3 +61,8 @@ export const GAME_REGISTRY: Readonly<Record<string, RegisteredGame>> = {
 export function getRegisteredGame(slug: string) {
   return GAME_REGISTRY[slug];
 }
+
+export function isLocalGame(slug: string) {
+  const engine = getRegisteredGame(slug)?.engine;
+  return engine === "react" || engine === "phaser";
+}

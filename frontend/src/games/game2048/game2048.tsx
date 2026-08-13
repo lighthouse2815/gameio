@@ -18,6 +18,7 @@ import {
   type VerifiedAction,
 } from "@/features/games/game-results-api";
 import { getErrorMessage } from "@/lib/api/api-error";
+import { getTileAppearance } from "@/games/game2048/tile-appearance";
 import {
   createInitialBoardSeeded,
   createEmptyBoard,
@@ -33,14 +34,6 @@ import {
 } from "@/games/game2048/engine";
 
 const BEST_SCORE_KEY = "gameio.2048.best";
-
-function tileStyle(value: number) {
-  if (value === 0) return "bg-[var(--background)] text-transparent";
-  if (value <= 4) return "bg-[var(--surface-strong)]";
-  if (value < 128) return "bg-[var(--line)]";
-  if (value < 1024) return "bg-[var(--line-strong)] text-[var(--foreground-inverse)]";
-  return "bg-[var(--accent)] text-white";
-}
 
 export default function Game2048() {
   const toast = useToast();
@@ -257,10 +250,8 @@ export default function Game2048() {
               row.map((value, columnIndex) => (
                 <div
                   key={rowIndex + "-" + columnIndex}
-                  className={
-                    "grid min-w-0 place-items-center font-mono text-lg font-black tracking-[-0.06em] sm:text-3xl " +
-                    tileStyle(value)
-                  }
+                  className="grid min-w-0 place-items-center font-mono text-lg font-black tracking-[-0.06em] sm:text-3xl"
+                  style={getTileAppearance(value)}
                 >
                   {value || "0"}
                 </div>

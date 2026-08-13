@@ -15,6 +15,7 @@ import { GameGrid } from "@/features/games/game-grid";
 import { useGames, useRecentGames } from "@/features/games/hooks";
 import { useGlobalLeaderboard } from "@/features/leaderboard/hooks";
 import { LeaderboardTable } from "@/features/leaderboard/leaderboard-table";
+import { selectOfflineGames } from "@/features/home/offline-games";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { getGameArtwork } from "@/games/core/artwork";
 
@@ -63,6 +64,7 @@ export function HomeScreen() {
         right.playsCount - left.playsCount,
     )
     .slice(0, 3);
+  const offline = selectOfflineGames(allGames);
 
   return (
     <>
@@ -260,9 +262,37 @@ export function HomeScreen() {
         </div>
       </div>
 
-      <div className="mt-20">
+      <section className="mt-20">
         <SectionHeading
           index="03"
+          eyebrow="Local engines / no room required"
+          title="Offline games"
+          href="/games"
+          actionLabel="View game index"
+        />
+        {catalog.isLoading ? (
+          <div className="border-x border-b border-[var(--line)] p-5">
+            <LoadingGrid count={2} />
+          </div>
+        ) : null}
+        {catalog.data && !offline.length ? (
+          <div className="border-x border-b border-[var(--line)] p-5">
+            <EmptyState
+              title="No offline games available"
+              description="Local game engines will appear here when they are installed in this build."
+            />
+          </div>
+        ) : null}
+        {offline.length ? (
+          <div className="border-x border-b border-[var(--line)]">
+            <GameGrid games={offline} className="xl:grid-cols-2" />
+          </div>
+        ) : null}
+      </section>
+
+      <div className="mt-20">
+        <SectionHeading
+          index="04"
           eyebrow="Rooms and queues"
           title="Online operations"
           href="/multiplayer"
@@ -291,7 +321,7 @@ export function HomeScreen() {
       <div className="mt-20 grid border-x border-t border-[var(--line)] lg:grid-cols-[1fr_360px]">
         <section className="border-b border-[var(--line)] bg-[var(--surface)] lg:border-b-0 lg:border-r">
           <SectionHeading
-            index="04"
+            index="05"
             eyebrow="Verified results"
             title="Top players"
             href="/leaderboard"
