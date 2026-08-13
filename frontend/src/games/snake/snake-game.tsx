@@ -162,7 +162,7 @@ export default function SnakeGame() {
 
     void import("phaser").then((module) => {
       if (disposed) return;
-      const Phaser = module.default;
+      const Phaser = module;
       const random = new SnakeXorShift32(activeDescriptor.seed);
       createSnakeState(
         activeDescriptor.initialState.width,
@@ -284,6 +284,19 @@ export default function SnakeGame() {
         },
         scene: SnakeScene,
       });
+    }).catch((error) => {
+      if (disposed) return;
+      runDescriptor.current = null;
+      verifiedRun.current = null;
+      setStarted(false);
+      setStatus("ready");
+      setPaused(false);
+      setMode("local");
+      toast({
+        title: "Snake engine unavailable",
+        description: getErrorMessage(error),
+        tone: "error",
+      });
     });
 
     return () => {
@@ -293,7 +306,7 @@ export default function SnakeGame() {
       game?.destroy(true);
       host.replaceChildren();
     };
-  }, [runId, started, submitVerifiedResult]);
+  }, [runId, started, submitVerifiedResult, toast]);
 
   const beginRun = useCallback((descriptor: RunDescriptor) => {
     runDescriptor.current = descriptor;
