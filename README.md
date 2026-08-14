@@ -14,6 +14,7 @@ The implementation deliberately keeps one application backend instead of introdu
 - Installable PWA shell with a pre-cached `/offline` hub for all six solo engines; offline scores stay device-local and never enter trusted rankings or progression.
 - Guest-local and account-synchronized favorites/recent games, plus player-controlled sound, haptics, reduced motion, contrast/color-vision palettes, large controls, keyboard presets, fullscreen and native/30/60/120 FPS presentation.
 - Post-run summaries backed by accepted server results, including personal-best deltas, EXP/level, newly unlocked achievements, replay and share actions.
+- Authenticated player analytics with all-time outcomes, play time, win rate, 30-day activity/streaks, score trend, achievement completion and per-engine breakdowns.
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
 - A single authenticated WebSocket transport shared by Tic Tac Toe, Caro and Tank Battle. Clients send inputs; the server validates membership, turns, movement, collisions, HP and terminal outcomes.
 - PostgreSQL/Flyway for durable data and Redis for ephemeral room, queue, presence and short-lived leaderboard-cache data.

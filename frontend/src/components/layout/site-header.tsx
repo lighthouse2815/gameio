@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  BarChart3,
   CalendarDays,
   CloudOff,
   Gamepad2,
@@ -145,6 +146,7 @@ export function SiteHeader() {
                       icon: UserRound,
                     },
                     { href: "/friends", label: "Friends", icon: Users },
+                    { href: "/stats", label: "Stats", icon: BarChart3 },
                     { href: "/settings", label: "Settings", icon: Settings },
                   ].map(({ href, label, icon: Icon }) => (
                     <Link
@@ -228,7 +230,7 @@ export function SiteHeader() {
             </button>
           </form>
           <nav className="grid gap-px bg-[var(--line)]" aria-label={t("Mobile navigation")}>
-            {[...NAVIGATION, { href: "/offline", label: "Offline", icon: CloudOff }, { href: "/friends", label: "Friends", icon: Users }].map(
+            {[...NAVIGATION, { href: "/stats", label: "Stats", icon: BarChart3 }, { href: "/friends", label: "Friends", icon: Users }].map(
               ({ href, label, icon: Icon }) => (
                 <Link
                   key={href}

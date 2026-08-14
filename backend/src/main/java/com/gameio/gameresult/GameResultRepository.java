@@ -3,6 +3,7 @@ package com.gameio.gameresult;
 import java.util.UUID;
 import java.util.Collection;
 import java.util.List;
+import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -33,4 +34,19 @@ public interface GameResultRepository extends JpaRepository<GameResult, UUID> {
 
     @EntityGraph(attributePaths = {"game", "player", "session"})
     Page<GameResult> findByPlayerIdOrderByPlayedAtDesc(UUID playerId, Pageable pageable);
+
+    @Query("select result.game.id as gameId, result.game.slug as gameSlug, result.game.name as gameName, "
+            + "count(result) as gamesPlayed, "
+            + "sum(case when result.result = 'WIN' then 1 else 0 end) as wins, "
+            + "sum(case when result.result = 'LOSS' then 1 else 0 end) as losses, "
+            + "sum(case when result.result = 'DRAW' then 1 else 0 end) as draws, "
+            + "sum(case when result.result = 'COMPLETED' then 1 else 0 end) as completed, "
+            + "sum(result.score) as totalScore, avg(result.score) as averageScore, max(result.score) as bestScore, "
+            + "sum(result.durationSeconds) as totalDurationSeconds, max(result.playedAt) as lastPlayedAt "
+            + "from GameResult result where result.player.id = :playerId "
+            + "group by result.game.id, result.game.slug, result.game.name order by count(result) desc")
+    List<GameStatsProjection> statisticsByGame(@Param("playerId") UUID playerId);
+
+    List<GameResult> findByPlayerIdAndPlayedAtGreaterThanEqualOrderByPlayedAtAsc(
+            UUID playerId, Instant playedAt);
 }

@@ -86,6 +86,14 @@ The session response includes `sessionId`, `gameSlug`, a server seed, game-speci
 
 The browser also keeps a bounded local preference copy so favorites and recent games work before login and offline. On login it merges newer local selections into the authenticated account. These records are convenience metadata only and never create scores, EXP or ranking entries.
 
+## Player analytics
+
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/stats/me` | Bearer | All-time summary, per-game breakdown, 30-day activity, two-week score trend and achievement completion |
+
+Analytics are derived only from durable `game_results` accepted by replay verification or an authoritative multiplayer engine. Dates and play streaks use the `Asia/Ho_Chi_Minh` business timezone. Empty accounts receive a stable zero-valued response and a 30-day zero-filled activity series rather than fabricated activity.
+
 ## Leaderboards and achievements
 
 | Method | Route | Auth | Purpose |
