@@ -6,6 +6,7 @@ import com.gameio.achievement.UnlockedAchievementResponse;
 import com.gameio.common.error.ConflictException;
 import com.gameio.common.error.InvalidGameActionException;
 import com.gameio.common.web.PageResponse;
+import com.gameio.dailychallenge.DailyChallengeService;
 import com.gameio.game.Game;
 import com.gameio.game.GameNotFoundException;
 import com.gameio.game.GameRepository;
@@ -41,6 +42,7 @@ public class GameResultService {
     private final LevelService levelService;
     private final AchievementService achievementService;
     private final LeaderboardCacheInvalidator leaderboardCacheInvalidator;
+    private final DailyChallengeService dailyChallenges;
     private final Clock clock;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -53,6 +55,7 @@ public class GameResultService {
             LevelService levelService,
             AchievementService achievementService,
             LeaderboardCacheInvalidator leaderboardCacheInvalidator,
+            DailyChallengeService dailyChallenges,
             Clock clock) {
         this.sessions = sessions;
         this.results = results;
@@ -62,6 +65,7 @@ public class GameResultService {
         this.levelService = levelService;
         this.achievementService = achievementService;
         this.leaderboardCacheInvalidator = leaderboardCacheInvalidator;
+        this.dailyChallenges = dailyChallenges;
         this.clock = clock;
     }
 
@@ -78,7 +82,7 @@ public class GameResultService {
         GameSession session = GameSession.start(game, user, seed, now, now.plus(SESSION_TTL));
         sessions.save(session);
         return new GameSessionResponse(session.getId(), game.getSlug(), seed, verifier.initialState(seed),
-                session.getExpiresAt());
+                session.getExpiresAt(), null);
     }
 
     @Transactional
@@ -115,6 +119,15 @@ public class GameResultService {
         long ticTacToeWins = results.countWins(userId, "tic-tac-toe");
         List<UnlockedAchievementResponse> unlocked = achievementService.evaluate(user,
                 new AchievementProgress(completedGames, wins, snakeBestScore, ticTacToeWins));
+        if (session.getChallengeDate() != null) {
+            results.flush();
+            List<UnlockedAchievementResponse> dailyUnlocked = dailyChallenges.evaluateCompletion(session, user);
+            if (!dailyUnlocked.isEmpty()) {
+                List<UnlockedAchievementResponse> combined = new java.util.ArrayList<>(unlocked);
+                combined.addAll(dailyUnlocked);
+                unlocked = List.copyOf(combined);
+            }
+        }
         leaderboardCacheInvalidator.afterCommit(session.getGame().getId());
         return GameResultResponse.completed(result, user.getExp() - experienceBefore, user.getLevel(), unlocked);
     }

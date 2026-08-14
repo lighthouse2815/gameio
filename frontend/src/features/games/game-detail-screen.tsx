@@ -23,9 +23,11 @@ import { useI18n } from "@/lib/i18n/use-i18n";
 export function GameDetailScreen({
   slug,
   roomId,
+  dailyChallenge,
 }: {
   slug: string;
   roomId?: string;
+  dailyChallenge?: boolean;
 }) {
   const { t, formatDate, formatNumber } = useI18n();
   const game = useGame(slug);
@@ -153,6 +155,12 @@ export function GameDetailScreen({
       </section>
 
       <section id="game-stage" className="scroll-mt-24 border-x border-b border-[var(--line)] bg-[var(--surface)]">
+        {dailyChallenge ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--accent)] bg-[var(--background)] px-5 py-3">
+            <p className="font-telemetry text-[9px] text-[var(--accent)]">{t("DAILY CHALLENGE / VERIFIED SHARED SEED")}</p>
+            <Link href="/daily-challenge" className={buttonStyles("ghost")}>{t("Back to daily ranking")}</Link>
+          </div>
+        ) : null}
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-5 py-4">
           <div>
             <p className="font-telemetry text-[8px] text-[var(--accent)]">{t("[ GAME STAGE ]")}</p>

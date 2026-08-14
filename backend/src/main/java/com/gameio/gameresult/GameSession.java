@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -45,6 +46,9 @@ public class GameSession {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @Column(name = "challenge_date")
+    private LocalDate challengeDate;
+
     @Version
     @Column(name = "entity_version", nullable = false)
     private long version;
@@ -65,6 +69,18 @@ public class GameSession {
     public static GameSession start(
             Game game, UserAccount player, long randomSeed, Instant startedAt, Instant expiresAt) {
         return new GameSession(game, player, randomSeed, startedAt, expiresAt);
+    }
+
+    public static GameSession startDailyChallenge(
+            Game game,
+            UserAccount player,
+            long randomSeed,
+            LocalDate challengeDate,
+            Instant startedAt,
+            Instant expiresAt) {
+        GameSession session = new GameSession(game, player, randomSeed, startedAt, expiresAt);
+        session.challengeDate = challengeDate;
+        return session;
     }
 
     public void complete(Instant now) {
@@ -101,5 +117,9 @@ public class GameSession {
 
     public Instant getExpiresAt() {
         return expiresAt;
+    }
+
+    public LocalDate getChallengeDate() {
+        return challengeDate;
     }
 }

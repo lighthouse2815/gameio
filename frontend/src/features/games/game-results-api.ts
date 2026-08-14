@@ -48,6 +48,7 @@ export type GameSessionResponse<
   seed: number;
   initialState: GameSessionInitialStates[Slug];
   expiresAt: string;
+  challengeDate?: string | null;
 };
 
 export type VerifiedAction = Uppercase<MoveDirection>;
@@ -65,12 +66,25 @@ export type VerifiedReplayAction =
   | MemoryReplayAction;
 
 export const gameResultsApi = {
-  createSession: <Slug extends keyof GameSessionInitialStates>(
+  createSession: async <Slug extends keyof GameSessionInitialStates>(
     gameSlug: Slug,
-  ) =>
-    apiClient.post<GameSessionResponse<Slug>>("/game-results/sessions", {
-      gameSlug,
-    }),
+  ) => {
+    const daily =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("challenge") === "today";
+    const session = daily
+      ? await apiClient.post<GameSessionResponse<Slug>>(
+          "/daily-challenges/today/sessions",
+        )
+      : await apiClient.post<GameSessionResponse<Slug>>(
+          "/game-results/sessions",
+          { gameSlug },
+        );
+    if (session.gameSlug !== gameSlug) {
+      throw new Error("Today's challenge belongs to another game.");
+    }
+    return session;
+  },
   complete: (input: {
     sessionId: string;
     actions: string[];

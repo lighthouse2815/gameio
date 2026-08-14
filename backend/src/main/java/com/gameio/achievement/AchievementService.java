@@ -39,6 +39,19 @@ public class AchievementService {
         if (progress.snakeBestScore() >= 1000) eligibleCodes.add("SCORE_1000_SNAKE");
         if (progress.ticTacToeWins() >= 5) eligibleCodes.add("WIN_5_TICTACTOE");
 
+        return unlockEligible(user, eligibleCodes);
+    }
+
+    public List<UnlockedAchievementResponse> evaluateDaily(
+            UserAccount user, long completedDays, long currentStreak, long distinctSoloGames) {
+        Set<String> eligibleCodes = new LinkedHashSet<>();
+        if (completedDays >= 1) eligibleCodes.add("DAILY_FIRST");
+        if (currentStreak >= 3) eligibleCodes.add("DAILY_STREAK_3");
+        if (distinctSoloGames >= 6) eligibleCodes.add("DAILY_ALL_SOLO");
+        return unlockEligible(user, eligibleCodes);
+    }
+
+    private List<UnlockedAchievementResponse> unlockEligible(UserAccount user, Set<String> eligibleCodes) {
         List<UnlockedAchievementResponse> unlocked = new ArrayList<>();
         Instant now = Instant.now(clock);
         for (Achievement achievement : achievements.findByCodeIn(eligibleCodes)) {

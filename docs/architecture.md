@@ -25,7 +25,7 @@ The browser connects directly to the Railway `/ws` endpoint because the Spring p
 
 | Store | Data | Recovery expectation |
 | --- | --- | --- |
-| PostgreSQL | users, hashed refresh tokens, catalog, results, stats, achievements, friendships | Durable source of truth; Flyway-managed and backed up |
+| PostgreSQL | users, hashed refresh tokens, catalog, results, Daily Challenge participation, stats, achievements, friendships | Durable source of truth; Flyway-managed and backed up |
 | Redis | online/current-game presence, matchmaking tickets/queues, room metadata, 30-second leaderboard responses | Ephemeral and TTL-bound; loss must not erase durable player data |
 | Spring process memory | active Tic Tac Toe, Caro and Tank engine instances | Available only while the single backend process remains alive |
 | Browser memory | short-lived access token and UI state | Disposable; restored through the HttpOnly refresh cookie and server queries |
@@ -59,6 +59,8 @@ The common shape is:
 - request/response records: external contract without exposing entities.
 
 The `gameresult` module has two trusted ingestion paths. Single-player titles use server-issued seeded sessions and replay verification. Multiplayer engines create outcomes inside the authoritative coordinator and persist each match once through an idempotent match identifier.
+
+`dailychallenge` selects one of the six installed solo engines from the Vietnam business date and derives a stable 32-bit seed from that date and slug. A challenge session is still an ordinary replay-verified `game_session`, marked with `challenge_date`; rankings and streaks can therefore include only durable results that passed the normal verifier.
 
 ## Realtime boundary
 

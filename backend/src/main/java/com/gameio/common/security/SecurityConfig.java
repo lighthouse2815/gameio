@@ -42,7 +42,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/ws", "/ws/**", "/actuator/health", "/actuator/health/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/games/**", "/api/leaderboards/**",
-                                "/api/users/*", "/api/achievements").permitAll()
+                                "/api/users/*", "/api/achievements", "/api/daily-challenges/today",
+                                "/api/daily-challenges/*/leaderboard").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(Customizer.withDefaults())

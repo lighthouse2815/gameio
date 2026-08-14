@@ -1,6 +1,7 @@
 package com.gameio.gameresult;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public record GameSessionResponse(
@@ -8,6 +9,7 @@ public record GameSessionResponse(
         String gameSlug,
         long seed,
         Object initialState,
-        Instant expiresAt
+        Instant expiresAt,
+        LocalDate challengeDate
 ) {
 }

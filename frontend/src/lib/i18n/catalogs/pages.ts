@@ -39,4 +39,9 @@ export const pageVietnameseMessages = {
   "Adjust the visual substrate, update the avatar field supported by the backend, or close the secure browser session.":
     "Điều chỉnh giao diện, cập nhật ảnh đại diện được máy chủ hỗ trợ hoặc đóng phiên trình duyệt an toàn.",
   "[ INDEXING NETWORK ]": "[ ĐANG LẬP CHỈ MỤC MẠNG ]",
+  Daily: "Mỗi ngày",
+  "Daily Challenge": "Thử thách hằng ngày",
+  "Shared seed operation": "Thử thách cùng seed",
+  "One verified solo operation every day. Everyone receives the same server seed and competes on a ranking that resets at midnight in Vietnam.":
+    "Mỗi ngày có một thử thách solo được xác thực. Mọi người nhận cùng seed từ máy chủ và tranh hạng trên bảng được đặt lại lúc nửa đêm theo giờ Việt Nam.",
 } satisfies MessageCatalog;

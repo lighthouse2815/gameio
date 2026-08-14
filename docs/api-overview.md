@@ -89,6 +89,17 @@ Leaderboard entries contain `rank`, `userId`, `username`, `avatarUrl`, `score` a
 
 Leaderboard responses are cached in Redis for 30 seconds by scope/page/size. The durable query remains PostgreSQL; single-player and multiplayer result commits invalidate the global and affected-game cache generations after the transaction commits, and cache failure falls back to the database.
 
+## Daily Challenge
+
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/daily-challenges/today` | Public | Today's rotating solo game and Vietnam business-day window |
+| `POST` | `/daily-challenges/today/sessions` | Bearer | Create a replay-verified session with the shared daily seed |
+| `GET` | `/daily-challenges/me` | Bearer | Today's best, completed days, current/longest streak and distinct solo engines |
+| `GET` | `/daily-challenges/{date}/leaderboard` | Public | Best verified score per player for that challenge date |
+
+The business day is `Asia/Ho_Chi_Minh`. A session expires at the earlier of 24 hours after creation or the next local midnight. Challenge results must be completed through the normal `/game-results` replay-verification endpoint; ordinary offline runs are never promoted into a daily ranking.
+
 ## Friends
 
 | Method | Route | Auth | Purpose |

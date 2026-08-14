@@ -8,6 +8,7 @@ The implementation deliberately keeps one application backend instead of introdu
 
 - Registration plus password or Google sign-in, short-lived JWT access tokens, rotating opaque refresh tokens, logout and refresh-token reuse protection.
 - Public profiles, avatar update, match history, EXP/levels, achievements, global and per-game leaderboards.
+- A shared-seed Daily Challenge rotating across all six solo engines, with Vietnam-midnight reset, daily rankings and streak achievements.
 - Friends, incoming/outgoing requests, accept/reject/remove, Redis-backed online/current-game presence and expiring realtime game invitations.
 - Catalog search/filters, real persisted play counts and active-room/session-derived online counts, responsive light/dark portal UI, loading/error/empty states and local generated game artwork.
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
@@ -176,7 +177,7 @@ See [deployment](docs/deployment.md) for the deployment order and complete prefl
 
 Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, six catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
 
-PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, progression, achievements and friendships. Redis is disposable: it stores presence, queues, room metadata and a 30-second versioned leaderboard response cache. A cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
+PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements and friendships. Redis is disposable: it stores presence, queues, room metadata, one-use game invitations and a 30-second versioned leaderboard response cache. A cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
 
 ## Authentication and WebSocket model
 

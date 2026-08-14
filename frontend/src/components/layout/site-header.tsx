@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  CalendarDays,
   Gamepad2,
   LogOut,
   Menu,
@@ -22,6 +23,7 @@ import { useI18n } from "@/lib/i18n/use-i18n";
 
 const NAVIGATION = [
   { href: "/games", label: "Games", icon: Gamepad2 },
+  { href: "/daily-challenge", label: "Daily", icon: CalendarDays },
   { href: "/multiplayer", label: "Live", icon: Radio },
   { href: "/leaderboard", label: "Ranks", icon: Users },
 ] as const;
