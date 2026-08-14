@@ -11,6 +11,9 @@ The implementation deliberately keeps one application backend instead of introdu
 - A shared-seed Daily Challenge rotating across all six solo engines, with Vietnam-midnight reset, daily rankings and streak achievements.
 - Friends, incoming/outgoing requests, accept/reject/remove, Redis-backed online/current-game presence and expiring realtime game invitations.
 - Catalog search/filters, real persisted play counts and active-room/session-derived online counts, responsive light/dark portal UI, loading/error/empty states and local generated game artwork.
+- Installable PWA shell with a pre-cached `/offline` hub for all six solo engines; offline scores stay device-local and never enter trusted rankings or progression.
+- Guest-local and account-synchronized favorites/recent games, plus player-controlled sound, haptics, reduced motion, contrast/color-vision palettes, large controls, keyboard presets, fullscreen and native/30/60/120 FPS presentation.
+- Post-run summaries backed by accepted server results, including personal-best deltas, EXP/level, newly unlocked achievements, replay and share actions.
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
 - A single authenticated WebSocket transport shared by Tic Tac Toe, Caro and Tank Battle. Clients send inputs; the server validates membership, turns, movement, collisions, HP and terminal outcomes.
 - PostgreSQL/Flyway for durable data and Redis for ephemeral room, queue, presence and short-lived leaderboard-cache data.
@@ -177,7 +180,7 @@ See [deployment](docs/deployment.md) for the deployment order and complete prefl
 
 Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, six catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
 
-PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements and friendships. Redis is disposable: it stores presence, queues, room metadata, one-use game invitations and a 30-second versioned leaderboard response cache. A cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
+PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements, friendships and signed-in game preferences. Redis is disposable: it stores presence, queues, room metadata, one-use game invitations and a 30-second versioned leaderboard response cache. A cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
 
 ## Authentication and WebSocket model
 

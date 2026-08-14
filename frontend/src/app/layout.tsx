@@ -19,6 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s — Gameio",
     },
     description: translate(locale, rootDescription),
+    manifest: "/manifest.webmanifest",
+    appleWebApp: { capable: true, title: "Gameio", statusBarStyle: "black-translucent" },
+    icons: { icon: "/icon.svg" },
   };
 }
 

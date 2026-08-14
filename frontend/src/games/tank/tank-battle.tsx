@@ -20,6 +20,7 @@ import {
   type TankAction,
 } from "@/games/tank/input";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { movementKeyAllowed } from "@/features/settings/input-preferences";
 
 export default function TankBattle({ roomId }: { roomId: string }) {
   const { t } = useI18n();
@@ -71,12 +72,13 @@ export default function TankBattle({ roomId }: { roomId: string }) {
   useEffect(() => {
     const held = new Set<string>();
     const movement = (key: string) => {
+      if (!movementKeyAllowed(key)) return null;
       const action = tankActionForKey(key);
       return action?.startsWith("MOVE_") ? action : null;
     };
     const onKeyDown = (event: KeyboardEvent) => {
       const action = tankActionForKey(event.key);
-      if (!action) return;
+      if (!action || (action.startsWith("MOVE_") && !movementKeyAllowed(event.key))) return;
       event.preventDefault();
       if (action === "SHOOT") {
         if (!event.repeat) sendAction("SHOOT");

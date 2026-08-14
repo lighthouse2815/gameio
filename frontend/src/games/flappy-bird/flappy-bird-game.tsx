@@ -23,6 +23,7 @@ import {
 } from "@/games/flappy-bird/engine";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { movementKeyAllowed, shouldPresentFrame } from "@/features/settings/input-preferences";
 
 const BEST_SCORE_KEY = "gameio.flappy-bird.best";
 
@@ -57,8 +58,8 @@ function isTypingTarget(target: EventTarget | null) {
 function isFlapKey(event: KeyboardEvent | React.KeyboardEvent) {
   return (
     event.code === "Space" ||
-    event.key === "ArrowUp" ||
-    event.key.toLowerCase() === "w"
+    ((event.key === "ArrowUp" || event.key.toLowerCase() === "w") &&
+      movementKeyAllowed(event.key))
   );
 }
 
@@ -369,6 +370,7 @@ export default function FlappyBirdGame() {
     let accumulator = 0;
     let stopped = false;
     let latestState = engineRef.current?.state() ?? null;
+    let previousPresentation = 0;
 
     const resetClock = () => {
       previousTime = null;
@@ -411,7 +413,12 @@ export default function FlappyBirdGame() {
       }
 
       const canvas = canvasRef.current;
-      if (canvas && latestState) {
+      if (
+        canvas &&
+        latestState &&
+        shouldPresentFrame(time, previousPresentation)
+      ) {
+        previousPresentation = time;
         const renderState = stopped
           ? latestState
           : projectFlappyState(

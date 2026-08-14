@@ -20,6 +20,7 @@ import {
 import { getErrorMessage } from "@/lib/api/api-error";
 import { getTileAppearance } from "@/games/game2048/tile-appearance";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { movementKeyAllowed } from "@/features/settings/input-preferences";
 import {
   createInitialBoardSeeded,
   createEmptyBoard,
@@ -197,7 +198,7 @@ export default function Game2048() {
         d: "right",
       };
       const direction = directions[event.key];
-      if (direction) {
+      if (direction && movementKeyAllowed(event.key)) {
         event.preventDefault();
         move(direction);
       }

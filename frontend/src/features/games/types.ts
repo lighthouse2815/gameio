@@ -62,5 +62,8 @@ export type GameResultSummary = {
   playedAt: string;
   expAwarded: number;
   resultingLevel: number;
+  previousBestScore?: number | null;
+  personalBest: boolean;
   unlockedAchievements: AchievementSummary[];
+  offline?: boolean;
 };

@@ -33,6 +33,38 @@
   --danger: #bb1118;
 }
 
+:root[data-color-vision="protanopia"] {
+  --accent: #1f9de0;
+  --online: #f4b942;
+  --danger: #f4b942;
+}
+
+:root[data-color-vision="deuteranopia"] {
+  --accent: #8f68ff;
+  --online: #f2cf4a;
+  --danger: #ff8b3d;
+}
+
+:root[data-color-vision="tritanopia"] {
+  --accent: #e93838;
+  --online: #31c8c8;
+  --danger: #ff4e88;
+}
+
+:root[data-contrast="high"] {
+  --foreground: #ffffff;
+  --muted: #d2cec7;
+  --line: #77736d;
+  --line-strong: #ffffff;
+}
+
+:root[data-theme="light"][data-contrast="high"] {
+  --foreground: #000000;
+  --muted: #2e2b27;
+  --line: #5d5952;
+  --line-strong: #000000;
+}
+
 @theme inline {
   --font-sans: "Inter Variable", Inter, Arial, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", monospace;
@@ -74,6 +106,22 @@ textarea {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+}
+
+:root[data-controls="large"] button,
+:root[data-controls="large"] a,
+:root[data-controls="large"] input,
+:root[data-controls="large"] select {
+  min-height: 52px;
+}
+
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }
 
 a {

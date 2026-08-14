@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
+  CloudOff,
   Gamepad2,
   LogOut,
   Menu,
@@ -26,6 +27,7 @@ const NAVIGATION = [
   { href: "/daily-challenge", label: "Daily", icon: CalendarDays },
   { href: "/multiplayer", label: "Live", icon: Radio },
   { href: "/leaderboard", label: "Ranks", icon: Users },
+  { href: "/offline", label: "Offline", icon: CloudOff },
 ] as const;
 
 export function SiteHeader() {
@@ -226,7 +228,7 @@ export function SiteHeader() {
             </button>
           </form>
           <nav className="grid gap-px bg-[var(--line)]" aria-label={t("Mobile navigation")}>
-            {[...NAVIGATION, { href: "/friends", label: "Friends", icon: Users }].map(
+            {[...NAVIGATION, { href: "/offline", label: "Offline", icon: CloudOff }, { href: "/friends", label: "Friends", icon: Users }].map(
               ({ href, label, icon: Icon }) => (
                 <Link
                   key={href}

@@ -95,6 +95,8 @@ class SnakeResultIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.score").value(expectedScore))
                 .andExpect(jsonPath("$.result").value("COMPLETED"))
+                .andExpect(jsonPath("$.previousBestScore").doesNotExist())
+                .andExpect(jsonPath("$.personalBest").value(true))
                 .andReturn();
         String gameId = JsonPath.read(completed.getResponse().getContentAsString(), "$.gameId");
 

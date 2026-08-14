@@ -16,9 +16,10 @@ import {
   useSession,
 } from "@/features/auth/hooks";
 import { profileApi } from "@/features/profile/api";
+import { PlayerPreferencesPanel } from "@/features/settings/player-preferences-panel";
 import { getErrorMessage } from "@/lib/api/api-error";
-import { useThemeStore, type ThemeMode } from "@/stores/theme-store";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { useThemeStore, type ThemeMode } from "@/stores/theme-store";
 
 export function SettingsScreen() {
   const router = useRouter();
@@ -33,16 +34,14 @@ export function SettingsScreen() {
   const avatarUrl = avatarOverride ?? session.data?.avatarUrl ?? "";
 
   const updateProfile = useMutation({
-    mutationFn: () =>
-      profileApi.updateMe({ avatarUrl: avatarUrl.trim() || null }),
+    mutationFn: () => profileApi.updateMe({ avatarUrl: avatarUrl.trim() || null }),
     onSuccess: (user) => {
       setAvatarOverride(user.avatarUrl ?? "");
       queryClient.setQueryData(sessionQueryKey, user);
       void queryClient.invalidateQueries({ queryKey: ["profile", user.username] });
       toast({ title: t("Profile updated"), description: t("Avatar record synchronized."), tone: "success" });
     },
-    onError: (error) =>
-      toast({ title: t("Update rejected"), description: t(getErrorMessage(error)), tone: "error" }),
+    onError: (error) => toast({ title: t("Update rejected"), description: t(getErrorMessage(error)), tone: "error" }),
   });
 
   function saveAvatar(event: FormEvent<HTMLFormElement>) {
@@ -61,77 +60,56 @@ export function SettingsScreen() {
     toast({ title: t("Session closed"), description: t("Refresh cookie and runtime token cleared."), tone: "info" });
   }
 
-  if (session.isLoading) return <Skeleton className="h-96" />;
-  if (session.isError && isUnauthenticated(session.error)) {
-    return <LoginRequired title={t("Settings locked")} />;
-  }
-  if (session.isError) {
-    return <ErrorState title={t("Identity link unavailable")} description={t(getErrorMessage(session.error))} onAction={() => void session.refetch()} />;
-  }
-
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <section className="border border-[var(--line)] bg-[var(--surface)]">
-        <header className="border-b border-[var(--line)] p-5">
-          <UserRound size={20} className="text-[var(--accent)]" aria-hidden="true" />
-          <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ PLAYER RECORD ]")}</p>
-          <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Identity")}</h2>
-        </header>
-        <form className="grid gap-5 p-5" onSubmit={saveAvatar}>
-          <Field label={t("Username")} value={session.data?.username ?? ""} disabled readOnly />
-          <Field label={t("Email")} type="email" value={session.data?.email ?? ""} disabled readOnly hint={t("Email changes are not exposed by the current backend contract.")} />
-          <Field
-            label={t("Avatar HTTPS URL")}
-            name="avatarUrl"
-            type="url"
-            value={avatarUrl}
-            onChange={(event) => setAvatarOverride(event.target.value)}
-            placeholder="https://..."
-            hint={t("Leave empty to remove the custom avatar.")}
-          />
-          <Button busy={updateProfile.isPending}>{t("Save player record")}</Button>
-        </form>
-      </section>
+    <div className="grid gap-8">
+      <PlayerPreferencesPanel />
 
-      <div className="grid content-start gap-6">
+      <div className="grid gap-6 lg:grid-cols-2">
         <section className="border border-[var(--line)] bg-[var(--surface)]">
           <header className="border-b border-[var(--line)] p-5">
-            <MonitorCog size={20} className="text-[var(--accent)]" aria-hidden="true" />
-            <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ DISPLAY SUBSTRATE ]")}</p>
-            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Interface theme")}</h2>
+            <UserRound size={20} className="text-[var(--accent)]" aria-hidden="true" />
+            <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ PLAYER RECORD ]")}</p>
+            <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Identity")}</h2>
           </header>
-          <div className="grid gap-px bg-[var(--line)] sm:grid-cols-2">
-            {(["dark", "light"] as ThemeMode[]).map((theme) => (
-              <button
-                type="button"
-                key={theme}
-                onClick={() => setMode(theme)}
-                className={
-                  "min-h-36 bg-[var(--background)] p-5 text-left transition-colors " +
-                  (mode === theme ? "shadow-[inset_0_-4px_0_var(--accent)]" : "hover:bg-[var(--surface-strong)]")
-                }
-                aria-pressed={mode === theme}
-              >
-                <span className="font-telemetry text-[9px] text-[var(--muted)]">[ {t(theme)} ]</span>
-                <span className="mt-12 flex items-center justify-between text-xl font-black uppercase">
-                  {t("{theme} substrate", { theme: t(theme) })}
-                  <span className={"h-3 w-3 " + (mode === theme ? "bg-[var(--accent)]" : "border border-[var(--line-strong)]")} />
-                </span>
-              </button>
-            ))}
-          </div>
+          {session.isLoading ? <Skeleton className="m-5 h-72" /> : null}
+          {session.isError && isUnauthenticated(session.error) ? <div className="p-5"><LoginRequired title={t("Account settings locked")} /></div> : null}
+          {session.isError && !isUnauthenticated(session.error) ? <div className="p-5"><ErrorState title={t("Identity link unavailable")} description={t(getErrorMessage(session.error))} onAction={() => void session.refetch()} /></div> : null}
+          {session.data ? (
+            <form className="grid gap-5 p-5" onSubmit={saveAvatar}>
+              <Field label={t("Username")} value={session.data.username} disabled readOnly />
+              <Field label={t("Email")} type="email" value={session.data.email} disabled readOnly hint={t("Email changes are not exposed by the current backend contract.")} />
+              <Field label={t("Avatar HTTPS URL")} name="avatarUrl" type="url" value={avatarUrl} onChange={(event) => setAvatarOverride(event.target.value)} placeholder="https://..." hint={t("Leave empty to remove the custom avatar.")} />
+              <Button busy={updateProfile.isPending}>{t("Save player record")}</Button>
+            </form>
+          ) : null}
         </section>
 
-        <section className="border border-[var(--danger)] bg-[var(--surface)] p-5">
-          <LogOut size={20} className="text-[var(--danger)]" aria-hidden="true" />
-          <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">{t("Close session")}</h2>
-          <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
-            {t("Revokes the server refresh cookie and clears the access token held in runtime memory.")}
-          </p>
-          <Button className="mt-5" variant="danger" onClick={signOut} busy={logout.isPending}>
-            {t("Sign out")}
-          </Button>
-        </section>
+        <div className="grid content-start gap-6">
+          <section className="border border-[var(--line)] bg-[var(--surface)]">
+            <header className="border-b border-[var(--line)] p-5">
+              <MonitorCog size={20} className="text-[var(--accent)]" aria-hidden="true" />
+              <p className="font-telemetry mt-5 text-[8px] text-[var(--muted)]">{t("[ DISPLAY SUBSTRATE ]")}</p>
+              <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Interface theme")}</h2>
+            </header>
+            <div className="grid gap-px bg-[var(--line)] sm:grid-cols-2">
+              {(["dark", "light"] as ThemeMode[]).map((theme) => (
+                <button type="button" key={theme} onClick={() => setMode(theme)} className={"min-h-36 bg-[var(--background)] p-5 text-left transition-colors " + (mode === theme ? "shadow-[inset_0_-4px_0_var(--accent)]" : "hover:bg-[var(--surface-strong)]")} aria-pressed={mode === theme}>
+                  <span className="font-telemetry text-[9px] text-[var(--muted)]">[ {t(theme)} ]</span>
+                  <span className="mt-12 flex items-center justify-between text-xl font-black uppercase">{t("{theme} substrate", { theme: t(theme) })}<span className={"h-3 w-3 " + (mode === theme ? "bg-[var(--accent)]" : "border border-[var(--line-strong)]")} /></span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {session.data ? (
+            <section className="border border-[var(--danger)] bg-[var(--surface)] p-5">
+              <LogOut size={20} className="text-[var(--danger)]" aria-hidden="true" />
+              <h2 className="mt-5 text-xl font-black uppercase tracking-[-0.04em]">{t("Close session")}</h2>
+              <p className="mt-2 text-xs leading-5 text-[var(--muted)]">{t("Revokes the server refresh cookie and clears the access token held in runtime memory.")}</p>
+              <Button className="mt-5" variant="danger" onClick={signOut} busy={logout.isPending}>{t("Sign out")}</Button>
+            </section>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -12,14 +12,27 @@ import { createQueryClient } from "@/lib/query-client";
 import { gameSocketClient } from "@/lib/socket/game-socket-client";
 import { RealtimeNotifications } from "@/features/notifications/realtime-notifications";
 import { useThemeStore } from "@/stores/theme-store";
+import { usePlayerPreferencesStore } from "@/stores/player-preferences-store";
+import { PreferencesBridge } from "@/features/game-preferences/preferences-bridge";
+import { ServiceWorkerRegistration } from "@/features/pwa/service-worker-registration";
+import { PerformanceHud } from "@/features/settings/performance-hud";
+import { playFeedback } from "@/features/settings/player-feedback";
 
 function RuntimeBridge() {
   const queryClient = useQueryClient();
   const hydrateTheme = useThemeStore((state) => state.hydrate);
+  const hydratePlayerPreferences = usePlayerPreferencesStore((state) => state.hydrate);
 
   useEffect(() => {
     hydrateTheme();
-  }, [hydrateTheme]);
+    hydratePlayerPreferences();
+  }, [hydratePlayerPreferences, hydrateTheme]);
+
+  useEffect(() => {
+    const resultFeedback = () => playFeedback("success");
+    window.addEventListener("gameio:verified-result", resultFeedback);
+    return () => window.removeEventListener("gameio:verified-result", resultFeedback);
+  }, []);
 
   useEffect(() => {
     const refreshSession = (event: Event) => {
@@ -54,7 +67,10 @@ export function Providers({
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <RuntimeBridge />
+          <PreferencesBridge />
+          <ServiceWorkerRegistration />
           <RealtimeNotifications />
+          <PerformanceHud />
           {children}
         </ToastProvider>
         {process.env.NODE_ENV === "development" ? (

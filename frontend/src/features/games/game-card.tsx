@@ -5,6 +5,7 @@ import { ArrowUpRight, Users } from "lucide-react";
 import type { GameSummary } from "@/features/games/types";
 import { getGameArtwork } from "@/games/core/artwork";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { FavoriteButton } from "@/features/game-preferences/favorite-button";
 
 type GameCardProps = {
   game: GameSummary;
@@ -23,6 +24,11 @@ export function GameCard({ game, index = 0, priority = false }: GameCardProps) {
   const artwork = getGameArtwork(game.slug, game.thumbnailUrl);
   return (
     <article className="group relative flex min-h-[300px] flex-col overflow-hidden bg-[var(--surface)]">
+      <FavoriteButton
+        gameId={game.id}
+        gameSlug={game.slug}
+        className="absolute right-3 top-3 z-10 h-9 min-h-9 w-9 bg-black/80 px-0 text-white"
+      />
       <Link
         href={"/game/" + encodeURIComponent(game.slug)}
         className="flex h-full flex-1 flex-col"

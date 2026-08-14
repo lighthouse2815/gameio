@@ -23,6 +23,11 @@ import type {
   MemoryState,
 } from "@/games/memory-match/engine";
 import { apiClient } from "@/lib/api/client";
+import {
+  completeOfflineSession,
+  createOfflineSession,
+  isOfflinePlayMode,
+} from "@/features/pwa/offline-game-results";
 
 export type Game2048InitialState = {
   board: Board;
@@ -69,6 +74,7 @@ export const gameResultsApi = {
   createSession: async <Slug extends keyof GameSessionInitialStates>(
     gameSlug: Slug,
   ) => {
+    if (isOfflinePlayMode()) return createOfflineSession(gameSlug);
     const daily =
       typeof window !== "undefined" &&
       new URLSearchParams(window.location.search).get("challenge") === "today";
@@ -85,9 +91,21 @@ export const gameResultsApi = {
     }
     return session;
   },
-  complete: (input: {
+  complete: async (input: {
     sessionId: string;
     actions: string[];
     durationSeconds: number;
-  }) => apiClient.post<GameResultSummary>("/game-results", input),
+  }) => {
+    const result = input.sessionId.startsWith("offline-")
+      ? completeOfflineSession(input)
+      : await apiClient.post<GameResultSummary>("/game-results", input);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent<GameResultSummary>("gameio:verified-result", {
+          detail: result,
+        }),
+      );
+    }
+    return result;
+  },
 };

@@ -22,6 +22,7 @@ import {
 } from "@/features/games/game-results-api";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { movementKeyAllowed } from "@/features/settings/input-preferences";
 import {
   cloneSnakeState,
   createSnakeState,
@@ -131,7 +132,7 @@ export default function SnakeGame() {
 
     const onKeyDown = (event: KeyboardEvent) => {
       const direction = KEYBOARD_DIRECTIONS[event.key];
-      if (!direction) return;
+      if (!direction || !movementKeyAllowed(event.key)) return;
 
       event.preventDefault();
       directionControl.current(direction);

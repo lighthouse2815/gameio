@@ -27,6 +27,7 @@ import {
 import { randomSeed } from "@/games/core/seeded-random";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { movementKeyAllowed, shouldPresentFrame } from "@/features/settings/input-preferences";
 
 const BEST_SCORE_KEY = "gameio.breakout.best";
 
@@ -223,6 +224,7 @@ export default function BreakoutGame() {
     let previousTime: number | null = null;
     let accumulator = 0;
     let renderedTick = engineRef.current?.state().tick ?? 0;
+    let previousPresentation = 0;
 
     const frame = (time: number) => {
       const engine = engineRef.current;
@@ -245,8 +247,11 @@ export default function BreakoutGame() {
         }
         accumulator -= BREAKOUT_TICK_MS;
       }
-      if (canvasRef.current) drawBreakout(canvasRef.current, state);
-      if (state.tick - renderedTick >= 4 || engine.terminal()) {
+      const present =
+        shouldPresentFrame(time, previousPresentation) || engine.terminal();
+      if (present) previousPresentation = time;
+      if (canvasRef.current && present) drawBreakout(canvasRef.current, state);
+      if (present && (state.tick - renderedTick >= 4 || engine.terminal())) {
         renderedTick = state.tick;
         setGameState(state);
       }
@@ -269,17 +274,26 @@ export default function BreakoutGame() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (runStatus !== "playing" || isTypingTarget(event.target)) return;
-      if (["ArrowLeft", "a", "A"].includes(event.key)) {
+      if (
+        ["ArrowLeft", "a", "A"].includes(event.key) &&
+        movementKeyAllowed(event.key)
+      ) {
         event.preventDefault();
         direction.current = "L";
-      } else if (["ArrowRight", "d", "D"].includes(event.key)) {
+      } else if (
+        ["ArrowRight", "d", "D"].includes(event.key) &&
+        movementKeyAllowed(event.key)
+      ) {
         event.preventDefault();
         direction.current = "R";
       }
     };
     const onKeyUp = (event: KeyboardEvent) => {
       if (runStatus !== "playing" || isTypingTarget(event.target)) return;
-      if (["ArrowLeft", "ArrowRight", "a", "A", "d", "D"].includes(event.key)) {
+      if (
+        ["ArrowLeft", "ArrowRight", "a", "A", "d", "D"].includes(event.key) &&
+        movementKeyAllowed(event.key)
+      ) {
         event.preventDefault();
         direction.current = "N";
       }

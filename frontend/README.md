@@ -42,5 +42,19 @@ runs submit action replays for server-derived ranking scores. Server-authoritati
 multiplayer games route through the room lobby instead of simulating trusted
 state in the browser.
 
+## Offline PWA and player preferences
+
+`src/app/manifest.ts`, `public/sw.js` and `src/features/pwa` provide an installable
+app shell. The service worker never caches `/api/*`; it pre-caches the dedicated
+`/offline` route and its solo-engine assets instead. Offline results and personal
+bests remain local and are explicitly excluded from account progression and
+rankings.
+
+Favorites and recent games are stored in the local Zustand preference store and
+merged into `/api/game-preferences` after authentication. Settings are also
+local-first and apply immediately through root data attributes: sound/haptics,
+motion, contrast, color-vision palette, control sizing, keyboard preset,
+fullscreen, target presentation FPS and the live FPS monitor.
+
 To add a game, implement its isolated engine, add unit tests for pure rules, and
 register its slug, engine type, control profile, and component in the registry.

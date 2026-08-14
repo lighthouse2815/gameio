@@ -15,6 +15,8 @@ public interface GameResultRepository extends JpaRepository<GameResult, UUID> {
 
     long countByPlayerId(UUID playerId);
 
+    long countByPlayerIdAndGameId(UUID playerId, UUID gameId);
+
     long countByPlayerIdAndResult(UUID playerId, GameResultType result);
 
     @Query("select new com.gameio.gameresult.GamePlayCount(result.game.id, count(result)) "

@@ -19,19 +19,23 @@ public record GameResultResponse(
         Instant playedAt,
         long expAwarded,
         int resultingLevel,
+        Long previousBestScore,
+        boolean personalBest,
         List<UnlockedAchievementResponse> unlockedAchievements
 ) {
     static GameResultResponse completed(
             GameResult result, long expAwarded, int resultingLevel,
+            Long previousBestScore, boolean personalBest,
             List<UnlockedAchievementResponse> unlockedAchievements) {
         UUID sessionId = result.getSession() == null ? null : result.getSession().getId();
         return new GameResultResponse(result.getId(), sessionId, result.getMatchId(), result.getGame().getId(),
                 result.getGame().getSlug(), result.getGame().getName(), result.getPlayer().getUsername(),
                 result.getScore(), result.getResult(),
-                result.getDurationSeconds(), result.getPlayedAt(), expAwarded, resultingLevel, unlockedAchievements);
+                result.getDurationSeconds(), result.getPlayedAt(), expAwarded, resultingLevel,
+                previousBestScore, personalBest, unlockedAchievements);
     }
 
     static GameResultResponse history(GameResult result) {
-        return completed(result, 0, result.getPlayer().getLevel(), List.of());
+        return completed(result, 0, result.getPlayer().getLevel(), null, false, List.of());
     }
 }

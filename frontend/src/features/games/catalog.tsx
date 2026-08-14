@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingGrid } from "@/components/ui/states";
@@ -11,6 +11,7 @@ import { useGames } from "@/features/games/hooks";
 import type { GameType } from "@/features/games/types";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { favoriteGameIds, useGamePreferencesStore } from "@/stores/game-preferences-store";
 
 type CatalogProps = {
   initialQuery: string;
@@ -24,6 +25,9 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
   const [category, setCategory] = useState("");
   const [gameType, setGameType] = useState<GameType | "">("");
   const [page, setPage] = useState(0);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const preferenceRecords = useGamePreferencesStore((state) => state.records);
+  const favorites = favoriteGameIds(preferenceRecords);
   const games = useGames({
     q: query,
     category,
@@ -134,7 +138,28 @@ export function GamesCatalog({ initialQuery }: CatalogProps) {
         ) : null}
         {games.data?.content.length ? (
           <>
-            <GameGrid games={games.data.content} />
+            <button
+              type="button"
+              className={
+                "font-telemetry mb-4 inline-flex min-h-10 items-center gap-2 border px-3 text-[9px] " +
+                (favoritesOnly
+                  ? "border-[var(--accent)] text-[var(--accent)]"
+                  : "border-[var(--line)] text-[var(--muted)]")
+              }
+              aria-pressed={favoritesOnly}
+              onClick={() => setFavoritesOnly((value) => !value)}
+            >
+              <Heart size={13} fill={favoritesOnly ? "currentColor" : "none"} aria-hidden="true" />
+              {t("Favorites only")} / {favorites.size}
+            </button>
+            {favoritesOnly && !games.data.content.some((game) => favorites.has(game.id)) ? (
+              <EmptyState
+                title={t("No favorites on this page")}
+                description={t("Disable the favorites filter or mark a game with the heart button.")}
+              />
+            ) : (
+              <GameGrid games={favoritesOnly ? games.data.content.filter((game) => favorites.has(game.id)) : games.data.content} />
+            )}
             <div className="mt-5 flex items-center justify-between border border-[var(--line)] bg-[var(--surface)] p-3">
               <Button
                 variant="ghost"

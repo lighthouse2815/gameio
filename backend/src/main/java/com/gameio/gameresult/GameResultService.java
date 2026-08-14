@@ -106,6 +106,8 @@ public class GameResultService {
         }
         validateTiming(session, request, replay, now);
 
+        long completedBefore = results.countByPlayerIdAndGameId(userId, session.getGame().getId());
+        long previousBest = results.maximumScore(userId, session.getGame().getSlug());
         session.complete(now);
         GameResult result = results.save(GameResult.verifiedCompletion(
                 session, replay.score(), request.durationSeconds(), now));
@@ -129,7 +131,10 @@ public class GameResultService {
             }
         }
         leaderboardCacheInvalidator.afterCommit(session.getGame().getId());
-        return GameResultResponse.completed(result, user.getExp() - experienceBefore, user.getLevel(), unlocked);
+        Long previousBestScore = completedBefore == 0 ? null : previousBest;
+        boolean personalBest = completedBefore == 0 || replay.score() > previousBest;
+        return GameResultResponse.completed(result, user.getExp() - experienceBefore, user.getLevel(),
+                previousBestScore, personalBest, unlocked);
     }
 
     @Transactional(readOnly = true)

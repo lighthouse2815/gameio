@@ -19,6 +19,9 @@ import { GameRuntime } from "@/games/core/game-runtime";
 import { getRegisteredGame } from "@/games/core/game-registry";
 import { getErrorMessage, isApiError } from "@/lib/api/api-error";
 import { useI18n } from "@/lib/i18n/use-i18n";
+import { SoloResultSummary } from "@/features/games/solo-result-summary";
+import { FavoriteButton } from "@/features/game-preferences/favorite-button";
+import { GamePreferenceTracker } from "@/features/game-preferences/game-preference-tracker";
 
 export function GameDetailScreen({
   slug,
@@ -71,6 +74,7 @@ export function GameDetailScreen({
 
   return (
     <>
+      <GamePreferenceTracker gameId={detail.id} gameSlug={detail.slug} />
       <section className="grid border-x border-b border-[var(--line)] bg-[var(--surface)] lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)]">
         <div className="flex min-h-[520px] flex-col justify-between p-5 sm:p-9 lg:p-12">
           <div className="flex items-center justify-between gap-3">
@@ -112,6 +116,7 @@ export function GameDetailScreen({
                 <Trophy size={14} aria-hidden="true" />
                 {t("View ranks")}
               </Link>
+              <FavoriteButton gameId={detail.id} gameSlug={detail.slug} showLabel />
             </div>
           </div>
           <dl className="grid grid-cols-2 gap-px border border-[var(--line)] bg-[var(--line)] sm:grid-cols-5">
@@ -173,6 +178,7 @@ export function GameDetailScreen({
         </header>
         <div className="p-3 sm:p-6 lg:p-8">
           <GameRuntime slug={detail.slug} roomId={roomId} />
+          {local ? <SoloResultSummary gameSlug={detail.slug} /> : null}
         </div>
       </section>
 

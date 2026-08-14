@@ -74,7 +74,17 @@ Each game response includes `onlinePlayers` from active Redis room metadata inte
 | `POST` | `/game-results` | Bearer | Complete that session with `{sessionId,actions,durationSeconds}`; `201` |
 | `GET` | `/game-results/me` | Bearer | Paginated current-player history |
 
-The session response includes `sessionId`, `gameSlug`, a server seed, game-specific `initialState` and `expiresAt`. Completion replays the bounded action list on the server; there is no endpoint that accepts a client-asserted score. Multiplayer results are written internally by the authoritative engine and share the same history table.
+The session response includes `sessionId`, `gameSlug`, a server seed, game-specific `initialState` and `expiresAt`. Completion replays the bounded action list on the server; there is no endpoint that accepts a client-asserted score. A completion response also includes the previous best, whether this is a new personal best, EXP/level and achievements unlocked by that run. Multiplayer results are written internally by the authoritative engine and share the same history table.
+
+## Game preferences
+
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/game-preferences/me` | Bearer | List the current player's favorite/recent game records |
+| `PUT` | `/game-preferences/{gameId}/favorite` | Bearer | Set `{favorite}` for an enabled game |
+| `POST` | `/game-preferences/{gameId}/played` | Bearer | Update the server-owned recent-play timestamp; `201` |
+
+The browser also keeps a bounded local preference copy so favorites and recent games work before login and offline. On login it merges newer local selections into the authenticated account. These records are convenience metadata only and never create scores, EXP or ranking entries.
 
 ## Leaderboards and achievements
 
