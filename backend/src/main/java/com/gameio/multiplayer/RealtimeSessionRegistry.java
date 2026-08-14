@@ -1,5 +1,6 @@
 package com.gameio.multiplayer;
 
+import com.gameio.observability.GameioOperationalMetrics;
 import com.gameio.multiplayer.presence.PresenceStore;
 import com.gameio.multiplayer.protocol.ServerEnvelope;
 import com.gameio.room.InvalidRoomActionException;
@@ -29,11 +30,17 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
     private final ObjectMapper objectMapper;
     private final PresenceStore presence;
     private final Clock clock;
+    private final GameioOperationalMetrics metrics;
 
-    public RealtimeSessionRegistry(ObjectMapper objectMapper, PresenceStore presence, Clock clock) {
+    public RealtimeSessionRegistry(
+            ObjectMapper objectMapper,
+            PresenceStore presence,
+            Clock clock,
+            GameioOperationalMetrics metrics) {
         this.objectMapper = objectMapper;
         this.presence = presence;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     public void register(WebSocketSession session, UUID userId, String username, Instant tokenExpiresAt) {
@@ -44,6 +51,7 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
         connections.put(session.getId(),
                 new Connection(userId, username, decorated, tokenExpiresAt, null, null, null, false));
         userSessions.computeIfAbsent(userId, ignored -> ConcurrentHashMap.newKeySet()).add(session.getId());
+        metrics.websocketConnections(connections.size());
         refreshPresenceFor(userId);
     }
 
@@ -57,6 +65,7 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
                 userSessions.remove(removed.userId(), remainingSessions);
             }
         }
+        metrics.websocketConnections(connections.size());
         refreshPresenceFor(removed.userId());
         return removed.info();
     }
@@ -209,8 +218,10 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
                     new ServerEnvelope(type, requestId, roomId, payload, Instant.now()));
             session.sendMessage(new TextMessage(json));
         } catch (JacksonException exception) {
+            metrics.websocketSendFailed();
             throw new IllegalStateException("Could not serialize WebSocket event", exception);
         } catch (IOException exception) {
+            metrics.websocketSendFailed();
             try {
                 session.close();
             } catch (IOException ignored) {

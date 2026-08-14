@@ -154,9 +154,11 @@ After the reconnect grace expires, the remaining player wins by forfeit when exa
 
 ## Reconnect and restart behavior
 
-The browser reconnects with capped exponential backoff, refreshes the access token, then re-sends `ROOM_JOIN` for its active room. Redis retains room metadata/membership, and the running coordinator sends the reconnecting player a fresh `GAME_STATE`. Room commands and game inputs are rejected until that particular socket is bound. A user may bind several tabs to the same room, but must leave it before joining a different room.
+The browser reconnects with capped exponential backoff, refreshes the access token, then re-sends `ROOM_JOIN` for its active room. Redis retains room metadata/membership and the latest exact engine checkpoint. The coordinator sends the reconnecting player a fresh `GAME_STATE`; room commands and game inputs are rejected until that particular socket is bound. A user may bind several tabs to the same room, but must leave it before joining a different room.
 
-Active engine state exists only inside the single Spring process. After a backend restart, a Redis room may still say `PLAYING` while its engine no longer exists. The server deletes that stale room and returns `ERROR` with code `ROOM_EXPIRED`; the UI clears the room/game snapshot and returns to a safe lobby state.
+Every changed authoritative state is checkpointed with the match ID, room metadata, activity/disconnect times and game-specific state. After a backend restart, the first player or spectator request validates the checkpoint against the Redis `PLAYING` room and reconstructs the engine. Players without a socket on the new process enter the normal 60-second reconnect grace; restored terminal state is finalized idempotently before another input is accepted.
+
+If the checkpoint is missing, expired, unreadable, incompatible with the deployed engine or does not match the room/game/ordered players, the server deletes it and returns `ERROR` with code `ROOM_EXPIRED`. The UI clears the room/game snapshot and returns to a safe lobby state. Recovery is restart-safe on one replica; it is not distributed match ownership and does not permit multiple realtime backend replicas.
 
 ## Authoritative result flow
 

@@ -35,6 +35,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 class PostgresCatalogIntegrationTest {
     private static final String JWT_SECRET =
             "postgres-integration-secret-with-more-than-thirty-two-characters";
+    private static final String METRICS_TOKEN =
+            "postgres-integration-metrics-token-with-more-than-thirty-two-characters";
     private static final UUID PLAYER_ID = UUID.fromString("30000000-0000-0000-0000-000000000001");
     private static final UUID SNAKE_ID = UUID.fromString("10000000-0000-0000-0000-000000000002");
 
@@ -63,6 +65,7 @@ class PostgresCatalogIntegrationTest {
         registry.add("DB_PASSWORD", POSTGRES::getPassword);
         registry.add("REDIS_URL", () -> "redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(6379));
         registry.add("JWT_SECRET", () -> JWT_SECRET);
+        registry.add("METRICS_TOKEN", () -> METRICS_TOKEN);
     }
 
     @BeforeEach

@@ -29,6 +29,40 @@ public final class CaroEngine implements AuthoritativeEngine {
         this.players = List.copyOf(playerIds);
     }
 
+    CaroEngine(List<UUID> playerIds, CaroCheckpoint checkpoint) {
+        this(playerIds);
+        if (checkpoint.board().size() != SIZE || checkpoint.board().stream().anyMatch(row -> row.size() != SIZE)
+                || checkpoint.currentPlayer() < 0 || checkpoint.currentPlayer() >= players.size()
+                || checkpoint.sequence() < 0 || checkpoint.moves() < 0 || checkpoint.moves() > SIZE * SIZE
+                || checkpoint.winnerId() != null && !players.contains(checkpoint.winnerId())) {
+            throw new IllegalArgumentException("Caro checkpoint is invalid");
+        }
+        int occupied = 0;
+        int firstMarkers = 0;
+        int secondMarkers = 0;
+        for (int row = 0; row < SIZE; row++) {
+            for (int column = 0; column < SIZE; column++) {
+                int marker = checkpoint.board().get(row).get(column);
+                if (marker < 0 || marker > 2) throw new IllegalArgumentException("Caro marker is invalid");
+                board[row][column] = marker;
+                if (marker != 0) occupied++;
+                if (marker == 1) firstMarkers++;
+                if (marker == 2) secondMarkers++;
+            }
+        }
+        if (occupied != checkpoint.moves() || checkpoint.sequence() != checkpoint.moves()
+                || firstMarkers < secondMarkers || firstMarkers > secondMarkers + 1
+                || checkpoint.draw() && checkpoint.winnerId() != null) {
+            throw new IllegalArgumentException("Caro move count is invalid");
+        }
+        currentPlayer = checkpoint.currentPlayer();
+        moves = checkpoint.moves();
+        sequence = checkpoint.sequence();
+        winner = checkpoint.winnerId();
+        draw = checkpoint.draw();
+        validateOutcome(firstMarkers, secondMarkers);
+    }
+
     @Override
     public CaroSnapshot snapshot() {
         List<List<String>> rows = new ArrayList<>(SIZE);
@@ -39,6 +73,23 @@ public final class CaroEngine implements AuthoritativeEngine {
         }
         UUID current = winner == null && !draw ? players.get(currentPlayer) : null;
         return new CaroSnapshot(sequence, SIZE, List.copyOf(rows), current, winner, draw);
+    }
+
+    @Override
+    public CaroCheckpoint checkpoint() {
+        List<List<Integer>> rows = new ArrayList<>(SIZE);
+        for (int[] cells : board) {
+            List<Integer> row = new ArrayList<>(SIZE);
+            for (int cell : cells) row.add(cell);
+            rows.add(List.copyOf(row));
+        }
+        return new CaroCheckpoint(CaroCheckpoint.CURRENT_VERSION, sequence, List.copyOf(rows),
+                currentPlayer, moves, winner, draw);
+    }
+
+    @Override
+    public boolean terminal() {
+        return winner != null || draw;
     }
 
     @Override
@@ -104,7 +155,31 @@ public final class CaroEngine implements AuthoritativeEngine {
         return total;
     }
 
-    private List<EngineOutcome> outcomes() {
+    private void validateOutcome(int firstMarkers, int secondMarkers) {
+        boolean firstWins = hasWinningLine(1);
+        boolean secondWins = hasWinningLine(2);
+        if (firstWins && secondWins
+                || winner == null && (firstWins || secondWins)
+                || winner != null && !(winner.equals(players.getFirst()) ? firstWins : secondWins)
+                || winner != null && winner.equals(players.getFirst()) && firstMarkers != secondMarkers + 1
+                || winner != null && winner.equals(players.get(1)) && firstMarkers != secondMarkers
+                || draw && (moves != SIZE * SIZE || firstWins || secondWins)
+                || !terminal() && currentPlayer != moves % players.size()) {
+            throw new IllegalArgumentException("Caro checkpoint outcome is invalid");
+        }
+    }
+
+    private boolean hasWinningLine(int marker) {
+        for (int row = 0; row < SIZE; row++) {
+            for (int column = 0; column < SIZE; column++) {
+                if (board[row][column] == marker && wins(row, column, marker)) return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public List<EngineOutcome> outcomes() {
         return players.stream().map(player -> new EngineOutcome(player,
                 draw ? GameResultType.DRAW : player.equals(winner) ? GameResultType.WIN : GameResultType.LOSS,
                 player.equals(winner) ? 1 : 0)).toList();

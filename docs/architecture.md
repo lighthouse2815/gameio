@@ -26,8 +26,8 @@ The browser connects directly to the Railway `/ws` endpoint because the Spring p
 | Store | Data | Recovery expectation |
 | --- | --- | --- |
 | PostgreSQL | users, hashed refresh tokens, catalog, results, Daily Challenge participation, stats, achievements, friendships | Durable source of truth; Flyway-managed and backed up |
-| Redis | online/current-game presence, matchmaking tickets/queues, room metadata, 30-second leaderboard responses | Ephemeral and TTL-bound; loss must not erase durable player data |
-| Spring process memory | active Tic Tac Toe, Caro and Tank engine instances | Available only while the single backend process remains alive |
+| Redis | online/current-game presence, matchmaking tickets/queues, room metadata, active-match checkpoints, 30-second leaderboard responses | TTL-bound; loss must not erase durable player data, but can terminate active rooms |
+| Spring process memory | live Tic Tac Toe, Caro and Tank engine instances plus their tick schedulers | Reconstructed from the latest valid Redis checkpoint after a process restart |
 | Browser memory | short-lived access token and UI state | Disposable; restored through the HttpOnly refresh cookie and server queries |
 
 Leaderboards query PostgreSQL through a dedicated read repository and use a versioned Redis read-through cache keyed by global/game scope, page and size. Entries expire after 30 seconds. A committed result increments global and affected-game generations; a Redis error fails open to PostgreSQL rather than failing the public ranking request.
@@ -84,7 +84,9 @@ Clients send `PLACE_PIECE`, direction, stop or shoot input. They cannot submit p
 
 Spectators bind to the same broadcast channel only for active public rooms. The binding is flagged read-only and excluded from membership, active-player presence, capacity, disconnect forfeits and input authorization. Quick reactions use four fixed enum values, authenticated server identity and a separate four-per-five-seconds limit; there is no free-form chat surface.
 
-Room metadata survives in Redis, but an active engine does not survive a backend restart. A reconnect to such a stale `PLAYING` room produces `ROOM_EXPIRED`; the room is removed and the frontend exits the canvas. This limitation is why production stays on one non-sleeping replica.
+Every accepted engine transition is serialized with match identity, room metadata, activity time, disconnect timers and an exact game-specific snapshot. Tic Tac Toe and Caro retain board, turn and outcome state; Tank also retains positions, velocity, HP, kills, bullets, input sequence, shot cooldown and tick clock. Checkpoints expire no later than the room or 35 minutes after their latest write and are deleted after durable result completion.
+
+After a process restart, the first reconnect or spectate request validates the checkpoint against the current `PLAYING` room, restores the registered engine and applies the normal 60-second player reconnect grace. A missing, expired, unreadable or incompatible checkpoint is discarded and yields `ROOM_EXPIRED`; the server never invents state. The in-memory process still owns tick scheduling and socket fan-out, so recovery supports restarts but not horizontal active/active ownership. Production therefore remains on one non-sleeping replica until distributed leasing/fencing and cross-replica delivery exist.
 
 ## Frontend boundaries
 

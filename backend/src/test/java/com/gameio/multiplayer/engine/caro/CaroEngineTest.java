@@ -51,6 +51,22 @@ class CaroEngineTest {
                 .hasMessageContaining("outside");
     }
 
+    @Test
+    void restoresLargeBoardWithoutChangingTheNextPlayer() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        CaroEngine original = new CaroEngine(List.of(first, second));
+        place(original, first, 7, 7);
+        place(original, second, 8, 8);
+
+        CaroEngine restored = new CaroEngine(List.of(first, second), original.checkpoint());
+
+        assertThat(restored.snapshot()).isEqualTo(original.snapshot());
+        EngineUpdate next = place(restored, first, 7, 8);
+        assertThat(((CaroSnapshot) next.snapshot()).sequence()).isEqualTo(3);
+        assertThat(((CaroSnapshot) next.snapshot()).currentTurnPlayerId()).isEqualTo(second);
+    }
+
     private EngineUpdate place(CaroEngine engine, UUID userId, int row, int column) {
         return engine.input(userId, new GameInput("PLACE_PIECE", row, column, null), NOW);
     }

@@ -20,7 +20,9 @@ The implementation deliberately keeps one application backend instead of introdu
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
 - Read-only spectating for active public matches plus rate-limited fixed quick reactions; spectators never acquire membership or game-input authority.
 - A single authenticated WebSocket transport shared by Tic Tac Toe, Caro and Tank Battle. Clients send inputs; the server validates membership, turns, movement, collisions, HP and terminal outcomes.
-- PostgreSQL/Flyway for durable data and Redis for ephemeral room, queue, presence and short-lived leaderboard-cache data.
+- PostgreSQL/Flyway for durable data and Redis for TTL-bound room, queue, presence, active-match checkpoint and leaderboard-cache data.
+- Exact Redis checkpoints for active Tic Tac Toe, Caro and Tank state, allowing a restarted backend to resume sequence, turns, movement, bullets, cooldowns and reconnect timers.
+- Public health probes, token-protected Prometheus metrics and checksum-verified PostgreSQL backup/restore scripts.
 
 ### Games
 
@@ -49,7 +51,7 @@ Browser
 
 The production Cloudflare worker proxies only the fixed `/api/*` namespace to the configured backend origin, rejects request bodies over 1 MiB and disables caching. This keeps the refresh cookie first-party on the frontend host. WebSocket traffic connects directly to the continuously running Railway backend and authenticates with WebSocket subprotocols, never a query-string token.
 
-The active multiplayer engine is process-local in this first release, so production uses one warm backend replica. Redis retains room metadata, but a process restart cannot reconstruct a match in progress; the client receives `ROOM_EXPIRED` and returns to the lobby safely.
+The running multiplayer engine is owned by one warm backend replica, while every accepted transition is checkpointed to Redis. After a process restart, the first player or spectator reconnect reconstructs the exact engine state and normal reconnect grace applies. A missing, expired, corrupt or deployment-incompatible checkpoint produces `ROOM_EXPIRED` and returns the client to the lobby safely. Checkpoint recovery does not yet provide distributed match ownership, so production still uses exactly one realtime backend replica.
 
 More detail: [architecture](docs/architecture.md), [security](docs/security.md), and [WebSocket protocol](docs/websocket-protocol.md).
 
@@ -93,6 +95,7 @@ docker compose up --build
 
 - Portal: `http://localhost:3000`
 - Backend health: `http://localhost:8080/actuator/health`
+- Prometheus metrics: `http://localhost:8080/actuator/prometheus` with `X-Gameio-Metrics-Token`
 - WebSocket: `ws://localhost:8080/ws`
 
 If host port `8080` is already in use, change only the host-facing values in `.env` before building:
@@ -171,6 +174,7 @@ That frontend example uses the local same-origin `/api` BFF with `BACKEND_ORIGIN
 | `JWT_ISSUER` | Stable issuer, normally `gameio-api` | Must remain consistent for issued and decoded access tokens |
 | `JWT_ACCESS_TTL` | For example `15m` | Keep short; an access token remains valid until expiry |
 | `JWT_REFRESH_TTL` | For example `30d` | Rotating refresh-family lifetime |
+| `METRICS_TOKEN` | Separate random value of at least 32 UTF-8 bytes | Required in `X-Gameio-Metrics-Token` to read `/actuator/prometheus`; production rejects the local fallback |
 | `GOOGLE_CLIENT_ID` | Same Google Web client ID embedded in the frontend | Required audience for backend Google ID-token validation; this public identifier is not a client secret |
 | `CORS_ALLOWED_ORIGINS` | Exact Cloudflare HTTPS origin | Used by REST CORS and WebSocket Origin validation; comma-separated when multiple exact origins are required |
 | `REFRESH_COOKIE_SECURE` | `true` | Required over HTTPS |
@@ -184,7 +188,9 @@ See [deployment](docs/deployment.md) for the deployment order and complete prefl
 
 Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, six catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
 
-PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements, friendships and signed-in game preferences. Redis is disposable: it stores presence, queues, room metadata, one-use game invitations and a 30-second versioned leaderboard response cache. A cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
+PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements, friendships and signed-in game preferences. Redis stores TTL-bound presence, queues, room metadata, active-match checkpoints, one-use game invitations and a 30-second versioned leaderboard response cache. Redis loss never erases completed player data, but it can end currently active rooms because their recovery checkpoints are intentionally transient. A leaderboard cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
+
+Operational health, metrics, verified backup and restore-drill procedures are documented in the [operations runbook](docs/operations.md).
 
 ## Authentication and WebSocket model
 
@@ -234,9 +240,10 @@ docker compose config --quiet
 docker compose up --build -d
 .\scripts\smoke.ps1
 .\scripts\realtime-smoke.ps1
+.\scripts\realtime-smoke.ps1 -RestartBackendAfterFirstMove
 ```
 
-The realtime smoke registers two unique users, negotiates two authenticated sockets, creates a Tic Tac Toe room, plays a deterministic server-authoritative win and verifies the persisted `WIN`/`LOSS` records. Both smoke scripts accept live URLs and avoid printing credentials; they create durable test accounts/results because no destructive account-delete API exists.
+The realtime smoke registers two unique users, negotiates two authenticated sockets, creates a Tic Tac Toe room, plays a deterministic server-authoritative win and verifies the persisted `WIN`/`LOSS` records. Its optional local-Docker restart mode makes the first move, restarts the backend, reconnects both users, verifies the exact recovered sequence/board/turn, then finishes the same match ID. Both smoke scripts accept live URLs and avoid printing credentials; they create durable test accounts/results because no destructive account-delete API exists.
 
 GitHub Actions repeats Maven verification, frontend lint/typecheck/tests/build, Compose validation and container builds on pushes and pull requests.
 
@@ -256,8 +263,8 @@ Release screenshots are generated from the real browser runtime during the final
 
 ## Roadmap
 
-- Persist or externalize active engine state before running more than one realtime backend replica.
-- Add provider-independent automated backup/restore drills and production observability.
+- Add distributed match ownership, fencing and cross-replica WebSocket fan-out before running more than one realtime backend replica.
+- Connect the provided Prometheus signals to a hosted collector and alert delivery channel.
 - Extract the realtime boundary to a dedicated game server only when scale justifies it; the current protocol keeps that migration possible without rewriting accounts or progression.
 
 ## Further documentation
@@ -267,4 +274,5 @@ Release screenshots are generated from the real browser runtime during the final
 - [WebSocket protocol](docs/websocket-protocol.md)
 - [Adding a game](docs/game-extension.md)
 - [Deployment](docs/deployment.md)
+- [Operations runbook](docs/operations.md)
 - [Security release checklist](docs/security.md)

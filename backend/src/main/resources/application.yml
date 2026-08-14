@@ -36,13 +36,18 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   endpoint:
     health:
       probes:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 gameio:
+  observability:
+    metrics-token: ${METRICS_TOKEN:local-development-metrics-token-change-before-deploying}
   security:
     jwt:
       issuer: ${JWT_ISSUER:gameio-api}

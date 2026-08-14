@@ -43,6 +43,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-local-only-secret-change-me-local-only-secret-change-me-1234567890}
+      METRICS_TOKEN: ${METRICS_TOKEN:-local-development-metrics-token-change-before-deploying}
       JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
       JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}

@@ -59,4 +59,24 @@ class TankEngineTest {
                 .isInstanceOf(InvalidGameActionException.class)
                 .hasMessageContaining("cooling down");
     }
+
+    @Test
+    void restoresMovementBulletsCooldownAndTickClockExactly() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        TankEngine original = new TankEngine(List.of(first, second));
+        original.input(first, new GameInput("MOVE_RIGHT", null, null, 1L), START);
+        original.input(first, new GameInput("SHOOT", null, null, 2L), START.plusMillis(10));
+        original.tick(START.plusMillis(100));
+
+        TankEngine restored = new TankEngine(List.of(first, second), original.checkpoint());
+
+        assertThat(restored.snapshot()).isEqualTo(original.snapshot());
+        assertThatThrownBy(() -> restored.input(first,
+                new GameInput("SHOOT", null, null, 3L), START.plusMillis(400)))
+                .isInstanceOf(InvalidGameActionException.class)
+                .hasMessageContaining("cooling down");
+        assertThat(restored.tick(START.plusMillis(150)).snapshot())
+                .isEqualTo(original.tick(START.plusMillis(150)).snapshot());
+    }
 }

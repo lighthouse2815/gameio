@@ -14,8 +14,8 @@ Run this checklist for production and every internet-accessible preview. Preview
 
 - [ ] Keep PostgreSQL and Redis on private networking with no public port. Expose only backend HTTPS/WSS.
 - [ ] Set `SPRING_PROFILES_ACTIVE=prod`; allow Railway to supply `PORT`; use `/actuator/health` as the health check.
-- [ ] Keep actuator exposure limited to public health and non-sensitive info. Never expose environment, heap, beans or configuration endpoints.
-- [ ] Run exactly one Singapore backend replica with Railway Serverless/sleep disabled. Active engine state is process-local and is not safe to distribute across replicas.
+- [ ] Keep only health public. Protect `/actuator/prometheus` with a separate random `METRICS_TOKEN`; never expose environment, heap, beans or configuration endpoints.
+- [ ] Run exactly one Singapore backend replica with Railway Serverless/sleep disabled. Redis checkpoints recover process restarts, but active engine ownership and WebSocket fan-out are not safe to distribute across replicas.
 - [ ] Set `CORS_ALLOWED_ORIGINS` to exact HTTPS frontend origins. Do not use `*`, broad subdomain patterns or localhost in production.
 - [ ] Terminate TLS at the platform edge and use only `https://`/`wss://` public URLs.
 - [ ] Add edge limits for registration, login, refresh and WebSocket connection attempts. Application login limiting is process-local (10 failed attempts per client key in one minute) and is not a distributed abuse defense.
@@ -64,15 +64,15 @@ Run this checklist for production and every internet-accessible preview. Preview
 - [ ] Require the current socket to bind through `ROOM_JOIN` before room/game commands, and prevent one user from binding active sockets to different rooms.
 - [ ] Accept only actions. Never accept a client-authoritative score, position, rotation, HP, bullet hit or terminal outcome.
 - [ ] Persist terminal multiplayer results once by match ID before publishing `GAME_OVER`.
-- [ ] Treat process restart as loss of active engine state: delete stale playing rooms and return `ROOM_EXPIRED` instead of inventing a restored state.
+- [ ] On process restart, restore only a valid Redis checkpoint whose game, room and ordered players match the current `PLAYING` room. Delete missing/corrupt/incompatible state and return `ROOM_EXPIRED` instead of inventing a snapshot.
 
 ## Data and recovery
 
 - [ ] Use Flyway migrations and keep Hibernate `ddl-auto=validate`; never enable create/update in production.
 - [ ] Use a least-privilege application database role when the provider permits migration/runtime separation.
 - [ ] Enable encrypted PostgreSQL backups with retention and at least one appropriate off-platform copy.
-- [ ] Perform a restore drill before launch and on a schedule. A backup is not verified until a restore succeeds.
-- [ ] Treat Redis as ephemeral. Account, result, EXP, achievement, friendship and leaderboard recovery must not depend on Redis; cached rankings must fail open to PostgreSQL.
+- [ ] Generate checksum-verified custom-format dumps with `scripts/backup-postgres.ps1`, retain encrypted off-platform copies and perform the `docs/operations.md` isolated restore drill before launch and on a schedule. A backup is not verified until a restore succeeds.
+- [ ] Treat Redis as transient. Account, result, EXP, achievement, friendship and leaderboard recovery must not depend on Redis; losing Redis may terminate active matches but must not erase completed records, and cached rankings must fail open to PostgreSQL.
 - [ ] Define retention/deletion rules for accounts, smoke-test users, match history, abuse metadata and operational logs.
 
 ## Logging and incident response

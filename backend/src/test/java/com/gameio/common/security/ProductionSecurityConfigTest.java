@@ -3,6 +3,7 @@ package com.gameio.common.security;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.gameio.observability.ObservabilityProperties;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -32,6 +33,22 @@ class ProductionSecurityConfigTest {
         MockEnvironment environment = new MockEnvironment().withProperty("JWT_SECRET", secret);
 
         assertThatCode(config.productionJwtSecretGuard(environment, properties(secret))::afterSingletonsInstantiated)
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void requiresASeparateStrongProductionMetricsToken() {
+        ObservabilityProperties fallback = new ObservabilityProperties(
+                ProductionSecurityConfig.LOCAL_METRICS_FALLBACK);
+        SmartInitializingSingleton missing = config.productionMetricsTokenGuard(new MockEnvironment(), fallback);
+        assertThatThrownBy(missing::afterSingletonsInstantiated)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("METRICS_TOKEN");
+
+        String token = "production-metrics-token-with-at-least-thirty-two-characters";
+        MockEnvironment environment = new MockEnvironment().withProperty("METRICS_TOKEN", token);
+        assertThatCode(config.productionMetricsTokenGuard(
+                environment, new ObservabilityProperties(token))::afterSingletonsInstantiated)
                 .doesNotThrowAnyException();
     }
 

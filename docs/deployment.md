@@ -63,6 +63,7 @@ SPRING_PROFILES_ACTIVE=prod
 DATABASE_URL=<private PostgreSQL connection URL>
 REDIS_URL=<private Redis connection URL>
 JWT_SECRET=<at least 64 random bytes>
+METRICS_TOKEN=<separate random value of at least 32 bytes>
 JWT_ISSUER=gameio-api
 JWT_ACCESS_TTL=15m
 JWT_REFRESH_TTL=30d
@@ -77,7 +78,7 @@ Railway supplies `PORT`. Do not set `PORT` to a fixed value in production. The b
 
 For Redis, `REDIS_URL` is preferred. When a provider does not supply it, configure `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD` and `REDIS_SSL` explicitly.
 
-The `prod` profile refuses a missing/default `JWT_SECRET`. Do not weaken that guard to make a failed deployment start.
+The `prod` profile refuses a missing/default `JWT_SECRET` or `METRICS_TOKEN`. Keep them independent and do not weaken either guard to make a failed deployment start.
 
 Verify the backend before building the frontend:
 
@@ -86,6 +87,15 @@ Invoke-RestMethod https://<railway-host>/actuator/health
 ```
 
 Expected result: `status` is `UP`, Flyway completed, and Railway reports the replica healthy.
+
+Verify the protected metrics endpoint without printing the token:
+
+```powershell
+$metricsHeaders = @{ "X-Gameio-Metrics-Token" = $env:METRICS_TOKEN }
+(Invoke-WebRequest https://<railway-host>/actuator/prometheus -Headers $metricsHeaders).StatusCode
+```
+
+Expected result: `200`. A missing or incorrect header returns `401`. The endpoint exposes JVM, HTTP, database-pool and low-cardinality `gameio_realtime_*` metrics; it never labels data with a room ID, user ID or token. See the [operations runbook](operations.md) for alerts and backup/restore drills.
 
 ## 4. Configure the Cloudflare/OpenNext frontend
 
@@ -178,7 +188,7 @@ Use the deployed Cloudflare URL, not localhost, and verify all of the following:
 - real 2048, Snake, Flappy Bird, Breakout, Minesweeper and Memory Match input on desktop/mobile controls, including offline and signed-in verified modes;
 - two isolated browser sessions completing Tic Tac Toe and Caro;
 - Tank Battle movement/shoot/state updates with two sessions;
-- reconnect UI, `ROOM_EXPIRED` handling and no blank canvas on socket failure;
+- reconnect through a controlled backend restart, `ROOM_EXPIRED` fallback for a removed/corrupt checkpoint and no blank canvas on socket failure;
 - no console errors, failed mixed-content requests, CSP violations or unexpected cached authenticated responses.
 
 Record the frontend/backend URLs, commit SHA, Flyway version, test timestamp and screenshots. Never record credentials or tokens.

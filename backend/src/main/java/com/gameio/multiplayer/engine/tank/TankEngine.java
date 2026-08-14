@@ -42,6 +42,53 @@ public final class TankEngine implements AuthoritativeEngine {
         }
     }
 
+    TankEngine(List<UUID> playerIds, TankCheckpoint checkpoint) {
+        this(playerIds);
+        if (checkpoint.sequence() < 0 || checkpoint.tanks().size() != playerIds.size()
+                || checkpoint.winnerId() != null && !playerIds.contains(checkpoint.winnerId())) {
+            throw new IllegalArgumentException("Tank Battle checkpoint is invalid");
+        }
+        tanks.clear();
+        for (TankCheckpoint.TankState state : checkpoint.tanks()) {
+            if (!playerIds.contains(state.userId()) || tanks.containsKey(state.userId())
+                    || !finite(state.x(), state.y(), state.rotation(), state.dx(), state.dy())
+                    || state.x() < TANK_RADIUS || state.x() > WIDTH - TANK_RADIUS
+                    || state.y() < TANK_RADIUS || state.y() > HEIGHT - TANK_RADIUS
+                    || !validRotation(state.rotation())
+                    || state.hp() < 0 || state.hp() > 100 || state.hp() % BULLET_DAMAGE != 0
+                    || state.kills() < 0 || state.kills() >= playerIds.size()
+                    || state.lastInputSequence() < -1 || !validDirection(state.dx(), state.dy())
+                    || state.alive() != (state.hp() > 0)) {
+                throw new IllegalArgumentException("Tank Battle tank checkpoint is invalid");
+            }
+            MutableTank tank = new MutableTank(state.userId(), state.x(), state.y());
+            tank.rotation = state.rotation();
+            tank.hp = state.hp();
+            tank.alive = state.alive();
+            tank.kills = state.kills();
+            tank.dx = state.dx();
+            tank.dy = state.dy();
+            tank.lastInputSequence = state.lastInputSequence();
+            tank.lastShotAt = state.lastShotAt();
+            tanks.put(state.userId(), tank);
+        }
+        java.util.Set<UUID> bulletIds = new java.util.HashSet<>();
+        for (TankCheckpoint.BulletState state : checkpoint.bullets()) {
+            if (state.id() == null || !bulletIds.add(state.id()) || !tanks.containsKey(state.ownerId())
+                    || !finite(state.x(), state.y(), state.dx(), state.dy())
+                    || state.x() < 0 || state.x() > WIDTH || state.y() < 0 || state.y() > HEIGHT
+                    || Math.abs(Math.hypot(state.dx(), state.dy()) - 1) > 0.000_001) {
+                throw new IllegalArgumentException("Tank Battle bullet checkpoint is invalid");
+            }
+            bullets.add(new MutableBullet(state.id(), state.ownerId(), state.x(), state.y(), state.dx(), state.dy()));
+        }
+        sequence = checkpoint.sequence();
+        lastTick = checkpoint.lastTick();
+        winner = checkpoint.winnerId();
+        draw = checkpoint.draw();
+        validateOutcome();
+    }
+
     @Override
     public boolean requiresServerTick() {
         return true;
@@ -52,6 +99,18 @@ public final class TankEngine implements AuthoritativeEngine {
         List<TankView> tankViews = tanks.values().stream().map(MutableTank::view).toList();
         List<BulletView> bulletViews = bullets.stream().map(MutableBullet::view).toList();
         return new TankSnapshot(sequence, WIDTH, HEIGHT, tankViews, bulletViews, winner, draw);
+    }
+
+    @Override
+    public TankCheckpoint checkpoint() {
+        List<TankCheckpoint.TankState> tankStates = tanks.values().stream().map(tank ->
+                new TankCheckpoint.TankState(tank.userId, tank.x, tank.y, tank.rotation, tank.hp, tank.alive,
+                        tank.kills, tank.dx, tank.dy, tank.lastInputSequence, tank.lastShotAt)).toList();
+        List<TankCheckpoint.BulletState> bulletStates = bullets.stream().map(bullet ->
+                new TankCheckpoint.BulletState(bullet.id, bullet.ownerId, bullet.x, bullet.y,
+                        bullet.dx, bullet.dy)).toList();
+        return new TankCheckpoint(TankCheckpoint.CURRENT_VERSION, sequence, lastTick, winner, draw,
+                tankStates, bulletStates);
     }
 
     @Override
@@ -169,11 +228,13 @@ public final class TankEngine implements AuthoritativeEngine {
         if (alive.isEmpty()) draw = true;
     }
 
-    private boolean terminal() {
+    @Override
+    public boolean terminal() {
         return winner != null || draw;
     }
 
-    private List<EngineOutcome> outcomes() {
+    @Override
+    public List<EngineOutcome> outcomes() {
         return tanks.values().stream().map(tank -> new EngineOutcome(tank.userId,
                 draw ? GameResultType.DRAW : tank.userId.equals(winner) ? GameResultType.WIN : GameResultType.LOSS,
                 tank.kills)).toList();
@@ -183,6 +244,35 @@ public final class TankEngine implements AuthoritativeEngine {
         double dx = x1 - x2;
         double dy = y1 - y2;
         return dx * dx + dy * dy;
+    }
+
+    private static boolean finite(double... values) {
+        for (double value : values) {
+            if (!Double.isFinite(value)) return false;
+        }
+        return true;
+    }
+
+    private static boolean validRotation(double rotation) {
+        return rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270;
+    }
+
+    private static boolean validDirection(double dx, double dy) {
+        return dx == Math.rint(dx) && dy == Math.rint(dy)
+                && Math.abs(dx) <= 1 && Math.abs(dy) <= 1 && Math.abs(dx) + Math.abs(dy) <= 1;
+    }
+
+    private void validateOutcome() {
+        List<MutableTank> alive = tanks.values().stream().filter(tank -> tank.alive).toList();
+        int totalKills = tanks.values().stream().mapToInt(tank -> tank.kills).sum();
+        int destroyed = tanks.size() - alive.size();
+        if (winner != null && draw
+                || winner != null && (alive.size() != 1 || !alive.getFirst().userId.equals(winner))
+                || draw && !alive.isEmpty()
+                || winner == null && !draw && alive.size() < 2
+                || totalKills != destroyed) {
+            throw new IllegalArgumentException("Tank Battle checkpoint outcome is invalid");
+        }
     }
 
     private static final class MutableTank {

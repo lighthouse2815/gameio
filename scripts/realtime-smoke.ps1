@@ -4,11 +4,11 @@
 param(
     [Parameter()]
     [ValidateNotNull()]
-    [uri] $BaseUrl = "http://localhost:8080",
+    [uri] $BaseUrl = "http://127.0.0.1:8080",
 
     [Parameter()]
     [ValidateNotNull()]
-    [uri] $WsUrl = "ws://localhost:8080/ws",
+    [uri] $WsUrl = "ws://127.0.0.1:8080/ws",
 
     [Parameter()]
     [ValidateNotNull()]
@@ -24,6 +24,9 @@ param(
 
     [Parameter()]
     [switch] $SkipDockerServices,
+
+    [Parameter()]
+    [switch] $RestartBackendAfterFirstMove,
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]
@@ -63,6 +66,9 @@ if (-not [string]::IsNullOrEmpty($WsUrl.UserInfo) -or
     -not [string]::IsNullOrEmpty($WsUrl.Query) -or
     -not [string]::IsNullOrEmpty($WsUrl.Fragment)) {
     throw "WsUrl must be the credential-free /ws endpoint without query or fragment."
+}
+if ($RestartBackendAfterFirstMove -and $SkipDockerServices) {
+    throw "RestartBackendAfterFirstMove is supported only for the local Docker Compose backend."
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -263,6 +269,17 @@ function Wait-ForApiHealth {
         Start-Sleep -Seconds 2
     } while ([DateTimeOffset]::UtcNow -lt $deadline)
     throw "Backend health did not become UP within $StartupTimeoutSeconds seconds."
+}
+
+function Restart-ComposeBackend {
+    param([Parameter(Mandatory)][object] $Session)
+
+    Write-SmokeStep "Restarting the backend to verify Redis checkpoint recovery"
+    & docker compose --project-directory $repoRoot --file $composeFile restart backend
+    if ($LASTEXITCODE -ne 0) {
+        throw "docker compose restart backend failed with exit code $LASTEXITCODE."
+    }
+    Wait-ForApiHealth -Session $Session
 }
 
 function Register-SmokePlayer {
@@ -578,6 +595,49 @@ try {
         [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 1 },
         [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 2 }
     )
+    if ($RestartBackendAfterFirstMove) {
+        $firstMove = $moves[0]
+        $firstInputId = Send-WsEnvelope -Connection $firstMove.Connection -Type "GAME_INPUT" `
+            -RoomId $roomId -Payload @{
+                action = "PLACE_PIECE"
+                row = $firstMove.Row
+                column = $firstMove.Column
+            }
+        $null = Wait-ForWsEvent -Connection $firstMove.Connection -Type "GAME_STATE" -RequestId $firstInputId
+
+        Close-GameSocket -Connection $ownerSocket
+        Close-GameSocket -Connection $guestSocket
+        $ownerSocket = $null
+        $guestSocket = $null
+        Restart-ComposeBackend -Session $ownerSession
+
+        Write-SmokeStep "Reconnecting both players and validating the recovered board"
+        $ownerSocket = New-GameSocket -AccessToken $owner.AccessToken -Label "Owner"
+        $guestSocket = New-GameSocket -AccessToken $guest.AccessToken -Label "Guest"
+        $ownerRejoinId = Send-WsEnvelope -Connection $ownerSocket -Type "ROOM_JOIN" -RoomId $roomId
+        $guestRejoinId = Send-WsEnvelope -Connection $guestSocket -Type "ROOM_JOIN" -RoomId $roomId
+        $null = Wait-ForWsEvent -Connection $ownerSocket -Type "ROOM_STATE" -RequestId $ownerRejoinId
+        $null = Wait-ForWsEvent -Connection $guestSocket -Type "ROOM_STATE" -RequestId $guestRejoinId
+        $ownerRecovered = Wait-ForWsEvent -Connection $ownerSocket -Type "GAME_STATE"
+        $guestRecovered = Wait-ForWsEvent -Connection $guestSocket -Type "GAME_STATE"
+        $null = Wait-ForWsEvent -Connection $ownerSocket -Type "CONNECTED"
+        $null = Wait-ForWsEvent -Connection $guestSocket -Type "CONNECTED"
+
+        $guestId = [string] (Get-RequiredProperty $guest.User "id" "Guest")
+        foreach ($recovered in @($ownerRecovered, $guestRecovered)) {
+            $sequence = [long] (Get-RequiredProperty $recovered.payload "sequence" "Recovered GAME_STATE")
+            $turn = [string] (Get-RequiredProperty $recovered.payload "currentTurnPlayerId" "Recovered GAME_STATE")
+            if ($sequence -ne 1 -or [string] $recovered.payload.board[0][0] -ne "X" -or $turn -ne $guestId) {
+                throw "Recovered GAME_STATE did not preserve sequence, board and current turn."
+            }
+        }
+        $moves = @(
+            [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 0 },
+            [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 1 },
+            [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 1 },
+            [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 2 }
+        )
+    }
     foreach ($move in $moves) {
         $inputId = Send-WsEnvelope -Connection $move.Connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
             action = "PLACE_PIECE"
@@ -632,5 +692,6 @@ finally {
 }
 
 if ($flowCompleted) {
-    Write-SmokeStep "WebSocket auth, room flow, authoritative match, and persisted outcomes passed"
+    $recoveryResult = if ($RestartBackendAfterFirstMove) { ", backend restart recovery" } else { "" }
+    Write-SmokeStep "WebSocket auth, room flow$recoveryResult, authoritative match, and persisted outcomes passed"
 }

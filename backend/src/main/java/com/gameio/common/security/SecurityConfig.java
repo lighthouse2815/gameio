@@ -32,14 +32,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, MetricsTokenFilter metricsTokenFilter)
+            throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .addFilterBefore(new CsrfHeaderFilter(), BearerTokenAuthenticationFilter.class)
+                .addFilterBefore(metricsTokenFilter, BearerTokenAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/auth/**", "/ws", "/ws/**", "/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/ws", "/ws/**", "/actuator/health",
+                                "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/games/**", "/api/leaderboards/**",
                                 "/api/users/*", "/api/achievements", "/api/daily-challenges/today",

@@ -45,6 +45,22 @@ class TicTacToeEngineTest {
                 .hasMessageContaining("already over");
     }
 
+    @Test
+    void restoresTurnBoardAndSequenceFromCheckpoint() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        TicTacToeEngine original = new TicTacToeEngine(List.of(first, second));
+        place(original, first, 0, 0);
+        place(original, second, 1, 1);
+
+        TicTacToeEngine restored = new TicTacToeEngine(List.of(first, second), original.checkpoint());
+
+        assertThat(restored.snapshot()).isEqualTo(original.snapshot());
+        EngineUpdate next = place(restored, first, 0, 1);
+        assertThat(((TicTacToeSnapshot) next.snapshot()).sequence()).isEqualTo(3);
+        assertThat(((TicTacToeSnapshot) next.snapshot()).currentTurnPlayerId()).isEqualTo(second);
+    }
+
     private EngineUpdate place(TicTacToeEngine engine, UUID userId, int row, int column) {
         return engine.input(userId, new GameInput("PLACE_PIECE", row, column, null), NOW);
     }

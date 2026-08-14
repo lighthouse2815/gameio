@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.gameio.multiplayer.presence.PresenceStore;
+import com.gameio.observability.GameioOperationalMetrics;
 import com.gameio.room.RoomPlayer;
 import com.gameio.room.RoomState;
 import com.gameio.room.RoomStatus;
@@ -27,7 +28,7 @@ class RealtimeSessionRegistryTest {
     void refreshPrefersRoomBoundTabAndFinishClearsEveryRoomBinding() {
         PresenceStore presence = mock(PresenceStore.class);
         RealtimeSessionRegistry registry = new RealtimeSessionRegistry(JsonMapper.builder().build(), presence,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), mock(GameioOperationalMetrics.class));
         UUID userId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
         WebSocketSession lobbySession = session("lobby");
@@ -53,7 +54,8 @@ class RealtimeSessionRegistryTest {
     @Test
     void roomConnectionRemainsUntilLastBoundTabClosesAndExplicitLeaveClearsAllTabs() {
         RealtimeSessionRegistry registry = new RealtimeSessionRegistry(JsonMapper.builder().build(),
-                mock(PresenceStore.class), Clock.fixed(NOW, ZoneOffset.UTC));
+                mock(PresenceStore.class), Clock.fixed(NOW, ZoneOffset.UTC),
+                mock(GameioOperationalMetrics.class));
         UUID userId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
         RoomState room = new RoomState(roomId, "ABC234", UUID.randomUUID(), "caro", "Caro",
@@ -77,7 +79,7 @@ class RealtimeSessionRegistryTest {
     void spectatorBindingCanShareRoomChannelWithoutClaimingPlayerMembership() {
         PresenceStore presence = mock(PresenceStore.class);
         RealtimeSessionRegistry registry = new RealtimeSessionRegistry(JsonMapper.builder().build(), presence,
-                Clock.fixed(NOW, ZoneOffset.UTC));
+                Clock.fixed(NOW, ZoneOffset.UTC), mock(GameioOperationalMetrics.class));
         UUID spectatorId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
         RoomState room = new RoomState(roomId, "WATCH1", UUID.randomUUID(), "caro", "Caro",
