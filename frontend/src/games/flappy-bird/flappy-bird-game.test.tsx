@@ -1,5 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/ui/toast";
 import FlappyBirdGame from "@/games/flappy-bird/flappy-bird-game";
@@ -101,6 +108,50 @@ describe("Flappy Bird game", () => {
     input.dispatchEvent(typingKey);
     expect(typingKey.defaultPrevented).toBe(false);
     input.remove();
+  });
+
+  it("redraws the canvas on animation frames between fixed simulation ticks", () => {
+    const frames: FrameRequestCallback[] = [];
+    const context = {
+      arc: vi.fn(),
+      beginPath: vi.fn(),
+      clearRect: vi.fn(),
+      closePath: vi.fn(),
+      ellipse: vi.fn(),
+      fill: vi.fn(),
+      fillRect: vi.fn(),
+      lineTo: vi.fn(),
+      moveTo: vi.fn(),
+      restore: vi.fn(),
+      rotate: vi.fn(),
+      save: vi.fn(),
+      setLineDash: vi.fn(),
+      stroke: vi.fn(),
+      strokeRect: vi.fn(),
+      translate: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
+      () => context,
+    );
+    vi.stubGlobal(
+      "requestAnimationFrame",
+      vi.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+    );
+    renderGame();
+
+    fireEvent.click(screen.getByRole("button", { name: "Play offline" }));
+    vi.mocked(context.clearRect).mockClear();
+    act(() => {
+      frames.shift()?.(0);
+      frames.shift()?.(16);
+      frames.shift()?.(32);
+    });
+
+    expect(context.clearRect).toHaveBeenCalledTimes(3);
+    expect(screen.getByText("0 TICKS")).toBeInTheDocument();
   });
 
   it("starts a seeded online run while retaining the offline choice", async () => {

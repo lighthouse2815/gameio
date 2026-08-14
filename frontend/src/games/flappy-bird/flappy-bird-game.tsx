@@ -16,6 +16,7 @@ import {
   FLAPPY_PIPE_GAP,
   FLAPPY_PIPE_WIDTH,
   FLAPPY_TICK_MS,
+  projectFlappyState,
   sameFlappyState,
   type FlappyAction,
   type FlappyState,
@@ -244,8 +245,10 @@ export default function FlappyBirdGame() {
   });
 
   useEffect(() => {
-    if (canvasRef.current) drawScene(canvasRef.current, gameState);
-  }, [gameState]);
+    if (status !== "playing" && canvasRef.current) {
+      drawScene(canvasRef.current, gameState);
+    }
+  }, [gameState, status]);
 
   const beginRun = useCallback(
     (engine: FlappyEngine, runMode: RunMode, sessionId?: string) => {
@@ -365,6 +368,7 @@ export default function FlappyBirdGame() {
     let previousTime: number | null = null;
     let accumulator = 0;
     let stopped = false;
+    let latestState = engineRef.current?.state() ?? null;
 
     const resetClock = () => {
       previousTime = null;
@@ -388,6 +392,7 @@ export default function FlappyBirdGame() {
         const action: FlappyAction = pendingFlap.current ? "FLAP" : "WAIT";
         pendingFlap.current = false;
         const nextState = engine.step(action);
+        latestState = nextState;
         if (run.mode === "online") run.actions.push(action);
         setGameState(nextState);
         setBest((currentBest) => {
@@ -403,6 +408,18 @@ export default function FlappyBirdGame() {
             void submitOnlineResult(run.token);
           }
         }
+      }
+
+      const canvas = canvasRef.current;
+      if (canvas && latestState) {
+        const renderState = stopped
+          ? latestState
+          : projectFlappyState(
+              latestState,
+              pendingFlap.current ? "FLAP" : "WAIT",
+              accumulator / FLAPPY_TICK_MS,
+            );
+        drawScene(canvas, renderState);
       }
 
       if (!stopped) animationFrame = window.requestAnimationFrame(frame);

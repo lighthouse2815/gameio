@@ -93,6 +93,40 @@ export function birdYInPixels(state: FlappyState) {
   return state.birdY / FIXED_POINT_SCALE;
 }
 
+/**
+ * Projects only the visual motion toward the next fixed simulation tick.
+ * The authoritative engine state, score, collisions, and replay remain untouched.
+ */
+export function projectFlappyState(
+  state: FlappyState,
+  action: FlappyAction,
+  progress: number,
+): FlappyState {
+  const frameProgress = Math.max(0, Math.min(1, progress));
+  if (state.status === "over" || frameProgress === 0) {
+    return cloneFlappyState(state);
+  }
+
+  const startingVelocity =
+    action === "FLAP" ? FLAP_VELOCITY : state.birdVelocity;
+  const targetVelocity = Math.min(
+    MAX_FALL_VELOCITY,
+    startingVelocity + GRAVITY,
+  );
+
+  return {
+    ...state,
+    birdY: state.birdY + targetVelocity * frameProgress,
+    birdVelocity:
+      state.birdVelocity +
+      (targetVelocity - state.birdVelocity) * frameProgress,
+    pipes: state.pipes.map((pipe) => ({
+      ...pipe,
+      x: pipe.x - PIPE_SPEED * frameProgress,
+    })),
+  };
+}
+
 export class FlappyEngine {
   private readonly random: FlappyXorShift32;
   private current: FlappyState;

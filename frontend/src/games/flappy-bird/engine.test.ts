@@ -6,6 +6,7 @@ import {
   FLAPPY_PIPE_GAP,
   FLAPPY_PIPE_WIDTH,
   FLAPPY_TICK_MS,
+  projectFlappyState,
   sameFlappyState,
   type FlappyAction,
 } from "@/games/flappy-bird/engine";
@@ -64,6 +65,35 @@ describe("flappy bird engine", () => {
     expect(after.birdVelocity).toBeLessThan(0);
     expect(birdYInPixels(after)).toBeLessThan(birdYInPixels(before));
     expect(after.status).toBe("playing");
+  });
+
+  it("projects smooth render frames without mutating authoritative state", () => {
+    const engine = new FlappyEngine(42);
+    const authoritative = engine.state();
+    const halfway = projectFlappyState(authoritative, "WAIT", 0.5);
+    const projectedTick = projectFlappyState(authoritative, "WAIT", 1);
+    const nextTick = engine.step("WAIT");
+
+    expect(authoritative.tick).toBe(0);
+    expect(authoritative.pipes[0].x).toBe(520);
+    expect(halfway.tick).toBe(0);
+    expect(halfway.pipes[0].x).toBe(518);
+    expect(projectedTick.birdY).toBe(nextTick.birdY);
+    expect(projectedTick.birdVelocity).toBe(nextTick.birdVelocity);
+    expect(projectedTick.pipes.map((pipe) => pipe.x)).toEqual(
+      nextTick.pipes.map((pipe) => pipe.x),
+    );
+  });
+
+  it("clamps render projection progress to one simulation tick", () => {
+    const state = new FlappyEngine(42).state();
+
+    expect(sameFlappyState(projectFlappyState(state, "WAIT", -1), state)).toBe(
+      true,
+    );
+    expect(projectFlappyState(state, "FLAP", 2).birdY).toBe(
+      new FlappyEngine(42).step("FLAP").birdY,
+    );
   });
 
   it("reaches a deterministic terminal state without flapping", () => {
