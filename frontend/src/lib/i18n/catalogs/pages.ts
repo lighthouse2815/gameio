@@ -11,6 +11,7 @@ export const pageVietnameseMessages = {
     "Tìm trong danh mục trực tiếp từ máy chủ. Mỗi trò chơi đều nêu rõ chế độ, thể loại, số người chơi và cách vận hành.",
   Registry: "Danh mục",
   "Local engines": "Trò chơi chạy cục bộ",
+  "6 installed engines": "6 BỘ MÁY ĐÃ CÀI",
   "AUTH CHANNEL / 01": "KÊNH XÁC THỰC / 01",
   Resume: "Tiếp tục",
   "Play.": "chơi.",

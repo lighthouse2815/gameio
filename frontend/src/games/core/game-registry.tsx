@@ -33,6 +33,39 @@ const FlappyBirdGame = dynamic(
   },
 );
 
+const BreakoutGame = dynamic(() => import("@/games/breakout/breakout-game"), {
+  ssr: false,
+  loading: () => (
+    <p className="font-telemetry p-8 text-[10px] text-[var(--muted)]">
+      LOADING BREAKOUT ENGINE ///
+    </p>
+  ),
+});
+
+const MinesweeperGame = dynamic(
+  () => import("@/games/minesweeper/minesweeper-game"),
+  {
+    ssr: false,
+    loading: () => (
+      <p className="font-telemetry p-8 text-[10px] text-[var(--muted)]">
+        LOADING MINEFIELD ENGINE ///
+      </p>
+    ),
+  },
+);
+
+const MemoryMatchGame = dynamic(
+  () => import("@/games/memory-match/memory-match-game"),
+  {
+    ssr: false,
+    loading: () => (
+      <p className="font-telemetry p-8 text-[10px] text-[var(--muted)]">
+        LOADING MEMORY ENGINE ///
+      </p>
+    ),
+  },
+);
+
 export type RegisteredGame = {
   slug: string;
   engine: "react" | "phaser" | "server-multiplayer";
@@ -40,6 +73,9 @@ export type RegisteredGame = {
     | "swipe-keys"
     | "direction-pad"
     | "single-action"
+    | "horizontal-action"
+    | "pointer-grid"
+    | "memory-grid"
     | "turn-grid"
     | "combat";
   component?: ComponentType;
@@ -63,6 +99,24 @@ export const GAME_REGISTRY: Readonly<Record<string, RegisteredGame>> = {
     engine: "react",
     controlProfile: "single-action",
     component: FlappyBirdGame,
+  },
+  breakout: {
+    slug: "breakout",
+    engine: "react",
+    controlProfile: "horizontal-action",
+    component: BreakoutGame,
+  },
+  minesweeper: {
+    slug: "minesweeper",
+    engine: "react",
+    controlProfile: "pointer-grid",
+    component: MinesweeperGame,
+  },
+  "memory-match": {
+    slug: "memory-match",
+    engine: "react",
+    controlProfile: "memory-grid",
+    component: MemoryMatchGame,
   },
   "tic-tac-toe": {
     slug: "tic-tac-toe",

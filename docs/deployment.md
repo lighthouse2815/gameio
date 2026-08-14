@@ -175,7 +175,7 @@ Use the deployed Cloudflare URL, not localhost, and verify all of the following:
 - request cookies are first-party on the Cloudflare host and are not exposed to JavaScript;
 - no direct Railway REST call from the browser API client;
 - catalog, profiles, friends, rankings, light/dark mode and responsive navigation;
-- real 2048, Snake and Flappy Bird input on desktop/mobile controls, including Flappy Bird offline and signed-in verified modes;
+- real 2048, Snake, Flappy Bird, Breakout, Minesweeper and Memory Match input on desktop/mobile controls, including offline and signed-in verified modes;
 - two isolated browser sessions completing Tic Tac Toe and Caro;
 - Tank Battle movement/shoot/state updates with two sessions;
 - reconnect UI, `ROOM_EXPIRED` handling and no blank canvas on socket failure;

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title description">
+  <title id="title">Memory Match game artwork</title>
+  <desc id="description">A four by four array of technical memory cards with matching red symbols.</desc>
+  <rect width="1200" height="900" fill="#0d0d0d"/>
+  <g fill="#181818" stroke="#505050" stroke-width="4">
+    <rect x="110" y="94" width="210" height="160"/><rect x="340" y="94" width="210" height="160"/><rect x="570" y="94" width="210" height="160"/><rect x="800" y="94" width="210" height="160"/>
+    <rect x="110" y="274" width="210" height="160"/><rect x="340" y="274" width="210" height="160"/><rect x="570" y="274" width="210" height="160"/><rect x="800" y="274" width="210" height="160"/>
+    <rect x="110" y="454" width="210" height="160"/><rect x="340" y="454" width="210" height="160"/><rect x="570" y="454" width="210" height="160"/><rect x="800" y="454" width="210" height="160"/>
+    <rect x="110" y="634" width="210" height="160"/><rect x="340" y="634" width="210" height="160"/><rect x="570" y="634" width="210" height="160"/><rect x="800" y="634" width="210" height="160"/>
+  </g>
+  <g fill="#f1ede5" font-family="monospace" font-size="24" letter-spacing="4">
+    <text x="132" y="132">01</text><text x="362" y="132">02</text><text x="592" y="132">03</text><text x="822" y="132">04</text>
+    <text x="132" y="312">05</text><text x="362" y="312">06</text><text x="592" y="312">07</text><text x="822" y="312">08</text>
+    <text x="132" y="492">09</text><text x="362" y="492">10</text><text x="592" y="492">11</text><text x="822" y="492">12</text>
+    <text x="132" y="672">13</text><text x="362" y="672">14</text><text x="592" y="672">15</text><text x="822" y="672">16</text>
+  </g>
+  <rect x="340" y="274" width="210" height="160" fill="#ed1c24" stroke="#f1ede5" stroke-width="6"/>
+  <rect x="800" y="634" width="210" height="160" fill="#ed1c24" stroke="#f1ede5" stroke-width="6"/>
+  <path d="M445 314l18 42 46 4-35 30 11 45-40-24-40 24 11-45-35-30 46-4z" fill="#f1ede5"/>
+  <path d="M905 674l18 42 46 4-35 30 11 45-40-24-40 24 11-45-35-30 46-4z" fill="#f1ede5"/>
+  <path d="M550 354C690 354 690 714 800 714" fill="none" stroke="#ed1c24" stroke-width="7" stroke-dasharray="16 18"/>
+  <text x="1050" y="150" fill="#ed1c24" font-family="monospace" font-size="22" letter-spacing="4" transform="rotate(90 1050 150)">PAIR SIGNAL / VERIFIED</text>
+</svg>

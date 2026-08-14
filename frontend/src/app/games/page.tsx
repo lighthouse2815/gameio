@@ -27,7 +27,7 @@ export default async function GamesPage({
             <div>
               <dt className="text-[var(--muted)]"><LocalizedText text="Local engines" /></dt>
               <dd className="mt-1 text-[var(--accent)]">
-                2048 + SNAKE + FLAPPY
+                <LocalizedText text="6 installed engines" />
               </dd>
             </div>
           </dl>

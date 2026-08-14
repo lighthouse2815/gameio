@@ -21,6 +21,9 @@ The implementation deliberately keeps one application backend instead of introdu
 | 2048 | React/TypeScript | Seeded session and server replay verification before persistence |
 | Snake | Phaser | Server-seeded deterministic run and replay verification before persistence |
 | Flappy Bird | React Canvas/TypeScript | Offline browser practice or server-seeded fixed-tick replay verification for ranked runs |
+| Breakout | React Canvas/TypeScript | Offline 60 FPS play or grouped fixed-tick replay verification for ranked runs |
+| Minesweeper | React/TypeScript | Protected first move with seeded reveal replay verified by the server |
+| Memory Match | React/TypeScript | Seeded card layout with server-verified selection replay and move-based score |
 | Tic Tac Toe | Spring authoritative engine | Server validates turns and a 3 by 3 win/draw |
 | Caro | Spring authoritative engine | Server validates turns and five-in-a-row on a 15 by 15 board |
 | Tank Battle | Phaser renderer + Spring tick engine | Client sends movement/shoot actions; server owns positions, rotation, bullets, HP and game over |

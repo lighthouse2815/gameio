@@ -90,6 +90,9 @@ games/
 |-- game2048/      React rules/rendering
 |-- snake/         Phaser scene and controls
 |-- flappy-bird/   fixed-tick rules and React Canvas rendering
+|-- breakout/      60 FPS fixed-tick rules and React Canvas rendering
+|-- minesweeper/   seeded minefield rules and responsive grid
+|-- memory-match/  seeded card-pair rules and responsive grid
 |-- tictactoe/     authoritative snapshot UI
 |-- caro/          authoritative snapshot UI
 `-- tank/          Phaser snapshot renderer and input mapping

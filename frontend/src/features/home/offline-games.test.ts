@@ -28,6 +28,9 @@ describe("offline game selection", () => {
       game("2048", { name: "2048", playsCount: 4 }),
       game("snake", { name: "Snake", playsCount: 12 }),
       game("flappy-bird", { name: "Flappy Bird", playsCount: 8 }),
+      game("breakout", { name: "Breakout" }),
+      game("minesweeper", { name: "Minesweeper" }),
+      game("memory-match", { name: "Memory Match" }),
       game("tic-tac-toe", {
         gameType: "TURN_BASED_MULTIPLAYER",
         minPlayers: 2,
@@ -49,6 +52,9 @@ describe("offline game selection", () => {
       "snake",
       "flappy-bird",
       "2048",
+      "breakout",
+      "memory-match",
+      "minesweeper",
     ]);
   });
 

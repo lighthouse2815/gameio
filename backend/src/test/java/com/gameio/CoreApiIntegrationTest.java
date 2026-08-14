@@ -40,12 +40,15 @@ class CoreApiIntegrationTest {
     }
 
     @Test
-    void seededCatalogIsPublicSearchableAndContainsSixRealGames() throws Exception {
+    void seededCatalogIsPublicSearchableAndContainsNineRealGames() throws Exception {
         mockMvc.perform(get("/api/games").param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(6))
+                .andExpect(jsonPath("$.totalElements").value(9))
                 .andExpect(jsonPath("$.content[?(@.slug == '2048')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'flappy-bird')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'breakout')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'minesweeper')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'memory-match')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'tank-battle')]").exists());
     }
 

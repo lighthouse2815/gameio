@@ -97,6 +97,77 @@ export const gameVietnameseMessages = {
     "Lượt trực tuyến dùng hạt giống máy chủ và replay được xác thực để tính hạng và EXP.",
   "Offline runs stay in this browser and never require an account.":
     "Lượt ngoại tuyến chỉ lưu trong trình duyệt này và không cần tài khoản.",
+  Breakout: "Đập gạch",
+  "Drive a precision paddle, keep the ball in play, and dismantle every brick in the wall.":
+    "Điều khiển thanh đỡ chính xác, giữ bóng trong sân và phá toàn bộ bức tường gạch.",
+  "Breakout online session unavailable": "Không thể mở phiên Đập gạch trực tuyến",
+  "The server returned an inconsistent seeded Breakout state.":
+    "Máy chủ trả về trạng thái Đập gạch theo hạt giống không nhất quán.",
+  "Breakout score verified": "Điểm Đập gạch đã được xác thực",
+  "Breakout verification failed": "Xác thực Đập gạch thất bại",
+  "Breakout play field": "Khu vực chơi Đập gạch",
+  "Breakout requires canvas support.": "Đập gạch cần trình duyệt hỗ trợ canvas.",
+  "[ BREAKOUT ENGINE / READY ]": "[ BỘ MÁY ĐẬP GẠCH / SẴN SÀNG ]",
+  "[ WALL REPORT ]": "[ BÁO CÁO BỨC TƯỜNG ]",
+  "Wall cleared": "Đã phá sạch tường",
+  "Move the paddle, keep the ball alive, and clear every brick.":
+    "Di chuyển thanh đỡ, giữ bóng trong sân và phá sạch mọi viên gạch.",
+  "[ PADDLE CONTROL ]": "[ ĐIỀU KHIỂN THANH ĐỠ ]",
+  "Keyboard: Left/Right or A/D. Touch either half of the arena or use the paddle controls.":
+    "Bàn phím: Trái/Phải hoặc A/D. Chạm vào nửa trái, nửa phải của sân hoặc dùng nút điều khiển thanh đỡ.",
+  Lives: "Mạng",
+  Bricks: "Gạch",
+  "Frame rate": "Tốc độ khung hình",
+  Minesweeper: "Dò mìn",
+  "Map a compact minefield with careful reveals, flags, and a protected opening move.":
+    "Khảo sát bãi mìn nhỏ bằng những lần mở ô cẩn thận, cắm cờ và nước đầu tiên luôn an toàn.",
+  "Minesweeper online session unavailable": "Không thể mở phiên Dò mìn trực tuyến",
+  "The server returned an inconsistent seeded Minesweeper state.":
+    "Máy chủ trả về trạng thái Dò mìn theo hạt giống không nhất quán.",
+  "Minesweeper score verified": "Điểm Dò mìn đã được xác thực",
+  "Minesweeper verification failed": "Xác thực Dò mìn thất bại",
+  Moves: "Lượt",
+  "Minesweeper board": "Bàn Dò mìn",
+  "Minesweeper row {row}, column {column}: {state}":
+    "Dò mìn hàng {row}, cột {column}: {state}",
+  flagged: "đã cắm cờ",
+  mine: "mìn",
+  revealed: "đã mở",
+  hidden: "đang ẩn",
+  "[ MINEFIELD / READY ]": "[ BÃI MÌN / SẴN SÀNG ]",
+  "[ FIELD REPORT ]": "[ BÁO CÁO BÃI MÌN ]",
+  "Minefield cleared": "Đã dọn sạch bãi mìn",
+  "Mine triggered": "Đã chạm phải mìn",
+  "Reveal every safe cell. Your first move is always protected.":
+    "Mở toàn bộ ô an toàn. Nước đi đầu tiên luôn được bảo vệ.",
+  "[ FIELD TOOLS ]": "[ CÔNG CỤ KHẢO SÁT ]",
+  "Reveal mode": "Chế độ mở ô",
+  "Flag mode": "Chế độ cắm cờ",
+  "Click or tap to reveal. Right-click, or enable Flag mode on touch screens, to mark a suspected mine.":
+    "Nhấp hoặc chạm để mở ô. Nhấp chuột phải, hoặc bật chế độ cắm cờ trên màn hình cảm ứng, để đánh dấu vị trí nghi có mìn.",
+  Flags: "Cờ",
+  "Safe cells": "Ô an toàn",
+  "Memory Match": "Ghép cặp trí nhớ",
+  "Recover every hidden symbol pair with as few memory checks as possible.":
+    "Tìm lại toàn bộ cặp biểu tượng đang ẩn với số lượt ghi nhớ ít nhất có thể.",
+  "Memory Match online session unavailable": "Không thể mở phiên Ghép cặp trí nhớ trực tuyến",
+  "The server returned an inconsistent seeded Memory Match state.":
+    "Máy chủ trả về trạng thái Ghép cặp trí nhớ theo hạt giống không nhất quán.",
+  "Memory Match score verified": "Điểm Ghép cặp trí nhớ đã được xác thực",
+  "Memory Match verification failed": "Xác thực Ghép cặp trí nhớ thất bại",
+  "Memory Match board": "Bàn Ghép cặp trí nhớ",
+  "Memory card {card}: {state}": "Thẻ nhớ {card}: {state}",
+  matched: "đã ghép",
+  "[ MEMORY ARRAY / READY ]": "[ MẢNG TRÍ NHỚ / SẴN SÀNG ]",
+  "[ MEMORY COMPLETE ]": "[ ĐÃ HOÀN TẤT TRÍ NHỚ ]",
+  "All pairs secured": "Đã tìm đủ mọi cặp",
+  "Reveal two cards at a time and remember where every symbol is stored.":
+    "Mở hai thẻ mỗi lượt và ghi nhớ vị trí của từng biểu tượng.",
+  "[ MEMORY TELEMETRY ]": "[ THÔNG SỐ TRÍ NHỚ ]",
+  "Matched cards stay exposed. A missed pair remains visible briefly, then returns to the grid.":
+    "Thẻ đã ghép sẽ tiếp tục hiện. Một cặp sai sẽ hiện trong chốc lát rồi úp lại.",
+  Pairs: "Cặp",
+  resolving: "đang xử lý",
   "Authoritative Tic Tac Toe board": "Bàn Tic Tac Toe do máy chủ điều khiển",
   "Authoritative 15 by 15 Caro board": "Bàn Caro 15 x 15 do máy chủ điều khiển",
   "Row {row}, column {column}: {marker}": "Hàng {row}, cột {column}: {marker}",

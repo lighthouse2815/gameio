@@ -11,7 +11,7 @@ import java.util.UUID;
 public record CompleteGameResultRequest(
         @NotNull UUID sessionId,
         @NotNull @Size(min = 1, max = 10_000)
-        List<@Pattern(regexp = "[A-Za-z_]{2,32}") String> actions,
+        List<@Pattern(regexp = "[A-Za-z0-9:_-]{1,32}") String> actions,
         @Min(1) @Max(86_400) int durationSeconds
 ) {
 }

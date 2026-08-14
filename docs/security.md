@@ -117,5 +117,5 @@ Live direct-backend checks:
 
 - [ ] Confirm both scripts pass without printing credentials. They create durable smoke users/results; apply the documented retention policy.
 - [ ] In the deployed browser, verify BFF cookie persistence/rotation, logout, CORS, CSP, mixed-content behavior and console/network output.
-- [ ] Complete real 2048/Snake input, Flappy Bird offline/verified input, and two-session Tic Tac Toe, Caro and Tank flows.
+- [ ] Complete real 2048/Snake/Breakout/Minesweeper/Memory Match input, Flappy Bird offline/verified input, and two-session Tic Tac Toe, Caro and Tank flows.
 - [ ] Record successful timestamp, frontend/backend URLs, commit, Flyway version, screenshots and rollback target without recording secrets.

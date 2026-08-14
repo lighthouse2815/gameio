@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title description">
+  <title id="title">Minesweeper game artwork</title>
+  <desc id="description">A surveyed minefield grid with numbered cells, flags, and one red mine.</desc>
+  <rect width="1200" height="900" fill="#0d0d0d"/>
+  <rect x="132" y="92" width="756" height="756" fill="#181818" stroke="#f1ede5" stroke-width="6"/>
+  <g stroke="#505050" stroke-width="3">
+    <path d="M216 92V848M300 92V848M384 92V848M468 92V848M552 92V848M636 92V848M720 92V848M804 92V848"/>
+    <path d="M132 176H888M132 260H888M132 344H888M132 428H888M132 512H888M132 596H888M132 680H888M132 764H888"/>
+  </g>
+  <g fill="#f1ede5" font-family="monospace" font-size="38" font-weight="700" text-anchor="middle">
+    <text x="258" y="154">1</text><text x="342" y="238">2</text><text x="510" y="322">1</text><text x="678" y="406">3</text><text x="762" y="574">2</text><text x="426" y="742">1</text>
+  </g>
+  <g transform="translate(594 554)">
+    <circle r="34" fill="#ed1c24"/>
+    <g stroke="#ed1c24" stroke-width="10"><path d="M0-58V58M-58 0H58M-42-42l84 84M42-42l-84 84"/></g>
+    <circle r="18" fill="#0d0d0d"/>
+  </g>
+  <g transform="translate(762 176)">
+    <path d="M-18 42v-78" stroke="#f1ede5" stroke-width="8"/>
+    <path d="M-14-34h66L18 4h-32z" fill="#ed1c24"/>
+  </g>
+  <text x="950" y="170" fill="#ed1c24" font-family="monospace" font-size="24" letter-spacing="5">FIELD</text>
+  <text x="950" y="216" fill="#f1ede5" font-family="monospace" font-size="72" font-weight="800">09×09</text>
+  <text x="950" y="278" fill="#77736d" font-family="monospace" font-size="25" letter-spacing="5">10 MINES</text>
+  <path d="M950 326h170" stroke="#ed1c24" stroke-width="7"/>
+  <text x="950" y="810" fill="#f1ede5" font-family="monospace" font-size="24" letter-spacing="4">SAFE FIRST SIGNAL</text>
+</svg>

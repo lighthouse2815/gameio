@@ -10,6 +10,18 @@ import type {
   FlappyAction,
   FlappyState,
 } from "@/games/flappy-bird/engine";
+import type {
+  BreakoutDirection,
+  BreakoutState,
+} from "@/games/breakout/engine";
+import type {
+  MinesweeperReplayAction,
+  MinesweeperState,
+} from "@/games/minesweeper/engine";
+import type {
+  MemoryReplayAction,
+  MemoryState,
+} from "@/games/memory-match/engine";
 import { apiClient } from "@/lib/api/client";
 
 export type Game2048InitialState = {
@@ -23,6 +35,9 @@ export type GameSessionInitialStates = {
   "2048": Game2048InitialState;
   snake: SnakeState;
   "flappy-bird": FlappyState;
+  breakout: BreakoutState;
+  minesweeper: MinesweeperState;
+  "memory-match": MemoryState;
 };
 
 export type GameSessionResponse<
@@ -37,10 +52,17 @@ export type GameSessionResponse<
 
 export type VerifiedAction = Uppercase<MoveDirection>;
 export type VerifiedSnakeAction = Uppercase<SnakeDirection>;
+export type BreakoutReplayAction =
+  | BreakoutDirection
+  | `${BreakoutDirection}${BreakoutDirection}`
+  | `${BreakoutDirection}${BreakoutDirection}${BreakoutDirection}`;
 export type VerifiedReplayAction =
   | VerifiedAction
   | VerifiedSnakeAction
-  | FlappyAction;
+  | FlappyAction
+  | BreakoutReplayAction
+  | MinesweeperReplayAction
+  | MemoryReplayAction;
 
 export const gameResultsApi = {
   createSession: <Slug extends keyof GameSessionInitialStates>(
@@ -51,7 +73,7 @@ export const gameResultsApi = {
     }),
   complete: (input: {
     sessionId: string;
-    actions: VerifiedReplayAction[];
+    actions: string[];
     durationSeconds: number;
   }) => apiClient.post<GameResultSummary>("/game-results", input),
 };
