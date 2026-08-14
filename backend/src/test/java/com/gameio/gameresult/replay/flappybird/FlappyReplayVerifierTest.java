@@ -25,6 +25,12 @@ class FlappyReplayVerifierTest {
         assertThat(first.tickMs()).isEqualTo(50);
         assertThat(first.pipes()).extracting(FlappyPipeState::x)
                 .containsExactly(520, 780, 1_040);
+
+        FlappyEngine movingEngine = new FlappyEngine(7_936);
+        movingEngine.step(FlappyAction.WAIT);
+        assertThat(FlappyEngine.PIPE_SPEED).isEqualTo(5);
+        assertThat(movingEngine.state().pipes()).extracting(FlappyPipeState::x)
+                .containsExactly(515, 775, 1_035);
     }
 
     @Test

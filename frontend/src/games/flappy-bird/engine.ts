@@ -6,12 +6,12 @@ export const FLAPPY_BIRD_HALF_WIDTH = 16;
 export const FLAPPY_BIRD_HALF_HEIGHT = 12;
 export const FLAPPY_PIPE_WIDTH = 76;
 export const FLAPPY_PIPE_GAP = 168;
+export const FLAPPY_PIPE_SPEED = 5;
 
 const FIXED_POINT_SCALE = 100;
 const GRAVITY = 55;
 const FLAP_VELOCITY = -760;
 const MAX_FALL_VELOCITY = 900;
-const PIPE_SPEED = 4;
 const FIRST_PIPE_X = 520;
 const PIPE_SPACING = 260;
 const INITIAL_PIPE_COUNT = 3;
@@ -122,7 +122,7 @@ export function projectFlappyState(
       (targetVelocity - state.birdVelocity) * frameProgress,
     pipes: state.pipes.map((pipe) => ({
       ...pipe,
-      x: pipe.x - PIPE_SPEED * frameProgress,
+      x: pipe.x - FLAPPY_PIPE_SPEED * frameProgress,
     })),
   };
 }
@@ -168,7 +168,7 @@ export class FlappyEngine {
     const birdY = this.current.birdY + birdVelocity;
     let score = this.current.score;
     let pipes = this.current.pipes.map((pipe) => {
-      const moved = { ...pipe, x: pipe.x - PIPE_SPEED };
+      const moved = { ...pipe, x: pipe.x - FLAPPY_PIPE_SPEED };
       if (!moved.passed && moved.x + FLAPPY_PIPE_WIDTH < FLAPPY_BIRD_X) {
         moved.passed = true;
         score += 1;

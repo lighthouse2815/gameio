@@ -4,6 +4,7 @@ import {
   FlappyEngine,
   FLAPPY_BIRD_HALF_WIDTH,
   FLAPPY_PIPE_GAP,
+  FLAPPY_PIPE_SPEED,
   FLAPPY_PIPE_WIDTH,
   FLAPPY_TICK_MS,
   projectFlappyState,
@@ -77,7 +78,9 @@ describe("flappy bird engine", () => {
     expect(authoritative.tick).toBe(0);
     expect(authoritative.pipes[0].x).toBe(520);
     expect(halfway.tick).toBe(0);
-    expect(halfway.pipes[0].x).toBe(518);
+    expect(FLAPPY_PIPE_SPEED).toBe(5);
+    expect(halfway.pipes[0].x).toBe(517.5);
+    expect(nextTick.pipes[0].x).toBe(515);
     expect(projectedTick.birdY).toBe(nextTick.birdY);
     expect(projectedTick.birdVelocity).toBe(nextTick.birdVelocity);
     expect(projectedTick.pipes.map((pipe) => pipe.x)).toEqual(

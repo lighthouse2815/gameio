@@ -12,12 +12,12 @@ final class FlappyEngine {
     static final int BIRD_HALF_HEIGHT = 12;
     static final int PIPE_WIDTH = 76;
     static final int PIPE_GAP = 168;
+    static final int PIPE_SPEED = 5;
 
     private static final int FIXED_POINT_SCALE = 100;
     private static final int GRAVITY = 55;
     private static final int FLAP_VELOCITY = -760;
     private static final int MAX_FALL_VELOCITY = 900;
-    private static final int PIPE_SPEED = 4;
     private static final int FIRST_PIPE_X = 520;
     private static final int PIPE_SPACING = 260;
     private static final int INITIAL_PIPE_COUNT = 3;
