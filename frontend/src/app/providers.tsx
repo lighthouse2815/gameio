@@ -10,6 +10,7 @@ import type { Locale } from "@/lib/i18n/types";
 import type { AuthChangeReason } from "@/lib/api/token-vault";
 import { createQueryClient } from "@/lib/query-client";
 import { gameSocketClient } from "@/lib/socket/game-socket-client";
+import { RealtimeNotifications } from "@/features/notifications/realtime-notifications";
 import { useThemeStore } from "@/stores/theme-store";
 
 function RuntimeBridge() {
@@ -53,6 +54,7 @@ export function Providers({
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <RuntimeBridge />
+          <RealtimeNotifications />
           {children}
         </ToastProvider>
         {process.env.NODE_ENV === "development" ? (

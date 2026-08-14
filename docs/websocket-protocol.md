@@ -51,6 +51,10 @@ Unknown payload fields fail deserialization. The authenticated principal always 
 | `ROOM_LEAVE` | `roomId` UUID | Leave/mark disconnected, clear this user's bindings and emit correlated `ROOM_LEFT` |
 | `ROOM_READY` | `roomId` UUID | Mark the authenticated player ready; correlated `ROOM_STATE` follows |
 | `ROOM_START` | `roomId` UUID | Owner explicitly starts when requirements are met; correlated `ROOM_STATE` follows |
+| `ROOM_REMATCH` | finished `roomId` UUID | Return the same members to a fresh waiting state and bind the requesting socket |
+| `GAME_INVITE_SEND` | `roomId`, `payload.recipientUsername` | Send a 60-second one-use invite to an online accepted friend |
+| `GAME_INVITE_ACCEPT` | `payload.inviteId` | Revalidate and consume the invite, join the normal room path and bind this socket |
+| `GAME_INVITE_DECLINE` | `payload.inviteId` | Consume the invite without joining and notify the sender |
 | `MATCHMAKING_JOIN` | `payload.gameId` UUID | Enter the game's queue; correlated `MATCHMAKING_STATE` follows |
 | `MATCHMAKING_LEAVE` | none | Remove the authenticated player's current queue ticket |
 | `GAME_INPUT` | `roomId` and game-specific payload | Validate and apply an input to the active authoritative engine |
@@ -108,25 +112,22 @@ Allowed actions are `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`, `MOVE_RIGHT`, `STOP` an
 | `GAME_START` | `{matchId,gameId,gameSlug,players,startedAt,state}` |
 | `GAME_STATE` | Game-specific authoritative snapshot with a monotonic engine sequence |
 | `GAME_OVER` | `{matchId,finalState,progression}` after durable result persistence |
+| `GAME_INVITE` | Incoming `{inviteId,roomId,roomCode,gameId,gameSlug,gameName,senderUsername,recipientId,expiresAt}` |
+| `GAME_INVITE_SENT` | Correlated confirmation that Redis stored and delivered the invite |
+| `GAME_INVITE_ACCEPTED` | `{inviteId,username,room}` for both sender and recipient |
+| `GAME_INVITE_DECLINED` | `{inviteId,username}` for both sender and recipient |
 | `OPPONENT_DISCONNECTED` | `{userId,reconnectGraceSeconds}` |
 | `ERROR` | Stable `{code,message}` plus the originating request ID when available |
 
 There is no `PRESENCE_STATE` or heartbeat message in the current protocol. Friend presence is read through REST; the WebSocket container has no application idle timeout. Clients still reconnect on any network or intermediary close.
 
-## Reserved friend invite contract (not implemented)
+## Friend invitations
 
-The current backend and UI do not send game invitations. The friends screen may open a same-game lobby, but it never reports that a remote invite was delivered.
+The sender must be a member of the named `WAITING` room and the recipient must be an accepted, online friend who is not already in that room. The backend derives both identities from authenticated state, checks room capacity, stores a random one-use invite in Redis for 60 seconds and delivers `GAME_INVITE` to every active recipient socket.
 
-A future implementation reserves this boundary:
+Acceptance atomically consumes the invite, revalidates friendship and room state, then delegates to the normal room join and socket-binding path. A stale invite cannot grant membership: it fails when its TTL elapsed or when the room started, filled or disappeared, the sender left, or the friendship was removed. Decline also consumes the token and notifies both sides.
 
-- client command `GAME_INVITE_SEND` with `{roomId,recipientUsername}`;
-- server event `GAME_INVITE` with `{inviteId,roomId,roomCode,gameId,gameSlug,senderUsername,expiresAt}`;
-- acceptance through the existing authenticated `ROOM_JOIN` path rather than a second membership mechanism;
-- optional `GAME_INVITE_EXPIRED`/rejection acknowledgement keyed by `inviteId`.
-
-Before delivery, the server must derive the sender from the socket JWT, verify an accepted friendship, verify that the sender belongs to the named `WAITING` room, ensure the room has capacity and mint a short-lived one-use invite. The recipient must be the authenticated recipient on delivery/acceptance. Invites expire when their TTL elapses, the room starts/fills/is deleted, the sender leaves or the friendship is removed. Redis is the appropriate ephemeral store; no invite may grant membership without the normal room checks.
-
-These event names are a documented extension point only. They are deliberately absent from the current client/server event unions and handler switch until persistence, validation, UI and tests are delivered together.
+After `GAME_OVER`, any existing member may send `ROOM_REMATCH`. The same room and member list return to `WAITING`, ready flags are cleared and each player reconnects their socket before the owner starts the next match. A fresh authoritative match identifier is created for every rematch.
 
 ## Limits and lifecycle
 

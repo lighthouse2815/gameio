@@ -101,7 +101,7 @@ For a server-tick game, keep `tick` bounded and deterministic for a supplied `In
 - Confirm catalog search/detail renders the backend record rather than duplicated page metadata.
 - Add room-capacity controls that exactly match catalog min/max players.
 - For multiplayer, navigate with `/game/<slug>?room=<room-uuid>` only after validated room membership.
-- Do not present friend invitation success unless the reserved `GAME_INVITE_SEND`/`GAME_INVITE` validation and expiry contract in the WebSocket guide has actually been implemented; it is not part of the current release.
+- Reuse the implemented `GAME_INVITE_SEND`/`GAME_INVITE` validation and expiry contract; do not create a game-specific invitation path.
 - Add result history/leaderboard presentation only when the backend trust path exists.
 - Reuse the centralized API client and `GameSocketClient`; do not scatter `fetch` or socket construction inside the renderer.
 - Add responsive desktop and touch controls and verify both themes.

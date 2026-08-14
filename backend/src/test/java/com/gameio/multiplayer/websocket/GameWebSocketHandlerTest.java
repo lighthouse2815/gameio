@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.gameio.matchmaking.MatchmakingService;
 import com.gameio.multiplayer.RealtimeGameCoordinator;
 import com.gameio.multiplayer.RealtimeSessionRegistry;
+import com.gameio.multiplayer.invite.GameInviteService;
 import com.gameio.room.RoomResponse;
 import com.gameio.room.RoomService;
 import java.time.Clock;
@@ -33,7 +34,8 @@ class GameWebSocketHandlerTest {
     void negotiatesOnlyPublicApplicationProtocolAndNeverEchoesJwtProtocol() {
         GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(),
                 mock(RealtimeSessionRegistry.class), mock(RoomService.class), mock(MatchmakingService.class),
-                mock(RealtimeGameCoordinator.class), mock(RealtimeRateLimiter.class), CLOCK);
+                mock(RealtimeGameCoordinator.class), mock(GameInviteService.class),
+                mock(RealtimeRateLimiter.class), CLOCK);
 
         org.assertj.core.api.Assertions.assertThat(handler.getSubProtocols())
                 .containsExactly("gameio.v1");
@@ -47,7 +49,8 @@ class GameWebSocketHandlerTest {
         RealtimeGameCoordinator coordinator = mock(RealtimeGameCoordinator.class);
         GameWebSocketHandler handler = new GameWebSocketHandler(
                 JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build(),
-                sessions, rooms, matchmaking, coordinator, mock(RealtimeRateLimiter.class), CLOCK);
+                sessions, rooms, matchmaking, coordinator, mock(GameInviteService.class),
+                mock(RealtimeRateLimiter.class), CLOCK);
         WebSocketSession session = mock(WebSocketSession.class);
         UUID userId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
@@ -73,7 +76,7 @@ class GameWebSocketHandlerTest {
         RoomService rooms = mock(RoomService.class);
         GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(), sessions, rooms,
                 mock(MatchmakingService.class), mock(RealtimeGameCoordinator.class),
-                mock(RealtimeRateLimiter.class), CLOCK);
+                mock(GameInviteService.class), mock(RealtimeRateLimiter.class), CLOCK);
         WebSocketSession session = mock(WebSocketSession.class);
         UUID userId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
@@ -104,7 +107,7 @@ class GameWebSocketHandlerTest {
         RealtimeGameCoordinator coordinator = mock(RealtimeGameCoordinator.class);
         GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(), sessions,
                 mock(RoomService.class), mock(MatchmakingService.class), coordinator,
-                mock(RealtimeRateLimiter.class), CLOCK);
+                mock(GameInviteService.class), mock(RealtimeRateLimiter.class), CLOCK);
         WebSocketSession session = mock(WebSocketSession.class);
         Map<String, Object> attributes = new HashMap<>();
         attributes.put(JwtHandshakeInterceptor.USER_ID_ATTRIBUTE, UUID.randomUUID());
@@ -126,7 +129,8 @@ class GameWebSocketHandlerTest {
         RoomService rooms = mock(RoomService.class);
         RealtimeRateLimiter rateLimiter = mock(RealtimeRateLimiter.class);
         GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(), sessions, rooms,
-                mock(MatchmakingService.class), mock(RealtimeGameCoordinator.class), rateLimiter, CLOCK);
+                mock(MatchmakingService.class), mock(RealtimeGameCoordinator.class),
+                mock(GameInviteService.class), rateLimiter, CLOCK);
         UUID userId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
         WebSocketSession session = session("leave-session", userId, NOW.plusSeconds(300));
@@ -147,7 +151,7 @@ class GameWebSocketHandlerTest {
         RoomService rooms = mock(RoomService.class);
         GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(), sessions, rooms,
                 mock(MatchmakingService.class), mock(RealtimeGameCoordinator.class),
-                mock(RealtimeRateLimiter.class), CLOCK);
+                mock(GameInviteService.class), mock(RealtimeRateLimiter.class), CLOCK);
         UUID userId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
         WebSocketSession session = mock(WebSocketSession.class);

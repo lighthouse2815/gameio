@@ -111,6 +111,35 @@ class RoomServiceTest {
                         exception -> assertThat(exception.code()).isEqualTo("ROOM_FINISHED"));
     }
 
+    @Test
+    void finishedRoomCanReturnToWaitingForAnExplicitRematch() {
+        RoomStore store = mock(RoomStore.class);
+        UUID gameId = UUID.randomUUID();
+        UserAccount owner = UserAccount.create("Owner", "owner-rematch@example.com", "hash", NOW);
+        UserAccount guest = UserAccount.create("Guest", "guest-rematch@example.com", "hash", NOW);
+        RoomState finished = new RoomState(UUID.randomUUID(), "REM234", gameId, "tic-tac-toe",
+                "Tic Tac Toe", owner.getId(), 2, 2, true, RoomStatus.FINISHED,
+                List.of(
+                        new RoomPlayer(owner.getId(), owner.getUsername(), true, true, true),
+                        new RoomPlayer(guest.getId(), guest.getUsername(), true, false, true)),
+                NOW, NOW.plusSeconds(21_600));
+        AtomicReference<RoomState> persisted = new AtomicReference<>(finished);
+        when(store.findById(finished.roomId())).thenAnswer(invocation -> Optional.of(persisted.get()));
+        doAnswer(invocation -> {
+            persisted.set(invocation.getArgument(0));
+            return null;
+        }).when(store).save(any(RoomState.class));
+        RoomService service = new RoomService(store, mock(GameRepository.class), mock(UserRepository.class),
+                mock(RoomEventSink.class), Clock.fixed(NOW, ZoneOffset.UTC));
+
+        RoomResponse rematch = service.rematch(owner.getId(), finished.roomId());
+
+        assertThat(rematch.status()).isEqualTo(RoomStatus.WAITING);
+        assertThat(rematch.players()).allMatch(player -> !player.ready());
+        assertThat(rematch.players().stream().filter(RoomPlayer::connected).map(RoomPlayer::id))
+                .containsExactly(owner.getId());
+    }
+
     private Game multiplayerGame(UUID gameId) {
         Game game = mock(Game.class);
         when(game.getId()).thenReturn(gameId);

@@ -115,6 +115,26 @@ public class FriendService {
         friendships.delete(friendship);
     }
 
+    @Transactional(readOnly = true)
+    public UserAccount requireAcceptedFriend(UUID userId, String username) {
+        requireUser(userId);
+        UserAccount friend = users.findByUsernameNormalized(UserAccount.normalize(username))
+                .orElseThrow(FriendshipNotFoundException::new);
+        requireAcceptedFriend(userId, friend.getId());
+        return friend;
+    }
+
+    @Transactional(readOnly = true)
+    public void requireAcceptedFriend(UUID userId, UUID friendId) {
+        if (userId.equals(friendId)) {
+            throw new FriendshipNotFoundException();
+        }
+        Friendship.UserPair pair = Friendship.canonicalPair(userId, friendId);
+        friendships.findPair(pair.low(), pair.high())
+                .filter(friendship -> friendship.getStatus() == FriendshipStatus.ACCEPTED)
+                .orElseThrow(FriendshipNotFoundException::new);
+    }
+
     private Friendship incomingPendingRequest(UUID userId, UUID requestId) {
         Friendship friendship = friendships.findByIdForUpdate(requestId)
                 .orElseThrow(FriendRequestNotFoundException::new);

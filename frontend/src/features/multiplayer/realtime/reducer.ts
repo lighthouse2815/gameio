@@ -76,6 +76,8 @@ export function realtimeGameReducer(
   const acknowledged = acknowledge(state, event.requestId);
   if (event.type === "ROOM_STATE" || event.type === "MATCH_FOUND") {
     const room = event.payload as GameRoom;
+    const returnedToWaitingRoom =
+      room.status === "WAITING" && state.gameOver !== null;
     const disconnectedPlayer = state.opponentDisconnected
       ? room.players.find(
           (player) => player.id === state.opponentDisconnected?.userId,
@@ -86,6 +88,9 @@ export function realtimeGameReducer(
       ...acknowledged,
       room,
       gameSlug: room.gameSlug,
+      matchId: returnedToWaitingRoom ? null : state.matchId,
+      snapshot: returnedToWaitingRoom ? null : state.snapshot,
+      gameOver: returnedToWaitingRoom ? null : state.gameOver,
       error: null,
       opponentDisconnected:
         disconnectedPlayer && !disconnectedPlayer.connected

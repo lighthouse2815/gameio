@@ -9,6 +9,12 @@ import com.gameio.multiplayer.RealtimeRoomExpiredException;
 import com.gameio.multiplayer.RealtimeSessionRegistry;
 import com.gameio.multiplayer.RoomLeftPayload;
 import com.gameio.multiplayer.engine.GameInput;
+import com.gameio.multiplayer.invite.GameInvite;
+import com.gameio.multiplayer.invite.GameInviteDecision;
+import com.gameio.multiplayer.invite.GameInvitePayload;
+import com.gameio.multiplayer.invite.GameInviteRequest;
+import com.gameio.multiplayer.invite.GameInviteService;
+import com.gameio.multiplayer.invite.GameInviteStatusPayload;
 import com.gameio.multiplayer.protocol.ClientEnvelope;
 import com.gameio.room.RoomResponse;
 import com.gameio.room.RoomService;
@@ -42,6 +48,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
     private final RoomService rooms;
     private final MatchmakingService matchmaking;
     private final RealtimeGameCoordinator coordinator;
+    private final GameInviteService invites;
     private final RealtimeRateLimiter rateLimiter;
     private final Clock clock;
 
@@ -51,6 +58,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
             RoomService rooms,
             MatchmakingService matchmaking,
             RealtimeGameCoordinator coordinator,
+            GameInviteService invites,
             RealtimeRateLimiter rateLimiter,
             Clock clock) {
         this.objectMapper = objectMapper;
@@ -58,6 +66,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
         this.rooms = rooms;
         this.matchmaking = matchmaking;
         this.coordinator = coordinator;
+        this.invites = invites;
         this.rateLimiter = rateLimiter;
         this.clock = clock;
     }
@@ -149,6 +158,33 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
                 RoomResponse room = rooms.start(userId, roomId);
                 sessions.toSession(session.getId(), "ROOM_STATE", roomId, room, envelope.requestId());
             }
+            case "ROOM_REMATCH" -> {
+                UUID roomId = roomId(envelope);
+                RoomResponse room = rooms.rematch(userId, roomId);
+                RoomState state = rooms.reconnect(userId, roomId.toString());
+                sessions.bindRoom(session.getId(), state);
+                sessions.toSession(session.getId(), "ROOM_STATE", roomId, room, envelope.requestId());
+            }
+            case "GAME_INVITE_SEND" -> {
+                UUID roomId = roomId(envelope);
+                sessions.requireBoundRoom(session.getId(), roomId);
+                String senderUsername = (String) session.getAttributes()
+                        .get(JwtHandshakeInterceptor.USERNAME_ATTRIBUTE);
+                GameInvitePayload payload = invites.send(userId, senderUsername, roomId,
+                        requirePayload(envelope, GameInviteRequest.class));
+                sessions.toSession(session.getId(), "GAME_INVITE_SENT", roomId, payload, envelope.requestId());
+            }
+            case "GAME_INVITE_ACCEPT" -> acceptInvite(session, userId, envelope);
+            case "GAME_INVITE_DECLINE" -> {
+                GameInvite invite = invites.decline(userId,
+                        requirePayload(envelope, GameInviteDecision.class).inviteId());
+                GameInviteStatusPayload payload = new GameInviteStatusPayload(
+                        invite.inviteId(), invite.recipientUsername(), null);
+                sessions.toUser(invite.senderId(), "GAME_INVITE_DECLINED", invite.roomId(), payload,
+                        envelope.requestId());
+                sessions.toSession(session.getId(), "GAME_INVITE_DECLINED", invite.roomId(), payload,
+                        envelope.requestId());
+            }
             case "MATCHMAKING_JOIN" -> {
                 JoinMatchmakingRequest request = requirePayload(envelope, JoinMatchmakingRequest.class);
                 MatchmakingTicketResponse ticket = matchmaking.join(userId, request.gameId());
@@ -181,6 +217,22 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
             sessions.clearRoomBindings(room.roomId());
             throw new RealtimeRoomExpiredException();
         }
+    }
+
+    private void acceptInvite(WebSocketSession session, UUID userId, ClientEnvelope envelope) {
+        GameInvite invite = invites.accept(userId,
+                requirePayload(envelope, GameInviteDecision.class).inviteId());
+        sessions.requireRoomAvailable(userId, invite.roomId());
+        RoomResponse joined = rooms.join(userId, invite.roomId().toString());
+        RoomState room = rooms.reconnect(userId, invite.roomId().toString());
+        sessions.bindRoom(session.getId(), room);
+        GameInviteStatusPayload recipientPayload = new GameInviteStatusPayload(
+                invite.inviteId(), invite.senderUsername(), joined);
+        sessions.toSession(session.getId(), "GAME_INVITE_ACCEPTED", invite.roomId(), recipientPayload,
+                envelope.requestId());
+        sessions.toUser(invite.senderId(), "GAME_INVITE_ACCEPTED", invite.roomId(),
+                new GameInviteStatusPayload(invite.inviteId(), invite.recipientUsername(), joined),
+                envelope.requestId());
     }
 
     private UUID roomId(ClientEnvelope envelope) {

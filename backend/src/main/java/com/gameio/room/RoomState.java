@@ -69,6 +69,21 @@ public record RoomState(
         return copy(ownerId, RoomStatus.FINISHED, players);
     }
 
+    public RoomState waitingForRematch(UUID connectedUserId) {
+        List<RoomPlayer> waitingPlayers = players.stream()
+                .map(player -> player.waitingForRematch(player.id().equals(connectedUserId)))
+                .toList();
+        return copy(ownerId, RoomStatus.WAITING, waitingPlayers);
+    }
+
+    public RoomState reconnectForRematch(UUID connectedUserId) {
+        return copy(ownerId, status, players.stream()
+                .map(player -> player.id().equals(connectedUserId)
+                        ? player.withConnection(true)
+                        : player)
+                .toList());
+    }
+
     private RoomState copy(UUID newOwnerId, RoomStatus newStatus, List<RoomPlayer> newPlayers) {
         return new RoomState(roomId, roomCode, gameId, gameSlug, gameName, newOwnerId, minPlayers, maxPlayers,
                 privateRoom, newStatus, newPlayers, createdAt, expiresAt);

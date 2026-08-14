@@ -192,6 +192,36 @@ describe("realtime game reducer", () => {
     expect(result.gameOver?.progression[0].result).toBe("WIN");
   });
 
+  it("clears the completed engine when the room returns for a rematch", () => {
+    const completed = {
+      ...initialRealtimeState,
+      room,
+      gameSlug: room.gameSlug,
+      matchId: "match-1",
+      snapshot: snapshot(5),
+      gameOver: {
+        matchId: "match-1",
+        finalState: snapshot(5),
+        progression: [],
+      },
+    };
+    const waitingRoom: GameRoom = {
+      ...room,
+      status: "WAITING",
+      players: room.players.map((player) => ({ ...player, ready: false })),
+    };
+
+    const result = realtimeGameReducer(completed, {
+      type: "server_event",
+      event: { type: "ROOM_STATE", roomId: room.roomId, payload: waitingRoom },
+    });
+
+    expect(result.room?.status).toBe("WAITING");
+    expect(result.matchId).toBeNull();
+    expect(result.snapshot).toBeNull();
+    expect(result.gameOver).toBeNull();
+  });
+
   it("clears an unrestorable room and stale snapshot on ROOM_EXPIRED", () => {
     const active = {
       ...initialRealtimeState,

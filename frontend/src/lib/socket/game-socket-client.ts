@@ -6,6 +6,10 @@ export type ClientEventType =
   | "ROOM_LEAVE"
   | "ROOM_READY"
   | "ROOM_START"
+  | "ROOM_REMATCH"
+  | "GAME_INVITE_SEND"
+  | "GAME_INVITE_ACCEPT"
+  | "GAME_INVITE_DECLINE"
   | "MATCHMAKING_JOIN"
   | "MATCHMAKING_LEAVE"
   | "GAME_INPUT";
@@ -19,6 +23,10 @@ export type ServerEventType =
   | "GAME_START"
   | "GAME_STATE"
   | "GAME_OVER"
+  | "GAME_INVITE"
+  | "GAME_INVITE_SENT"
+  | "GAME_INVITE_ACCEPTED"
+  | "GAME_INVITE_DECLINED"
   | "OPPONENT_DISCONNECTED"
   | "ERROR";
 
@@ -278,6 +286,39 @@ export class GameSocketClient {
   startRoom(roomId: string) {
     return this.sendEnvelope(
       createClientEnvelope("ROOM_START", { roomId }),
+    );
+  }
+
+  rematchRoom(roomId: string) {
+    this.activeRoomId = roomId;
+    return this.sendEnvelope(
+      createClientEnvelope("ROOM_REMATCH", { roomId }),
+    );
+  }
+
+  sendGameInvite(roomId: string, recipientUsername: string) {
+    return this.sendEnvelope(
+      createClientEnvelope("GAME_INVITE_SEND", {
+        roomId,
+        payload: { recipientUsername },
+      }),
+    );
+  }
+
+  acceptGameInvite(inviteId: string, roomId: string) {
+    this.activeRoomId = roomId;
+    return this.sendEnvelope(
+      createClientEnvelope("GAME_INVITE_ACCEPT", {
+        payload: { inviteId },
+      }),
+    );
+  }
+
+  declineGameInvite(inviteId: string) {
+    return this.sendEnvelope(
+      createClientEnvelope("GAME_INVITE_DECLINE", {
+        payload: { inviteId },
+      }),
     );
   }
 

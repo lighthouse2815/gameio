@@ -8,9 +8,9 @@ The implementation deliberately keeps one application backend instead of introdu
 
 - Registration plus password or Google sign-in, short-lived JWT access tokens, rotating opaque refresh tokens, logout and refresh-token reuse protection.
 - Public profiles, avatar update, match history, EXP/levels, achievements, global and per-game leaderboards.
-- Friends, incoming/outgoing requests, accept/reject/remove and Redis-backed online/current-game presence.
+- Friends, incoming/outgoing requests, accept/reject/remove, Redis-backed online/current-game presence and expiring realtime game invitations.
 - Catalog search/filters, real persisted play counts and active-room/session-derived online counts, responsive light/dark portal UI, loading/error/empty states and local generated game artwork.
-- Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking and reconnect handling.
+- Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
 - A single authenticated WebSocket transport shared by Tic Tac Toe, Caro and Tank Battle. Clients send inputs; the server validates membership, turns, movement, collisions, HP and terminal outcomes.
 - PostgreSQL/Flyway for durable data and Redis for ephemeral room, queue, presence and short-lived leaderboard-cache data.
 
@@ -249,7 +249,6 @@ Release screenshots are generated from the real browser runtime during the final
 ## Roadmap
 
 - Persist or externalize active engine state before running more than one realtime backend replica.
-- Implement the reserved friend-to-room `GAME_INVITE` delivery/expiry contract documented in the WebSocket guide; invitation sending is not part of the current release.
 - Add provider-independent automated backup/restore drills and production observability.
 - Extract the realtime boundary to a dedicated game server only when scale justifies it; the current protocol keeps that migration possible without rewriting accounts or progression.
 

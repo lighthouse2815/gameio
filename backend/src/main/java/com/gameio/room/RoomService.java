@@ -158,6 +158,36 @@ public class RoomService {
         }
     }
 
+    public RoomResponse rematch(UUID userId, UUID roomId) {
+        synchronized (lock(roomId)) {
+            RoomState room = requireMembership(requireRoom(roomId), userId);
+            if (room.status() == RoomStatus.PLAYING) {
+                throw new InvalidRoomActionException("MATCH_STILL_PLAYING",
+                        "A rematch cannot begin before the current match finishes");
+            }
+            RoomState waiting = room.status() == RoomStatus.FINISHED
+                    ? room.waitingForRematch(userId)
+                    : room.reconnectForRematch(userId);
+            rooms.save(waiting);
+            events.roomUpdated(waiting);
+            return RoomResponse.from(waiting);
+        }
+    }
+
+    public RoomState requireInviteableRoom(UUID senderId, UUID roomId) {
+        synchronized (lock(roomId)) {
+            RoomState room = requireMembership(requireRoom(roomId), senderId);
+            if (room.status() != RoomStatus.WAITING) {
+                throw new InvalidRoomActionException("ROOM_NOT_INVITEABLE",
+                        "Game invitations can only target a waiting room");
+            }
+            if (room.players().size() >= room.maxPlayers()) {
+                throw new InvalidRoomActionException("ROOM_FULL", "Room is full");
+            }
+            return room;
+        }
+    }
+
     public RoomResponse getForMember(UUID userId, UUID roomId) {
         return RoomResponse.from(requireMembership(requireRoom(roomId), userId));
     }

@@ -102,7 +102,7 @@ Leaderboard responses are cached in Redis for 30 seconds by scope/page/size. The
 
 Friend pairs are canonical and case-insensitive, so the inverse duplicate relationship cannot be created.
 
-Friend-to-game invitations are not implemented in this release. The UI opens the same-game lobby without claiming an invite was sent; a future validated event boundary is reserved in the [WebSocket protocol](websocket-protocol.md#reserved-friend-invite-contract-not-implemented).
+Friend-to-game invitations use authenticated WebSocket commands rather than REST. They are one-use Redis records with a 60-second TTL and always join through the normal room validation path; see the [WebSocket protocol](websocket-protocol.md#friend-invitations).
 
 ## Rooms
 
@@ -115,6 +115,8 @@ Friend-to-game invitations are not implemented in this release. The UI opens the
 | `POST` | `/rooms/{roomId}/leave` | Bearer/member | Leave/disconnect; `204` |
 | `POST` | `/rooms/{roomId}/ready` | Bearer/member | Mark ready and return room state |
 | `POST` | `/rooms/{roomId}/start` | Bearer/owner | Explicitly start once required players are ready |
+
+Same-room rematches use authenticated `ROOM_REMATCH` over WebSocket after `GAME_OVER`; the command resets ready state and returns the room to `WAITING`.
 
 Room codes are six characters. Tic Tac Toe and Caro accept exactly two players; Tank Battle accepts two to four. The backend validates requested capacity against the selected game's catalog limits.
 

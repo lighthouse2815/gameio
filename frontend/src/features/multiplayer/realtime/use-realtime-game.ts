@@ -169,6 +169,10 @@ export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
     () => runCommand("ROOM_START", () => gameSocketClient.startRoom(roomId)),
     [roomId, runCommand],
   );
+  const rematch = useCallback(
+    () => runCommand("ROOM_REMATCH", () => gameSocketClient.rematchRoom(roomId)),
+    [roomId, runCommand],
+  );
   const reconnect = useCallback(() => {
     gameSocketClient.joinRoom(roomId);
     gameSocketClient.reconnectNow();
@@ -182,6 +186,7 @@ export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
     sendInput,
     ready,
     start,
+    rematch,
     reconnect,
     clearError: () => dispatch({ type: "clear_error" }),
   };

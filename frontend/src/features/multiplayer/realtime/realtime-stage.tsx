@@ -253,6 +253,10 @@ export function RealtimeStage({
               >
                 {t("Open a new room")}
               </Link>
+              <Button onClick={controller.rematch}>
+                <RotateCw size={13} aria-hidden="true" />
+                {t("Rematch in this room")}
+              </Button>
               <Link href="/games" className={buttonStyles("secondary")}>
                 {t("Back to games")}
               </Link>

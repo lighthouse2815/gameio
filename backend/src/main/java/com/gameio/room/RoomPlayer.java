@@ -14,4 +14,8 @@ public record RoomPlayer(UUID id, String username, boolean ready, boolean owner,
     public RoomPlayer withConnection(boolean newConnection) {
         return new RoomPlayer(id, username, ready, owner, newConnection);
     }
+
+    public RoomPlayer waitingForRematch(boolean newConnection) {
+        return new RoomPlayer(id, username, false, owner, newConnection);
+    }
 }

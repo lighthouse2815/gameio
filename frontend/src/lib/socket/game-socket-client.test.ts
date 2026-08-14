@@ -120,6 +120,28 @@ describe("GameSocketClient protocol", () => {
     expect(client.roomId).toBeNull();
   });
 
+  it("sends invite and rematch commands without trusting client room state", async () => {
+    const client = new GameSocketClient();
+    client.connect();
+    await flushConnection();
+    const socket = FakeWebSocket.instances[0];
+    socket.open();
+
+    client.sendGameInvite("room-1", "Friend_1");
+    client.rematchRoom("room-1");
+
+    expect(JSON.parse(socket.sent[0])).toMatchObject({
+      type: "GAME_INVITE_SEND",
+      roomId: "room-1",
+      payload: { recipientUsername: "Friend_1" },
+    });
+    expect(JSON.parse(socket.sent[1])).toMatchObject({
+      type: "ROOM_REMATCH",
+      roomId: "room-1",
+    });
+    client.disconnect();
+  });
+
   it("forces a token refresh and ignores the old socket close on manual reconnect", async () => {
     vi.useFakeTimers();
     const client = new GameSocketClient();

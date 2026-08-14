@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Radio, ShieldCheck, Users } from "lucide-react";
+import { Radio, Send, ShieldCheck, Users } from "lucide-react";
 import { LoginRequired } from "@/components/auth/login-required";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Field, SelectField } from "@/components/ui/field";
@@ -11,6 +11,7 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { isUnauthenticated, useSession } from "@/features/auth/hooks";
 import { useGames } from "@/features/games/hooks";
+import { friendApi } from "@/features/friends/api";
 import { multiplayerApi } from "@/features/multiplayer/api";
 import type { GameRoom } from "@/features/multiplayer/types";
 import { getErrorMessage } from "@/lib/api/api-error";
@@ -56,6 +57,11 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
     gameSocketClient.status,
   );
   const enabled = Boolean(session.data && effectiveGameId);
+  const friends = useQuery({
+    queryKey: ["friends", "accepted"],
+    queryFn: friendApi.list,
+    enabled: Boolean(session.data),
+  });
 
   const rooms = useQuery({
     queryKey: ["rooms", effectiveGameId],
@@ -369,6 +375,60 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
                 {t("Leave room")}
               </Button>
             </div>
+            {displayedRoom.status === "WAITING" ? (
+              <div className="mt-5 border-t border-[var(--line)] pt-5">
+                <p className="font-telemetry text-[8px] text-[var(--muted)]">
+                  {t("[ INVITE ONLINE FRIENDS ]")}
+                </p>
+                <div className="mt-3 grid gap-2">
+                  {friends.data
+                    ?.filter(
+                      (friend) =>
+                        friend.online &&
+                        !displayedRoom.players.some(
+                          (player) => player.id === friend.id,
+                        ),
+                    )
+                    .map((friend) => (
+                      <Button
+                        compact
+                        variant="secondary"
+                        key={friend.id}
+                        onClick={() => {
+                          try {
+                            gameSocketClient.sendGameInvite(
+                              displayedRoom.roomId,
+                              friend.username,
+                            );
+                          } catch {
+                            gameSocketClient.connect(true);
+                            toast({
+                              title: t("Invite connection unavailable"),
+                              description: t("Reconnect and send the invite again."),
+                              tone: "error",
+                            });
+                          }
+                        }}
+                      >
+                        <Send size={12} aria-hidden="true" />
+                        {t("Invite {username}", { username: friend.username })}
+                      </Button>
+                    ))}
+                  {friends.data &&
+                  !friends.data.some(
+                    (friend) =>
+                      friend.online &&
+                      !displayedRoom.players.some(
+                        (player) => player.id === friend.id,
+                      ),
+                  ) ? (
+                    <p className="text-xs leading-5 text-[var(--muted)]">
+                      {t("No available online friends.")}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
