@@ -8,6 +8,8 @@ import com.gameio.multiplayer.RealtimeGameCoordinator;
 import com.gameio.multiplayer.RealtimeRoomExpiredException;
 import com.gameio.multiplayer.RealtimeSessionRegistry;
 import com.gameio.multiplayer.RoomLeftPayload;
+import com.gameio.multiplayer.QuickReactionPayload;
+import com.gameio.multiplayer.QuickReactionRequest;
 import com.gameio.multiplayer.engine.GameInput;
 import com.gameio.multiplayer.invite.GameInvite;
 import com.gameio.multiplayer.invite.GameInviteDecision;
@@ -17,6 +19,7 @@ import com.gameio.multiplayer.invite.GameInviteService;
 import com.gameio.multiplayer.invite.GameInviteStatusPayload;
 import com.gameio.multiplayer.protocol.ClientEnvelope;
 import com.gameio.room.RoomResponse;
+import com.gameio.room.InvalidRoomActionException;
 import com.gameio.room.RoomService;
 import com.gameio.room.RoomState;
 import java.io.IOException;
@@ -121,7 +124,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         RealtimeSessionRegistry.ConnectionInfo connection = sessions.unregister(session.getId());
-        if (connection != null && connection.roomId() != null
+        if (connection != null && connection.roomId() != null && !connection.spectator()
                 && !sessions.hasRoomConnections(connection.userId(), connection.roomId())) {
             try {
                 rooms.leave(connection.userId(), connection.roomId());
@@ -139,6 +142,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
         UUID userId = userId(session);
         switch (envelope.type()) {
             case "ROOM_JOIN" -> joinRoom(session, userId, envelope);
+            case "ROOM_SPECTATE" -> spectateRoom(session, userId, envelope);
+            case "ROOM_UNSUBSCRIBE" -> {
+                UUID roomId = roomId(envelope);
+                sessions.requireRoomChannel(session.getId(), roomId);
+                sessions.unbindRoom(session.getId(), roomId);
+                sessions.toSession(session.getId(), "ROOM_LEFT", roomId,
+                        new RoomLeftPayload(userId), envelope.requestId());
+            }
             case "ROOM_LEAVE" -> {
                 UUID roomId = roomId(envelope);
                 sessions.requireBoundRoom(session.getId(), roomId);
@@ -198,6 +209,16 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
                 coordinator.input(roomId, userId,
                         requirePayload(envelope, GameInput.class), envelope.requestId());
             }
+            case "ROOM_REACTION" -> {
+                UUID roomId = roomId(envelope);
+                sessions.requireRoomChannel(session.getId(), roomId);
+                rateLimiter.checkReaction(userId);
+                QuickReactionRequest request = requirePayload(envelope, QuickReactionRequest.class);
+                String username = (String) session.getAttributes()
+                        .get(JwtHandshakeInterceptor.USERNAME_ATTRIBUTE);
+                sessions.toRoom(roomId, "ROOM_REACTION",
+                        new QuickReactionPayload(userId, username, request.reaction()), envelope.requestId());
+            }
             default -> error(session, envelope.requestId(), "UNKNOWN_EVENT", "WebSocket event type is not supported");
         }
     }
@@ -217,6 +238,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler implements SubPro
             sessions.clearRoomBindings(room.roomId());
             throw new RealtimeRoomExpiredException();
         }
+    }
+
+    private void spectateRoom(WebSocketSession session, UUID userId, ClientEnvelope envelope) {
+        UUID roomId = roomId(envelope);
+        RoomState room = rooms.getSpectatable(roomId);
+        if (room.hasPlayer(userId)) {
+            throw new InvalidRoomActionException("ROOM_PLAYER_CANNOT_SPECTATE",
+                    "Players must join their match instead of spectating it");
+        }
+        sessions.bindSpectator(session.getId(), room);
+        sessions.toSession(session.getId(), "ROOM_STATE", roomId, RoomResponse.from(room), envelope.requestId());
+        sessions.toSession(session.getId(), "GAME_START", roomId, coordinator.spectatorStart(roomId),
+                envelope.requestId());
     }
 
     private void acceptInvite(WebSocketSession session, UUID userId, ClientEnvelope envelope) {

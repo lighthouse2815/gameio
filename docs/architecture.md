@@ -46,8 +46,8 @@ Packages under `backend/src/main/java/com/gameio` are grouped by feature:
 
 ```text
 achievement/   auth/          friend/        game/
-gameresult/    leaderboard/   matchmaking/   multiplayer/
-room/          user/          common/
+competition/   gameresult/    leaderboard/   matchmaking/
+multiplayer/   room/          user/          common/
 ```
 
 The common shape is:
@@ -59,6 +59,8 @@ The common shape is:
 - request/response records: external contract without exposing entities.
 
 The `gameresult` module has two trusted ingestion paths. Single-player titles use server-issued seeded sessions and replay verification. Multiplayer engines create outcomes inside the authoritative coordinator and persist each match once through an idempotent match identifier.
+
+`competition` consumes only those persisted authoritative outcomes. It owns annual seasons, per-game Elo records and tournament brackets in PostgreSQL. The coordinator publishes a match-completed application event after finishing the room; a competition listener advances a linked bracket without creating a dependency cycle between `RoomService`, the coordinator and tournament room allocation.
 
 `dailychallenge` selects one of the six installed solo engines from the Vietnam business date and derives a stable 32-bit seed from that date and slug. A challenge session is still an ordinary replay-verified `game_session`, marked with `challenge_date`; rankings and streaks can therefore include only durable results that passed the normal verifier.
 
@@ -79,6 +81,8 @@ Client command
 ```
 
 Clients send `PLACE_PIECE`, direction, stop or shoot input. They cannot submit position, HP, score or another player's identity. The server enforces 120 messages and 60 game inputs per user plus 240 messages per source IP in a one-second window, 60 handshakes per source IP and 20 per resolved user per minute, a 60-second reconnect grace period, a five-minute idle match limit and a 30-minute maximum match duration.
+
+Spectators bind to the same broadcast channel only for active public rooms. The binding is flagged read-only and excluded from membership, active-player presence, capacity, disconnect forfeits and input authorization. Quick reactions use four fixed enum values, authenticated server identity and a separate four-per-five-seconds limit; there is no free-form chat surface.
 
 Room metadata survives in Redis, but an active engine does not survive a backend restart. A reconnect to such a stale `PLAYING` room produces `ROOM_EXPIRED`; the room is removed and the frontend exits the canvas. This limitation is why production stays on one non-sleeping replica.
 

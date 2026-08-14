@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Radio, Send, ShieldCheck, Users } from "lucide-react";
+import { Eye, Radio, Send, ShieldCheck, Users } from "lucide-react";
 import { LoginRequired } from "@/components/auth/login-required";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { Field, SelectField } from "@/components/ui/field";
@@ -69,6 +69,13 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
     select: (response) => asPage(response, 0, 30),
     enabled,
     refetchInterval: 10_000,
+  });
+  const liveRooms = useQuery({
+    queryKey: ["rooms", "live", effectiveGameId],
+    queryFn: () => multiplayerApi.rooms(effectiveGameId, "PLAYING"),
+    select: (response) => asPage(response, 0, 30),
+    enabled,
+    refetchInterval: 5_000,
   });
   const currentMatch = useQuery({
     queryKey: ["matchmaking", "current"],
@@ -313,6 +320,59 @@ export function MultiplayerScreen({ initialGameSlug }: { initialGameSlug: string
             ))}
           </ul>
         ) : null}
+
+        <div className="border-t border-[var(--line)]">
+          <header className="flex items-center justify-between gap-4 border-b border-[var(--line)] p-5">
+            <div>
+              <p className="font-telemetry text-[8px] text-[var(--accent)]">{t("[ LIVE SPECTATOR CHANNEL ]")}</p>
+              <h2 className="mt-1 text-2xl font-black uppercase tracking-[-0.04em]">{t("Matches in progress")}</h2>
+            </div>
+            <Eye size={20} className="text-[var(--accent)]" aria-hidden="true" />
+          </header>
+          {liveRooms.isLoading ? <Skeleton className="m-5 h-32" /> : null}
+          {liveRooms.isError ? (
+            <div className="p-5">
+              <ErrorState
+                title={t("Live match channel unavailable")}
+                description={t(getErrorMessage(liveRooms.error))}
+                onAction={() => void liveRooms.refetch()}
+              />
+            </div>
+          ) : null}
+          {liveRooms.data && !liveRooms.data.content.length ? (
+            <div className="p-5">
+              <EmptyState
+                title={t("No public matches in progress")}
+                description={t("Public matches appear here while their server-authoritative engine is running.")}
+              />
+            </div>
+          ) : null}
+          {liveRooms.data?.content.length ? (
+            <ul>
+              {liveRooms.data.content.map((room) => {
+                const participating = room.players.some((player) => player.id === session.data?.id);
+                return (
+                  <li className="grid gap-4 border-b border-[var(--line)] p-5 last:border-b-0 sm:grid-cols-[1fr_auto] sm:items-center" key={room.roomId}>
+                    <div>
+                      <p className="font-telemetry text-[8px] text-[var(--accent)]">{room.roomCode} / {t("PLAYING")}</p>
+                      <p className="mt-2 font-bold uppercase">{t(room.gameName)}</p>
+                      <p className="font-telemetry mt-2 text-[8px] text-[var(--muted)]">
+                        {room.players.map((player) => player.username).join(" VS ")}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/game/${encodeURIComponent(room.gameSlug)}?room=${encodeURIComponent(room.roomId)}${participating ? "" : "&spectate=1"}`}
+                      className={buttonStyles("secondary")}
+                    >
+                      <Eye size={13} aria-hidden="true" />
+                      {t(participating ? "Resume match" : "Watch live")}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </div>
       </section>
 
       <aside className="grid content-start gap-6">

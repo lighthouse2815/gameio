@@ -47,4 +47,18 @@ class RealtimeRateLimiterTest {
         assertThatThrownBy(() -> limiter.checkMessage(UUID.randomUUID(), "198.51.100.4"))
                 .isInstanceOf(RealtimeRateLimitException.class);
     }
+
+    @Test
+    void limitsQuickReactionsWithoutConsumingGameInputQuota() {
+        RealtimeRateLimiter limiter = new RealtimeRateLimiter(
+                Clock.fixed(Instant.parse("2026-08-10T00:00:00Z"), ZoneOffset.UTC));
+        UUID userId = UUID.randomUUID();
+        for (int reaction = 0; reaction < 4; reaction++) {
+            limiter.checkReaction(userId);
+        }
+
+        assertThatThrownBy(() -> limiter.checkReaction(userId))
+                .isInstanceOf(RealtimeRateLimitException.class);
+        assertThatCode(() -> limiter.checkGameInput(userId)).doesNotThrowAnyException();
+    }
 }

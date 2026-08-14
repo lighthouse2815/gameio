@@ -10,9 +10,9 @@ import {
 } from "@/games/core/turn-based-helpers";
 import { useI18n } from "@/lib/i18n/use-i18n";
 
-export default function TicTacToeGame({ roomId }: { roomId: string }) {
+export default function TicTacToeGame({ roomId, spectator = false }: { roomId: string; spectator?: boolean }) {
   const { t } = useI18n();
-  const controller = useRealtimeGame(roomId, "tic-tac-toe");
+  const controller = useRealtimeGame(roomId, "tic-tac-toe", spectator ? "spectator" : "player");
   const snapshot = isTurnBasedSnapshot(controller.state.snapshot, 3)
     ? controller.state.snapshot
     : null;

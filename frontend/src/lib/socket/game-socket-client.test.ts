@@ -142,6 +142,32 @@ describe("GameSocketClient protocol", () => {
     client.disconnect();
   });
 
+  it("restores spectator mode and sends allowlisted room reactions", async () => {
+    const client = new GameSocketClient();
+    client.spectateRoom("room-live");
+    await flushConnection();
+    const socket = FakeWebSocket.instances[0];
+    socket.open();
+
+    expect(JSON.parse(socket.sent[0])).toMatchObject({
+      type: "ROOM_SPECTATE",
+      roomId: "room-live",
+    });
+    client.sendReaction("room-live", "WOW");
+    expect(JSON.parse(socket.sent[1])).toMatchObject({
+      type: "ROOM_REACTION",
+      roomId: "room-live",
+      payload: { reaction: "WOW" },
+    });
+    client.leaveSpectator("room-live");
+    expect(JSON.parse(socket.sent[2])).toMatchObject({
+      type: "ROOM_UNSUBSCRIBE",
+      roomId: "room-live",
+    });
+    expect(client.roomId).toBeNull();
+    client.disconnect();
+  });
+
   it("forces a token refresh and ignores the old socket close on manual reconnect", async () => {
     vi.useFakeTimers();
     const client = new GameSocketClient();

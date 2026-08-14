@@ -22,9 +22,9 @@ import {
 import { useI18n } from "@/lib/i18n/use-i18n";
 import { movementKeyAllowed } from "@/features/settings/input-preferences";
 
-export default function TankBattle({ roomId }: { roomId: string }) {
+export default function TankBattle({ roomId, spectator = false }: { roomId: string; spectator?: boolean }) {
   const { t } = useI18n();
-  const controller = useRealtimeGame(roomId, "tank-battle");
+  const controller = useRealtimeGame(roomId, "tank-battle", spectator ? "spectator" : "player");
   const snapshot = isTankSnapshot(controller.state.snapshot)
     ? controller.state.snapshot
     : null;

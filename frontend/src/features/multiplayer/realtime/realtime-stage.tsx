@@ -4,18 +4,24 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
+  Award,
   Check,
+  Eye,
   LoaderCircle,
   Radio,
   RotateCw,
+  Share2,
   ShieldCheck,
+  Sparkles,
   WifiOff,
   X,
 } from "lucide-react";
 import { LoginRequired } from "@/components/auth/login-required";
 import { Button, buttonStyles } from "@/components/ui/button";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/states";
+import { useToast } from "@/components/ui/toast";
 import { isUnauthenticated } from "@/features/auth/hooks";
+import { QuickReactions } from "@/features/multiplayer/realtime/quick-reactions";
 import type { RealtimeGameController } from "@/features/multiplayer/realtime/use-realtime-game";
 import { getErrorMessage } from "@/lib/api/api-error";
 import { useI18n } from "@/lib/i18n/use-i18n";
@@ -30,6 +36,7 @@ export function RealtimeStage({
   children: ReactNode;
 }) {
   const { t, formatNumber } = useI18n();
+  const toast = useToast();
   const { session, state } = controller;
   if (session.isLoading) {
     return <Skeleton className="h-[560px]" />;
@@ -67,6 +74,39 @@ export function RealtimeStage({
     state.error?.code === "ROOM_FINISHED" ||
     state.error?.code === "ROOM_GAME_MISMATCH" ||
     state.error?.code === "INVALID_GAME_STATE";
+  const spectator = controller.mode === "spectator";
+
+  async function shareResult() {
+    const result = progression?.result ?? "Match over";
+    const shareText = t("I finished a {result} match in {game} on Gameio.", {
+      result: t(result),
+      game: t(state.gameSlug ?? title),
+    });
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: t("Gameio verified result"),
+          text: shareText,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+        toast({
+          title: t("Result copied"),
+          description: t("The verified score and game link are ready to paste."),
+          tone: "success",
+        });
+      }
+    } catch (error) {
+      if ((error as DOMException).name !== "AbortError") {
+        toast({
+          title: t("Could not share result"),
+          description: t("Your browser blocked the share action. Try again from a secure tab."),
+          tone: "error",
+        });
+      }
+    }
+  }
 
   return (
     <section className="border border-[var(--line-strong)] bg-[var(--background)]">
@@ -124,6 +164,13 @@ export function RealtimeStage({
         <div className="font-telemetry flex items-center gap-3 border-b border-[var(--accent)] px-4 py-3 text-[9px] text-[var(--accent)]">
           <WifiOff size={14} aria-hidden="true" />
           {t("OPPONENT DISCONNECTED / SERVER RECONNECT GRACE ACTIVE")}
+        </div>
+      ) : null}
+
+      {spectator ? (
+        <div className="font-telemetry flex items-center gap-3 border-b border-[var(--line)] bg-[var(--surface-strong)] px-4 py-3 text-[9px] text-[var(--accent)]">
+          <Eye size={14} aria-hidden="true" />
+          {t("SPECTATOR MODE / INPUT DISABLED / LIVE SERVER STATE")}
         </div>
       ) : null}
 
@@ -193,12 +240,12 @@ export function RealtimeStage({
             <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
               {t("Every player must signal ready. Only the room owner may issue ROOM_START.")}
             </p>
-            {!currentPlayer?.ready ? (
+            {!spectator && !currentPlayer?.ready ? (
               <Button className="mt-5 w-full" onClick={controller.ready}>
                 {t("Signal ready")}
               </Button>
             ) : null}
-            {currentPlayer?.owner ? (
+            {!spectator && currentPlayer?.owner ? (
               <Button
                 className="mt-2 w-full"
                 variant="secondary"
@@ -223,7 +270,12 @@ export function RealtimeStage({
         </div>
       ) : null}
 
-      {state.snapshot ? <div className="relative">{children}</div> : null}
+      {state.snapshot ? (
+        <div className="relative">
+          {children}
+          <QuickReactions controller={controller} />
+        </div>
+      ) : null}
 
       {state.gameOver ? (
         <div className="border-t border-[var(--accent)] bg-[var(--surface)] p-6">
@@ -236,10 +288,38 @@ export function RealtimeStage({
               {t(progression?.result ?? "Match over")}
             </h4>
             {progression ? (
-              <p className="font-telemetry mt-4 text-[9px] text-[var(--muted)]">
-                {t("SCORE")} {formatNumber(progression.score)} / +{formatNumber(progression.expAwarded)} EXP /
-                {t("LEVEL")} {progression.level}
-              </p>
+              <dl className="mt-5 grid gap-px border border-[var(--line)] bg-[var(--line)] text-left sm:grid-cols-3">
+                <div className="bg-[var(--background)] p-3">
+                  <dt className="font-telemetry text-[8px] text-[var(--muted)]">{t("Score / EXP")}</dt>
+                  <dd className="mt-2 font-black">{formatNumber(progression.score)} / +{formatNumber(progression.expAwarded)}</dd>
+                </div>
+                <div className="bg-[var(--background)] p-3">
+                  <dt className="font-telemetry text-[8px] text-[var(--muted)]">{t("Level")}</dt>
+                  <dd className="mt-2 font-black">{formatNumber(progression.level)}</dd>
+                </div>
+                <div className="bg-[var(--background)] p-3">
+                  <dt className="font-telemetry text-[8px] text-[var(--muted)]">{t("Season rating")}</dt>
+                  <dd className={"mt-2 font-black " + (progression.ratingDelta >= 0 ? "text-[var(--online)]" : "text-[var(--danger)]")}>
+                    {formatNumber(progression.ratingAfter)} ({progression.ratingDelta >= 0 ? "+" : ""}{formatNumber(progression.ratingDelta)})
+                  </dd>
+                </div>
+              </dl>
+            ) : null}
+            {progression?.unlockedAchievements.length ? (
+              <div className="mt-4 border border-[var(--line)] p-4 text-left">
+                <p className="font-telemetry flex items-center gap-2 text-[8px] text-[var(--accent)]">
+                  <Sparkles size={13} aria-hidden="true" />
+                  {t("Achievements unlocked in this match")}
+                </p>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {progression.unlockedAchievements.map((achievement) => (
+                    <li key={achievement.id} className="flex items-center gap-3 border border-[var(--line)] p-3">
+                      <Award size={17} className="shrink-0 text-[var(--accent)]" aria-hidden="true" />
+                      <span className="text-xs font-black uppercase">{t(achievement.name)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : null}
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Link
@@ -253,10 +333,18 @@ export function RealtimeStage({
               >
                 {t("Open a new room")}
               </Link>
-              <Button onClick={controller.rematch}>
-                <RotateCw size={13} aria-hidden="true" />
-                {t("Rematch in this room")}
-              </Button>
+              {!spectator ? (
+                <Button onClick={controller.rematch}>
+                  <RotateCw size={13} aria-hidden="true" />
+                  {t("Rematch in this room")}
+                </Button>
+              ) : null}
+              {progression ? (
+                <Button variant="secondary" onClick={() => void shareResult()}>
+                  <Share2 size={13} aria-hidden="true" />
+                  {t("Share result")}
+                </Button>
+              ) : null}
               <Link href="/games" className={buttonStyles("secondary")}>
                 {t("Back to games")}
               </Link>

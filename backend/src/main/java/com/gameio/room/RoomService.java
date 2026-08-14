@@ -192,6 +192,17 @@ public class RoomService {
         return RoomResponse.from(requireMembership(requireRoom(roomId), userId));
     }
 
+    public RoomState getSpectatable(UUID roomId) {
+        RoomState room = requireRoom(roomId);
+        if (room.privateRoom()) {
+            throw new InvalidRoomActionException("ROOM_NOT_SPECTATABLE", "Private rooms cannot be spectated");
+        }
+        if (room.status() != RoomStatus.PLAYING) {
+            throw new InvalidRoomActionException("ROOM_NOT_LIVE", "Only an active public match can be spectated");
+        }
+        return room;
+    }
+
     public RoomState reconnect(UUID userId, String roomReference) {
         RoomState found = findByReference(roomReference);
         synchronized (lock(found.roomId())) {

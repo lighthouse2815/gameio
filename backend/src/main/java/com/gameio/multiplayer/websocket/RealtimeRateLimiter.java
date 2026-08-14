@@ -18,12 +18,15 @@ public class RealtimeRateLimiter {
     private static final int MAX_MESSAGES_PER_IP = 240;
     private static final int MAX_HANDSHAKES_PER_IP = 60;
     private static final int MAX_HANDSHAKES_PER_USER = 20;
+    private static final Duration REACTION_WINDOW = Duration.ofSeconds(5);
+    private static final int MAX_REACTIONS_PER_USER = 4;
     private static final int MAX_TRACKED_KEYS = 50_000;
 
     private final Map<UUID, UserBucket> userBuckets = new ConcurrentHashMap<>();
     private final Map<String, WindowBucket> messageIpBuckets = new ConcurrentHashMap<>();
     private final Map<String, WindowBucket> handshakeIpBuckets = new ConcurrentHashMap<>();
     private final Map<UUID, WindowBucket> handshakeUserBuckets = new ConcurrentHashMap<>();
+    private final Map<UUID, WindowBucket> reactionUserBuckets = new ConcurrentHashMap<>();
     private final AtomicLong checks = new AtomicLong();
     private final Clock clock;
 
@@ -48,6 +51,11 @@ public class RealtimeRateLimiter {
 
     public void checkGameInput(UUID userId, String clientAddress) {
         checkUser(userId, true);
+    }
+
+    public void checkReaction(UUID userId) {
+        if (userId == null) throw new RealtimeRateLimitException();
+        checkWindow(reactionUserBuckets, userId, REACTION_WINDOW, MAX_REACTIONS_PER_USER);
     }
 
     void checkMessage(UUID userId) {
@@ -105,6 +113,7 @@ public class RealtimeRateLimiter {
         cleanup(messageIpBuckets, now.minus(MESSAGE_WINDOW.multipliedBy(2)));
         cleanup(handshakeIpBuckets, now.minus(HANDSHAKE_WINDOW.multipliedBy(2)));
         cleanup(handshakeUserBuckets, now.minus(HANDSHAKE_WINDOW.multipliedBy(2)));
+        cleanup(reactionUserBuckets, now.minus(REACTION_WINDOW.multipliedBy(2)));
     }
 
     private <K, T extends TrackedBucket> void ensureCapacity(Map<K, T> buckets) {

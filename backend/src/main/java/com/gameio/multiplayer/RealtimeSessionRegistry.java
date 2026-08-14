@@ -42,7 +42,7 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
         }
         WebSocketSession decorated = new ConcurrentWebSocketSessionDecorator(session, 5_000, 1_048_576);
         connections.put(session.getId(),
-                new Connection(userId, username, decorated, tokenExpiresAt, null, null, null));
+                new Connection(userId, username, decorated, tokenExpiresAt, null, null, null, false));
         userSessions.computeIfAbsent(userId, ignored -> ConcurrentHashMap.newKeySet()).add(session.getId());
         refreshPresenceFor(userId);
     }
@@ -68,14 +68,29 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
         }
         requireRoomAvailable(existing.userId(), room.roomId());
         connections.computeIfPresent(sessionId, (ignored, connection) -> {
-            Connection bound = connection.withRoom(room.roomId(), room.gameSlug(), room.gameName());
+            Connection bound = connection.withRoom(room.roomId(), room.gameSlug(), room.gameName(), false);
             return bound;
         });
         refreshPresenceFor(existing.userId());
     }
 
+    public void bindSpectator(String sessionId, RoomState room) {
+        Connection existing = connections.get(sessionId);
+        if (existing == null) {
+            throw new InvalidRoomActionException("SOCKET_NOT_CONNECTED", "WebSocket session is not connected");
+        }
+        UUID activePlayerRoom = activePlayerRoomId(existing.userId());
+        if (activePlayerRoom != null) {
+            throw new InvalidRoomActionException("ACTIVE_PLAYER_ROOM",
+                    "Leave the active player room before spectating another match");
+        }
+        connections.computeIfPresent(sessionId, (ignored, connection) ->
+                connection.withRoom(room.roomId(), room.gameSlug(), room.gameName(), true));
+        refreshPresenceFor(existing.userId());
+    }
+
     public void requireRoomAvailable(UUID userId, UUID roomId) {
-        UUID otherRoomId = activeRoomId(userId);
+        UUID otherRoomId = activePlayerRoomId(userId);
         if (otherRoomId != null && !otherRoomId.equals(roomId)) {
             throw new InvalidRoomActionException("ALREADY_IN_ANOTHER_ROOM",
                     "Leave the active room before joining another room");
@@ -85,12 +100,12 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
     public void unbindRoom(String sessionId) {
         Connection existing = connections.get(sessionId);
         if (existing == null) return;
-        connections.computeIfPresent(sessionId, (ignored, connection) -> connection.withRoom(null, null, null));
+        connections.computeIfPresent(sessionId, (ignored, connection) -> connection.withRoom(null, null, null, false));
         refreshPresenceFor(existing.userId());
     }
 
     public void unbindRoom(String sessionId, UUID roomId) {
-        requireBoundRoom(sessionId, roomId);
+        requireRoomChannel(sessionId, roomId);
         unbindRoom(sessionId);
     }
 
@@ -100,7 +115,7 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
                 (key, connection) -> {
                     if (!roomId.equals(connection.roomId())) return connection;
                     affectedUsers.add(connection.userId());
-                    return connection.withRoom(null, null, null);
+                    return connection.withRoom(null, null, null, false);
                 }));
         affectedUsers.forEach(this::refreshPresenceFor);
     }
@@ -108,7 +123,7 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
     public void clearUserRoomBindings(UUID userId, UUID roomId) {
         userSessions.getOrDefault(userId, Set.of()).forEach(sessionId -> connections.computeIfPresent(sessionId,
                 (key, connection) -> roomId.equals(connection.roomId())
-                        ? connection.withRoom(null, null, null)
+                        ? connection.withRoom(null, null, null, false)
                         : connection));
         refreshPresenceFor(userId);
     }
@@ -127,14 +142,23 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
                 .map(connections::get)
                 .filter(java.util.Objects::nonNull)
                 .anyMatch(connection -> connection.tokenExpiresAt().isAfter(now)
+                        && !connection.spectator()
                         && roomId.equals(connection.roomId()));
     }
 
     public void requireBoundRoom(String sessionId, UUID roomId) {
         Connection connection = connections.get(sessionId);
-        if (connection == null || !roomId.equals(connection.roomId())) {
+        if (connection == null || connection.spectator() || !roomId.equals(connection.roomId())) {
             throw new InvalidRoomActionException("ROOM_SOCKET_BINDING_REQUIRED",
                     "Join this room on the current WebSocket before sending room commands");
+        }
+    }
+
+    public void requireRoomChannel(String sessionId, UUID roomId) {
+        Connection connection = connections.get(sessionId);
+        if (connection == null || !roomId.equals(connection.roomId())) {
+            throw new InvalidRoomActionException("ROOM_SOCKET_BINDING_REQUIRED",
+                    "Join or spectate this room before sending room reactions");
         }
     }
 
@@ -194,10 +218,11 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
         }
     }
 
-    private UUID activeRoomId(UUID userId) {
+    private UUID activePlayerRoomId(UUID userId) {
         return userSessions.getOrDefault(userId, Set.of()).stream()
                 .map(connections::get)
                 .filter(java.util.Objects::nonNull)
+                .filter(connection -> !connection.spectator())
                 .map(Connection::roomId)
                 .filter(java.util.Objects::nonNull)
                 .findFirst()
@@ -213,10 +238,12 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
                 .map(connections::get)
                 .filter(java.util.Objects::nonNull)
                 .filter(connection -> connection.tokenExpiresAt().isAfter(now))
-                .reduce(null, (current, candidate) -> current == null || candidate.roomId() != null
-                        ? candidate : current);
+                .reduce(null, (current, candidate) -> current == null
+                        || (!candidate.spectator() && candidate.roomId() != null) ? candidate : current);
         if (preferred == null) {
             presence.offline(userId);
+        } else if (preferred.spectator()) {
+            presence.online(userId, null, null, null);
         } else {
             presence.online(userId, preferred.roomId(), preferred.gameSlug(), preferred.gameName());
         }
@@ -229,18 +256,19 @@ public class RealtimeSessionRegistry implements RealtimePublisher {
             Instant tokenExpiresAt,
             UUID roomId,
             String gameSlug,
-            String gameName
+            String gameName,
+            boolean spectator
     ) {
-        private Connection withRoom(UUID newRoomId, String newGameSlug, String newGameName) {
+        private Connection withRoom(UUID newRoomId, String newGameSlug, String newGameName, boolean asSpectator) {
             return new Connection(userId, username, session, tokenExpiresAt,
-                    newRoomId, newGameSlug, newGameName);
+                    newRoomId, newGameSlug, newGameName, asSpectator);
         }
 
         private ConnectionInfo info() {
-            return new ConnectionInfo(userId, username, roomId);
+            return new ConnectionInfo(userId, username, roomId, spectator);
         }
     }
 
-    public record ConnectionInfo(UUID userId, String username, UUID roomId) {
+    public record ConnectionInfo(UUID userId, String username, UUID roomId, boolean spectator) {
     }
 }

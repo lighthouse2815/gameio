@@ -1,6 +1,7 @@
 package com.gameio.multiplayer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -70,6 +71,38 @@ class RealtimeSessionRegistryTest {
         registry.clearUserRoomBindings(userId, roomId);
         assertThat(registry.hasRoomConnections(userId, roomId)).isFalse();
         assertThat(registry.unregister("second").roomId()).isNull();
+    }
+
+    @Test
+    void spectatorBindingCanShareRoomChannelWithoutClaimingPlayerMembership() {
+        PresenceStore presence = mock(PresenceStore.class);
+        RealtimeSessionRegistry registry = new RealtimeSessionRegistry(JsonMapper.builder().build(), presence,
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        UUID spectatorId = UUID.randomUUID();
+        UUID roomId = UUID.randomUUID();
+        RoomState room = new RoomState(roomId, "WATCH1", UUID.randomUUID(), "caro", "Caro",
+                UUID.randomUUID(), 2, 2, false, RoomStatus.PLAYING,
+                List.of(new RoomPlayer(UUID.randomUUID(), "First", true, true, true),
+                        new RoomPlayer(UUID.randomUUID(), "Second", true, false, true)),
+                NOW, NOW.plusSeconds(21_600));
+        registry.register(session("spectator"), spectatorId, "Viewer", NOW.plusSeconds(300));
+        clearInvocations(presence);
+
+        registry.bindSpectator("spectator", room);
+
+        registry.requireRoomChannel("spectator", roomId);
+        assertThat(registry.hasRoomConnections(spectatorId, roomId)).isFalse();
+        assertThatThrownBy(() -> registry.requireBoundRoom("spectator", roomId))
+                .isInstanceOf(com.gameio.room.InvalidRoomActionException.class);
+        verify(presence).online(spectatorId, null, null, null);
+
+        registry.unbindRoom("spectator", roomId);
+
+        assertThatThrownBy(() -> registry.requireRoomChannel("spectator", roomId))
+                .isInstanceOf(com.gameio.room.InvalidRoomActionException.class);
+        RealtimeSessionRegistry.ConnectionInfo info = registry.unregister("spectator");
+        assertThat(info.roomId()).isNull();
+        assertThat(info.spectator()).isFalse();
     }
 
     private WebSocketSession session(String id) {

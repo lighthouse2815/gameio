@@ -7,9 +7,9 @@ import { apiClient } from "@/lib/api/client";
 import { isApiError } from "@/lib/api/api-error";
 
 export const multiplayerApi = {
-  rooms: (gameId?: string) =>
+  rooms: (gameId?: string, status: "WAITING" | "PLAYING" = "WAITING") =>
     apiClient.get<RoomListResponse>("/rooms", {
-      query: { gameId, status: "WAITING", page: 0, size: 30 },
+      query: { gameId, status, page: 0, size: 30 },
     }),
   createRoom: (input: {
     gameId: string;

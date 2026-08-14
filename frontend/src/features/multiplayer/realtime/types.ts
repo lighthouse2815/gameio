@@ -67,6 +67,9 @@ export type PlayerProgression = {
   score: number;
   expAwarded: number;
   level: number;
+  ratingBefore: number;
+  ratingAfter: number;
+  ratingDelta: number;
   unlockedAchievements: AchievementSummary[];
 };
 

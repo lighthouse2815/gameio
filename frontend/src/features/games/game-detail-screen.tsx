@@ -27,10 +27,12 @@ export function GameDetailScreen({
   slug,
   roomId,
   dailyChallenge,
+  spectator = false,
 }: {
   slug: string;
   roomId?: string;
   dailyChallenge?: boolean;
+  spectator?: boolean;
 }) {
   const { t, formatDate, formatNumber } = useI18n();
   const game = useGame(slug);
@@ -177,7 +179,7 @@ export function GameDetailScreen({
           </p>
         </header>
         <div className="p-3 sm:p-6 lg:p-8">
-          <GameRuntime slug={detail.slug} roomId={roomId} />
+          <GameRuntime slug={detail.slug} roomId={roomId} spectator={spectator} />
           {local ? <SoloResultSummary gameSlug={detail.slug} /> : null}
         </div>
       </section>

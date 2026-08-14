@@ -11,8 +11,12 @@ import static org.mockito.Mockito.when;
 import com.gameio.matchmaking.MatchmakingService;
 import com.gameio.multiplayer.RealtimeGameCoordinator;
 import com.gameio.multiplayer.RealtimeSessionRegistry;
+import com.gameio.multiplayer.GameStartPayload;
 import com.gameio.multiplayer.invite.GameInviteService;
 import com.gameio.room.RoomResponse;
+import com.gameio.room.RoomPlayer;
+import com.gameio.room.RoomState;
+import com.gameio.room.RoomStatus;
 import com.gameio.room.RoomService;
 import java.time.Clock;
 import java.time.Instant;
@@ -20,6 +24,7 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -157,12 +162,73 @@ class GameWebSocketHandlerTest {
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getId()).thenReturn("closed-tab");
         when(sessions.unregister("closed-tab"))
-                .thenReturn(new RealtimeSessionRegistry.ConnectionInfo(userId, "Player", roomId));
+                .thenReturn(new RealtimeSessionRegistry.ConnectionInfo(userId, "Player", roomId, false));
         when(sessions.hasRoomConnections(userId, roomId)).thenReturn(true);
 
         handler.afterConnectionClosed(session, org.springframework.web.socket.CloseStatus.NORMAL);
 
         verify(rooms, never()).leave(userId, roomId);
+    }
+
+    @Test
+    void spectatorReceivesCurrentStateAndCanSendOnlyAllowlistedReaction() {
+        RealtimeSessionRegistry sessions = mock(RealtimeSessionRegistry.class);
+        RoomService rooms = mock(RoomService.class);
+        RealtimeGameCoordinator coordinator = mock(RealtimeGameCoordinator.class);
+        RealtimeRateLimiter limiter = mock(RealtimeRateLimiter.class);
+        GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(), sessions, rooms,
+                mock(MatchmakingService.class), coordinator, mock(GameInviteService.class), limiter, CLOCK);
+        UUID viewerId = UUID.randomUUID();
+        UUID roomId = UUID.randomUUID();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        RoomState room = new RoomState(roomId, "LIVE01", UUID.randomUUID(), "tic-tac-toe", "Tic Tac Toe",
+                first, 2, 2, false, RoomStatus.PLAYING,
+                List.of(new RoomPlayer(first, "First", true, true, true),
+                        new RoomPlayer(second, "Second", true, false, true)),
+                NOW, NOW.plusSeconds(21_600));
+        GameStartPayload start = mock(GameStartPayload.class);
+        WebSocketSession session = session("viewer-session", viewerId, NOW.plusSeconds(300));
+        session.getAttributes().put(JwtHandshakeInterceptor.USERNAME_ATTRIBUTE, "Viewer");
+        when(rooms.getSpectatable(roomId)).thenReturn(room);
+        when(coordinator.spectatorStart(roomId)).thenReturn(start);
+
+        handler.handleTextMessage(session, new TextMessage("""
+                {"type":"ROOM_SPECTATE","requestId":"watch-1","roomId":"%s"}
+                """.formatted(roomId)));
+        handler.handleTextMessage(session, new TextMessage("""
+                {"type":"ROOM_REACTION","requestId":"reaction-1","roomId":"%s","payload":{"reaction":"GG"}}
+                """.formatted(roomId)));
+
+        verify(sessions).bindSpectator("viewer-session", room);
+        verify(sessions).toSession(eq("viewer-session"), eq("ROOM_STATE"), eq(roomId), any(), eq("watch-1"));
+        verify(sessions).toSession("viewer-session", "GAME_START", roomId, start, "watch-1");
+        verify(sessions).requireRoomChannel("viewer-session", roomId);
+        verify(limiter).checkReaction(viewerId);
+        verify(sessions).toRoom(eq(roomId), eq("ROOM_REACTION"),
+                org.mockito.ArgumentMatchers.argThat(payload -> payload instanceof com.gameio.multiplayer.QuickReactionPayload reaction
+                        && reaction.username().equals("Viewer")
+                        && reaction.reaction() == com.gameio.multiplayer.QuickReaction.GG),
+                eq("reaction-1"));
+    }
+
+    @Test
+    void closingSpectatorNeverMutatesRoomMembership() {
+        RealtimeSessionRegistry sessions = mock(RealtimeSessionRegistry.class);
+        RoomService rooms = mock(RoomService.class);
+        GameWebSocketHandler handler = new GameWebSocketHandler(JsonMapper.builder().build(), sessions, rooms,
+                mock(MatchmakingService.class), mock(RealtimeGameCoordinator.class),
+                mock(GameInviteService.class), mock(RealtimeRateLimiter.class), CLOCK);
+        UUID userId = UUID.randomUUID();
+        UUID roomId = UUID.randomUUID();
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn("spectator-tab");
+        when(sessions.unregister("spectator-tab"))
+                .thenReturn(new RealtimeSessionRegistry.ConnectionInfo(userId, "Viewer", roomId, true));
+
+        handler.afterConnectionClosed(session, org.springframework.web.socket.CloseStatus.NORMAL);
+
+        verify(rooms, never()).leave(any(), any());
     }
 
     private WebSocketSession session(String id, UUID userId, Instant expiresAt) {

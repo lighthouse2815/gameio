@@ -15,7 +15,10 @@ The implementation deliberately keeps one application backend instead of introdu
 - Guest-local and account-synchronized favorites/recent games, plus player-controlled sound, haptics, reduced motion, contrast/color-vision palettes, large controls, keyboard presets, fullscreen and native/30/60/120 FPS presentation.
 - Post-run summaries backed by accepted server results, including personal-best deltas, EXP/level, newly unlocked achievements, replay and share actions.
 - Authenticated player analytics with all-time outcomes, play time, win rate, 30-day activity/streaks, score trend, achievement completion and per-engine breakdowns.
+- Annual competitive seasons with a game-specific 1000-start Elo ladder, atomic K=32 rating updates and per-match rating deltas in the result summary.
+- Server-owned single-elimination tournaments for 4, 8 or 16 entrants, including registration, seeded brackets, private match rooms, automatic round advancement and champion records.
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
+- Read-only spectating for active public matches plus rate-limited fixed quick reactions; spectators never acquire membership or game-input authority.
 - A single authenticated WebSocket transport shared by Tic Tac Toe, Caro and Tank Battle. Clients send inputs; the server validates membership, turns, movement, collisions, HP and terminal outcomes.
 - PostgreSQL/Flyway for durable data and Redis for ephemeral room, queue, presence and short-lived leaderboard-cache data.
 

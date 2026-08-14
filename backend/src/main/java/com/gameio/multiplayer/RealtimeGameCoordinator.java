@@ -1,6 +1,7 @@
 package com.gameio.multiplayer;
 
 import com.gameio.common.error.InvalidGameActionException;
+import com.gameio.competition.TournamentMatchCompletedEvent;
 import com.gameio.gameresult.GameResultType;
 import com.gameio.gameresult.multiplayer.AuthoritativeMatchResult;
 import com.gameio.gameresult.multiplayer.AuthoritativePlayerOutcome;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +48,7 @@ public class RealtimeGameCoordinator implements RoomEventSink {
     private final PresenceStore presence;
     private final RealtimeSessionRegistry sessions;
     private final Clock clock;
+    private final ApplicationEventPublisher events;
 
     public RealtimeGameCoordinator(
             EngineRegistry engines,
@@ -54,6 +57,7 @@ public class RealtimeGameCoordinator implements RoomEventSink {
             AuthoritativeResultService resultService,
             PresenceStore presence,
             RealtimeSessionRegistry sessions,
+            ApplicationEventPublisher events,
             Clock clock) {
         this.engines = engines;
         this.realtime = realtime;
@@ -61,6 +65,7 @@ public class RealtimeGameCoordinator implements RoomEventSink {
         this.resultService = resultService;
         this.presence = presence;
         this.sessions = sessions;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -120,6 +125,14 @@ public class RealtimeGameCoordinator implements RoomEventSink {
     public void snapshotTo(UUID roomId, UUID userId) {
         ActiveMatch active = requireMatch(roomId);
         realtime.toUser(userId, "GAME_STATE", roomId, active.engine.snapshot(), null);
+    }
+
+    public GameStartPayload spectatorStart(UUID roomId) {
+        ActiveMatch active = requireMatch(roomId);
+        synchronized (active) {
+            return new GameStartPayload(active.matchId, active.room.gameId(), active.room.gameSlug(),
+                    active.room.players(), active.startedAt, active.engine.snapshot());
+        }
     }
 
     public void disconnect(UUID roomId, UUID userId) {
@@ -191,6 +204,11 @@ public class RealtimeGameCoordinator implements RoomEventSink {
             List<PlayerProgression> progression = resultService.record(result);
             RoomState finished = active.room.finished();
             rooms.save(finished);
+            try {
+                events.publishEvent(new TournamentMatchCompletedEvent(active.room.roomId(), result.outcomes()));
+            } catch (RuntimeException exception) {
+                log.error("Tournament bracket update failed for room {}", active.room.roomId(), exception);
+            }
             realtime.toRoom(active.room.roomId(), "GAME_OVER",
                     new GameOverPayload(active.matchId, finalState, progression), null);
             sessions.clearRoomBindings(active.room.roomId());

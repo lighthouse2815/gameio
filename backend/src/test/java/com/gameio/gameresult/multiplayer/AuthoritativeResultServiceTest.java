@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.gameio.achievement.AchievementService;
+import com.gameio.competition.CompetitiveRatingService;
 import com.gameio.game.GameRepository;
 import com.gameio.gameresult.GameResultRepository;
 import com.gameio.gameresult.GameResultType;
@@ -35,7 +36,7 @@ class AuthoritativeResultServiceTest {
                         new AuthoritativePlayerOutcome(UUID.randomUUID(), GameResultType.LOSS, 0)));
         when(results.existsByMatchId(matchId)).thenReturn(true);
         AuthoritativeResultService service = new AuthoritativeResultService(results, games, users, levels,
-                achievements, mock(LeaderboardCacheInvalidator.class),
+                achievements, mock(LeaderboardCacheInvalidator.class), mock(CompetitiveRatingService.class),
                 Clock.fixed(Instant.parse("2026-08-10T00:00:00Z"), ZoneOffset.UTC));
 
         assertThat(service.record(match)).isEmpty();

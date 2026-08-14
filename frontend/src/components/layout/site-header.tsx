@@ -13,6 +13,7 @@ import {
   Radio,
   Search,
   Settings,
+  Swords,
   UserRound,
   Users,
   X,
@@ -27,6 +28,7 @@ const NAVIGATION = [
   { href: "/games", label: "Games", icon: Gamepad2 },
   { href: "/daily-challenge", label: "Daily", icon: CalendarDays },
   { href: "/multiplayer", label: "Live", icon: Radio },
+  { href: "/competition", label: "Arena", icon: Swords },
   { href: "/leaderboard", label: "Ranks", icon: Users },
   { href: "/offline", label: "Offline", icon: CloudOff },
 ] as const;
@@ -147,6 +149,7 @@ export function SiteHeader() {
                     },
                     { href: "/friends", label: "Friends", icon: Users },
                     { href: "/stats", label: "Stats", icon: BarChart3 },
+                    { href: "/competition", label: "Arena", icon: Swords },
                     { href: "/settings", label: "Settings", icon: Settings },
                   ].map(({ href, label, icon: Icon }) => (
                     <Link

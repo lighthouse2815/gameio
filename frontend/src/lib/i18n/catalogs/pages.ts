@@ -44,4 +44,8 @@ export const pageVietnameseMessages = {
   "Shared seed operation": "Thử thách cùng seed",
   "One verified solo operation every day. Everyone receives the same server seed and competes on a ranking that resets at midnight in Vietnam.":
     "Mỗi ngày có một thử thách solo được xác thực. Mọi người nhận cùng seed từ máy chủ và tranh hạng trên bảng được đặt lại lúc nửa đêm theo giờ Việt Nam.",
+  "Season operations": "Vận hành mùa giải",
+  "Competitive arena": "Đấu trường cạnh tranh",
+  "Track game-specific seasonal Elo, inspect the live ladder, and run server-authoritative single-elimination tournaments.":
+    "Theo dõi Elo mùa giải riêng cho từng game, xem bảng hạng trực tiếp và tổ chức giải loại trực tiếp do máy chủ điều khiển.",
 } satisfies MessageCatalog;

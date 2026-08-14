@@ -3,6 +3,8 @@ import { runtimeConfig } from "@/lib/config";
 
 export type ClientEventType =
   | "ROOM_JOIN"
+  | "ROOM_SPECTATE"
+  | "ROOM_UNSUBSCRIBE"
   | "ROOM_LEAVE"
   | "ROOM_READY"
   | "ROOM_START"
@@ -12,7 +14,8 @@ export type ClientEventType =
   | "GAME_INVITE_DECLINE"
   | "MATCHMAKING_JOIN"
   | "MATCHMAKING_LEAVE"
-  | "GAME_INPUT";
+  | "GAME_INPUT"
+  | "ROOM_REACTION";
 
 export type ServerEventType =
   | "CONNECTED"
@@ -28,6 +31,7 @@ export type ServerEventType =
   | "GAME_INVITE_ACCEPTED"
   | "GAME_INVITE_DECLINED"
   | "OPPONENT_DISCONNECTED"
+  | "ROOM_REACTION"
   | "ERROR";
 
 export type ClientEnvelope<T = unknown> = {
@@ -118,6 +122,7 @@ export class GameSocketClient {
   private reconnectTimer: number | null = null;
   private shouldReconnect = false;
   private activeRoomId: string | null = null;
+  private activeRoomMode: "player" | "spectator" | null = null;
   private currentStatus: SocketStatus = "idle";
   private connectionGeneration = 0;
 
@@ -181,9 +186,12 @@ export class GameSocketClient {
       this.emitStatus("connected");
       if (this.activeRoomId) {
         this.sendEnvelope(
-          createClientEnvelope("ROOM_JOIN", {
-            roomId: this.activeRoomId,
-          }),
+          createClientEnvelope(
+            this.activeRoomMode === "spectator" ? "ROOM_SPECTATE" : "ROOM_JOIN",
+            {
+              roomId: this.activeRoomId,
+            },
+          ),
         );
       }
     });
@@ -247,6 +255,7 @@ export class GameSocketClient {
     this.clearReconnectTimer();
     this.connectionGeneration += 1;
     this.activeRoomId = null;
+    this.activeRoomMode = null;
     this.socket?.close(1000, "Client disconnect");
     this.socket = null;
     this.emitStatus("disconnected");
@@ -254,6 +263,7 @@ export class GameSocketClient {
 
   joinRoom(roomId: string) {
     this.activeRoomId = roomId;
+    this.activeRoomMode = "player";
     if (this.socket?.readyState === WebSocket.OPEN) {
       return this.sendEnvelope(
         createClientEnvelope("ROOM_JOIN", { roomId }),
@@ -263,15 +273,34 @@ export class GameSocketClient {
     return null;
   }
 
+  spectateRoom(roomId: string) {
+    this.activeRoomId = roomId;
+    this.activeRoomMode = "spectator";
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      return this.sendEnvelope(createClientEnvelope("ROOM_SPECTATE", { roomId }));
+    }
+    this.connect();
+    return null;
+  }
+
   clearActiveRoom(roomId?: string) {
     if (!roomId || this.activeRoomId === roomId) {
       this.activeRoomId = null;
+      this.activeRoomMode = null;
     }
   }
 
   leaveRoom(roomId: string) {
     const requestId = this.sendEnvelope(
       createClientEnvelope("ROOM_LEAVE", { roomId }),
+    );
+    this.clearActiveRoom(roomId);
+    return requestId;
+  }
+
+  leaveSpectator(roomId: string) {
+    const requestId = this.sendEnvelope(
+      createClientEnvelope("ROOM_UNSUBSCRIBE", { roomId }),
     );
     this.clearActiveRoom(roomId);
     return requestId;
@@ -337,6 +366,12 @@ export class GameSocketClient {
   sendGameInput(roomId: string, payload: GameInputPayload) {
     return this.sendEnvelope(
       createClientEnvelope("GAME_INPUT", { roomId, payload }),
+    );
+  }
+
+  sendReaction(roomId: string, reaction: "GG" | "NICE" | "WOW" | "REMATCH") {
+    return this.sendEnvelope(
+      createClientEnvelope("ROOM_REACTION", { roomId, payload: { reaction } }),
     );
   }
 

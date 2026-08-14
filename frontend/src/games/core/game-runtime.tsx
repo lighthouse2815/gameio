@@ -22,9 +22,11 @@ const TankBattle = dynamic(() => import("@/games/tank/tank-battle"), {
 export function GameRuntime({
   slug,
   roomId,
+  spectator = false,
 }: {
   slug: string;
   roomId?: string;
+  spectator?: boolean;
 }) {
   const { t } = useI18n();
   const registration = getRegisteredGame(slug);
@@ -39,13 +41,13 @@ export function GameRuntime({
   if (registration.engine === "server-multiplayer") {
     if (roomId) {
       if (slug === "tic-tac-toe") {
-        return <TicTacToeGame roomId={roomId} />;
+        return <TicTacToeGame roomId={roomId} spectator={spectator} />;
       }
       if (slug === "caro") {
-        return <CaroGame roomId={roomId} />;
+        return <CaroGame roomId={roomId} spectator={spectator} />;
       }
       if (slug === "tank-battle") {
-        return <TankBattle roomId={roomId} />;
+        return <TankBattle roomId={roomId} spectator={spectator} />;
       }
     }
     return (

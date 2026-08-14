@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n/use-i18n";
 
 const footerLinks = [
   ["Game index", "/games"],
-  ["Leaderboard", "/leaderboard"],
+  ["Competitive arena", "/competition"],
   ["Friends", "/friends"],
   ["Settings", "/settings"],
 ] as const;

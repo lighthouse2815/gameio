@@ -11,6 +11,9 @@ public record PlayerProgression(
         long score,
         long expAwarded,
         int level,
+        int ratingBefore,
+        int ratingAfter,
+        int ratingDelta,
         List<UnlockedAchievementResponse> unlockedAchievements
 ) {
 }

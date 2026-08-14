@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 class RealtimeGameCoordinatorTest {
     @Test
@@ -54,7 +55,7 @@ class RealtimeGameCoordinatorTest {
         when(engine.snapshot()).thenReturn(Map.of("sequence", 0));
         when(results.record(any())).thenReturn(List.of());
         RealtimeGameCoordinator coordinator = new RealtimeGameCoordinator(
-                engines, realtime, rooms, results, presence, sessions, clock);
+                engines, realtime, rooms, results, presence, sessions, mock(ApplicationEventPublisher.class), clock);
         coordinator.gameStarted(room);
 
         coordinator.tick();
@@ -90,7 +91,7 @@ class RealtimeGameCoordinatorTest {
         when(results.record(any())).thenReturn(List.of());
         RealtimeGameCoordinator coordinator = new RealtimeGameCoordinator(engines, mock(RealtimePublisher.class),
                 mock(RoomStore.class), results, mock(PresenceStore.class),
-                mock(RealtimeSessionRegistry.class), clock);
+                mock(RealtimeSessionRegistry.class), mock(ApplicationEventPublisher.class), clock);
         coordinator.gameStarted(room);
         clock.set(startedAt.plus(RealtimeGameCoordinator.MAX_MATCH_DURATION).minusSeconds(1));
         assertThat(coordinator.reconnect(roomId, first)).isTrue();

@@ -48,6 +48,8 @@ Unknown payload fields fail deserialization. The authenticated principal always 
 | Type | Required data | Behavior |
 | --- | --- | --- |
 | `ROOM_JOIN` | `roomId` UUID or code | Join/reconnect and bind this socket; correlated `ROOM_STATE` follows |
+| `ROOM_SPECTATE` | active public `roomId` UUID | Bind a read-only room channel; correlated `ROOM_STATE` and current `GAME_START` snapshots follow |
+| `ROOM_UNSUBSCRIBE` | spectated `roomId` UUID | Unbind only the spectator channel and emit correlated `ROOM_LEFT`; room membership is unchanged |
 | `ROOM_LEAVE` | `roomId` UUID | Leave/mark disconnected, clear this user's bindings and emit correlated `ROOM_LEFT` |
 | `ROOM_READY` | `roomId` UUID | Mark the authenticated player ready; correlated `ROOM_STATE` follows |
 | `ROOM_START` | `roomId` UUID | Owner explicitly starts when requirements are met; correlated `ROOM_STATE` follows |
@@ -58,6 +60,7 @@ Unknown payload fields fail deserialization. The authenticated principal always 
 | `MATCHMAKING_JOIN` | `payload.gameId` UUID | Enter the game's queue; correlated `MATCHMAKING_STATE` follows |
 | `MATCHMAKING_LEAVE` | none | Remove the authenticated player's current queue ticket |
 | `GAME_INPUT` | `roomId` and game-specific payload | Validate and apply an input to the active authoritative engine |
+| `ROOM_REACTION` | bound/spectated `roomId`, `payload.reaction` | Broadcast one fixed value: `GG`, `NICE`, `WOW` or `REMATCH` |
 
 Ready does not auto-start a room. Only the owner can send a successful `ROOM_START`, and all required players must already be ready.
 
@@ -117,6 +120,7 @@ Allowed actions are `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`, `MOVE_RIGHT`, `STOP` an
 | `GAME_INVITE_ACCEPTED` | `{inviteId,username,room}` for both sender and recipient |
 | `GAME_INVITE_DECLINED` | `{inviteId,username}` for both sender and recipient |
 | `OPPONENT_DISCONNECTED` | `{userId,reconnectGraceSeconds}` |
+| `ROOM_REACTION` | Authenticated `{userId,username,reaction}` quick reaction; no free-form chat text |
 | `ERROR` | Stable `{code,message}` plus the originating request ID when available |
 
 There is no `PRESENCE_STATE` or heartbeat message in the current protocol. Friend presence is read through REST; the WebSocket container has no application idle timeout. Clients still reconnect on any network or intermediary close.
@@ -129,10 +133,17 @@ Acceptance atomically consumes the invite, revalidates friendship and room state
 
 After `GAME_OVER`, any existing member may send `ROOM_REMATCH`. The same room and member list return to `WAITING`, ready flags are cleared and each player reconnects their socket before the owner starts the next match. A fresh authoritative match identifier is created for every rematch.
 
+## Spectators and reactions
+
+Only a non-private room in `PLAYING` state can be spectated. A player already in that match must use `ROOM_JOIN`; a user with another active player-room binding must leave it before spectating. `ROOM_SPECTATE` adds the socket to broadcasts without changing the room's player list, ready state, capacity, presence game or disconnect/forfeit lifecycle. Spectator sockets fail the stricter binding check used by ready/start/rematch and every `GAME_INPUT`.
+
+Reactions are deliberately not chat. The payload is an enum allowlist and the server supplies the user identity from the authenticated socket. Players and spectators sharing the channel may send at most four reactions per five-second window. `ROOM_UNSUBSCRIBE` and closing a spectator tab never call the room leave path.
+
 ## Limits and lifecycle
 
 - The container accepts text frames up to 65,536 bytes, while the application rejects envelopes over 16,384 bytes; binary messages are disabled.
 - Per user: at most 120 messages and 60 `GAME_INPUT` commands in a one-second window.
+- Per user: at most four `ROOM_REACTION` commands in a five-second window, independent of game-input quota.
 - Per source IP: at most 240 messages per second and 60 WebSocket handshakes per minute; after identity lookup, each user is limited to 20 handshakes per minute.
 - Access-token expiry is checked on each message and by a scheduled five-second sweep.
 - Match reconnect grace: 60 seconds.
@@ -153,6 +164,7 @@ Active engine state exists only inside the single Spring process. After a backen
 validated input -> engine transition -> GAME_STATE broadcast
                 -> terminal outcome -> idempotent PostgreSQL results
                 -> statistics/EXP/achievements -> leaderboard cache generation
+                -> seasonal Elo -> tournament bracket advancement (when linked)
                 -> GAME_OVER broadcast
 ```
 

@@ -20,7 +20,11 @@ import {
   roomPayloadMatches,
 } from "@/features/multiplayer/realtime/validation";
 
-export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
+export function useRealtimeGame(
+  roomId: string,
+  expectedGameSlug: string,
+  mode: "player" | "spectator" = "player",
+) {
   const session = useSession();
   const roomValidated = useRef(false);
   const [state, dispatch] = useReducer(
@@ -118,11 +122,12 @@ export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
   useEffect(() => {
     if (!session.data || !roomId) return;
     try {
-      gameSocketClient.joinRoom(roomId);
+      if (mode === "spectator") gameSocketClient.spectateRoom(roomId);
+      else gameSocketClient.joinRoom(roomId);
     } catch {
       gameSocketClient.connect();
     }
-  }, [roomId, session.data]);
+  }, [mode, roomId, session.data]);
 
   const runCommand = useCallback((
     eventType: ClientEventType,
@@ -153,12 +158,12 @@ export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
   }, []);
 
   const sendInput = useCallback(
-    (payload: GameInputPayload) =>
+    (payload: GameInputPayload) => mode === "spectator" ? null :
       runCommand(
         "GAME_INPUT",
         () => gameSocketClient.sendGameInput(roomId, payload),
       ),
-    [roomId, runCommand],
+    [mode, roomId, runCommand],
   );
 
   const ready = useCallback(
@@ -174,13 +179,21 @@ export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
     [roomId, runCommand],
   );
   const reconnect = useCallback(() => {
-    gameSocketClient.joinRoom(roomId);
+    if (mode === "spectator") gameSocketClient.spectateRoom(roomId);
+    else gameSocketClient.joinRoom(roomId);
     gameSocketClient.reconnectNow();
-  }, [roomId]);
+  }, [mode, roomId]);
+
+  const react = useCallback(
+    (reaction: "GG" | "NICE" | "WOW" | "REMATCH") =>
+      runCommand("ROOM_REACTION", () => gameSocketClient.sendReaction(roomId, reaction)),
+    [roomId, runCommand],
+  );
 
   return {
     roomId,
     expectedGameSlug,
+    mode,
     session,
     state,
     sendInput,
@@ -188,6 +201,7 @@ export function useRealtimeGame(roomId: string, expectedGameSlug: string) {
     start,
     rematch,
     reconnect,
+    react,
     clearError: () => dispatch({ type: "clear_error" }),
   };
 }

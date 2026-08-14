@@ -15,9 +15,9 @@ export default async function GameDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ room?: string; challenge?: string }>;
+  searchParams: Promise<{ room?: string; challenge?: string; spectate?: string }>;
 }) {
   const { slug } = await params;
-  const { room, challenge } = await searchParams;
-  return <GameDetailScreen slug={slug} roomId={room} dailyChallenge={challenge === "today"} />;
+  const { room, challenge, spectate } = await searchParams;
+  return <GameDetailScreen slug={slug} roomId={room} dailyChallenge={challenge === "today"} spectator={spectate === "1"} />;
 }

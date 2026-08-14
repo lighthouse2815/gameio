@@ -107,6 +107,23 @@ Leaderboard entries contain `rank`, `userId`, `username`, `avatarUrl`, `score` a
 
 Leaderboard responses are cached in Redis for 30 seconds by scope/page/size. The durable query remains PostgreSQL; single-player and multiplayer result commits invalidate the global and affected-game cache generations after the transaction commits, and cache failure falls back to the database.
 
+## Competitive seasons and tournaments
+
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/competition/season` | Public | Current annual season and its UTC start/end instants |
+| `GET` | `/competition/ratings?gameId=...` | Public | Paginated game-specific Elo ladder for the current season |
+| `GET` | `/competition/ratings/me` | Bearer | Current player's ratings across multiplayer games |
+| `GET` | `/competition/tournaments` | Public | Paginated tournament directory |
+| `GET` | `/competition/tournaments/{id}` | Public | Entrants, seeds and complete round/match bracket |
+| `POST` | `/competition/tournaments` | Bearer | Create `{name,gameId,maxPlayers}` and enter as seed 1; `201` |
+| `POST` | `/competition/tournaments/{id}/join` | Bearer | Idempotently reserve the next seed while registration is open |
+| `POST` | `/competition/tournaments/{id}/start` | Bearer/creator | Close registration and allocate the first private match round |
+
+Every authoritative multiplayer outcome updates a rating scoped to `(season, player, game)`. New ratings start at 1000. All participants are calculated from the same pre-match snapshot with K=32, so a two-player equal-rating win produces `+16/-16`; a draw uses an actual score of `0.5`. The `GAME_OVER.progression` payload includes `ratingBefore`, `ratingAfter` and `ratingDelta` for each player.
+
+Tournaments are single elimination. The creator may start with any count from two through the configured 4/8/16 capacity; an odd player receives a recorded bye. Active pairings use normal private authoritative rooms. A win advances the winner, a draw allocates a fresh rematch room for the same pairing, and the final winner completes the durable tournament record.
+
 ## Daily Challenge
 
 | Method | Route | Auth | Purpose |

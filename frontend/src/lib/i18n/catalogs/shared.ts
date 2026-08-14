@@ -11,6 +11,7 @@ export const sharedVietnameseMessages = {
     "Cổng trò chơi mini được xây dựng chỉn chu cho lượt chơi đơn, phòng nhiều người và bảng xếp hạng được xác thực.",
   Games: "Trò chơi",
   Live: "Trực tuyến",
+  Arena: "Đấu trường",
   Ranks: "Xếp hạng",
   Profile: "Hồ sơ",
   Friends: "Bạn bè",
@@ -91,4 +92,8 @@ export const sharedVietnameseMessages = {
   SINGLE_PLAYER: "MỘT NGƯỜI CHƠI",
   TURN_BASED_MULTIPLAYER: "ĐỐI KHÁNG THEO LƯỢT",
   REALTIME_MULTIPLAYER: "ĐỐI KHÁNG THỜI GIAN THỰC",
+  REGISTRATION: "ĐANG ĐĂNG KÝ",
+  IN_PROGRESS: "ĐANG DIỄN RA",
+  CANCELLED: "ĐÃ HỦY",
+  ACTIVE: "ĐANG ĐẤU",
 } satisfies MessageCatalog;
