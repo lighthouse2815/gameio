@@ -18,6 +18,10 @@ const CaroGame = dynamic(() => import("@/games/caro/caro-game"), {
 const TankBattle = dynamic(() => import("@/games/tank/tank-battle"), {
   ssr: false,
 });
+const TypingRaceOnline = dynamic(
+  () => import("@/games/typing-race/typing-race-online"),
+  { ssr: false },
+);
 
 export function GameRuntime({
   slug,
@@ -37,6 +41,9 @@ export function GameRuntime({
         description={t("This catalog record exists, but the current frontend build has no registered renderer for it.")}
       />
     );
+  }
+  if (registration.engine === "hybrid" && roomId && slug === "typing-race") {
+    return <TypingRaceOnline roomId={roomId} spectator={spectator} />;
   }
   if (registration.engine === "server-multiplayer") {
     if (roomId) {

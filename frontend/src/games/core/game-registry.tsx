@@ -66,9 +66,21 @@ const MemoryMatchGame = dynamic(
   },
 );
 
+const TypingRacePractice = dynamic(
+  () => import("@/games/typing-race/typing-race-game"),
+  {
+    ssr: false,
+    loading: () => (
+      <p className="font-telemetry p-8 text-[10px] text-[var(--muted)]">
+        LOADING TYPE RUSH ENGINE ///
+      </p>
+    ),
+  },
+);
+
 export type RegisteredGame = {
   slug: string;
-  engine: "react" | "phaser" | "server-multiplayer";
+  engine: "react" | "phaser" | "server-multiplayer" | "hybrid";
   controlProfile:
     | "swipe-keys"
     | "direction-pad"
@@ -77,7 +89,8 @@ export type RegisteredGame = {
     | "pointer-grid"
     | "memory-grid"
     | "turn-grid"
-    | "combat";
+    | "combat"
+    | "typing";
   component?: ComponentType;
 };
 
@@ -118,6 +131,12 @@ export const GAME_REGISTRY: Readonly<Record<string, RegisteredGame>> = {
     controlProfile: "memory-grid",
     component: MemoryMatchGame,
   },
+  "typing-race": {
+    slug: "typing-race",
+    engine: "hybrid",
+    controlProfile: "typing",
+    component: TypingRacePractice,
+  },
   "tic-tac-toe": {
     slug: "tic-tac-toe",
     engine: "server-multiplayer",
@@ -141,5 +160,10 @@ export function getRegisteredGame(slug: string) {
 
 export function isLocalGame(slug: string) {
   const engine = getRegisteredGame(slug)?.engine;
-  return engine === "react" || engine === "phaser";
+  return engine === "react" || engine === "phaser" || engine === "hybrid";
+}
+
+export function supportsMultiplayer(slug: string) {
+  const engine = getRegisteredGame(slug)?.engine;
+  return engine === "server-multiplayer" || engine === "hybrid";
 }

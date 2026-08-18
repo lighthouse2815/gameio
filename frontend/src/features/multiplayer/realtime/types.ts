@@ -47,10 +47,37 @@ export type TankSnapshot = {
   draw: boolean;
 };
 
+export type TypingRacePlayerSnapshot = {
+  userId: string;
+  progress: number;
+  correctCharacters: number;
+  errors: number;
+  combo: number;
+  bestCombo: number;
+  lastInputSequence: number;
+  wpm: number;
+  accuracyPercent: number;
+  finished: boolean;
+  finishedAt?: string | null;
+};
+
+export type TypingRaceSnapshot = {
+  sequence: number;
+  passageId: string;
+  passage: string;
+  startsAt: string;
+  deadline: string;
+  players: TypingRacePlayerSnapshot[];
+  winnerId?: string | null;
+  draw: boolean;
+  terminal: boolean;
+};
+
 export type GameSnapshot =
   | TicTacToeSnapshot
   | CaroSnapshot
-  | TankSnapshot;
+  | TankSnapshot
+  | TypingRaceSnapshot;
 
 export type GameStartPayload = {
   matchId: string;

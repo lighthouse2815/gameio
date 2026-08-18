@@ -5,6 +5,7 @@ const GAME_ARTWORK: Record<string, string> = {
   breakout: "/game-art/breakout.svg",
   minesweeper: "/game-art/minesweeper.svg",
   "memory-match": "/game-art/memory-match.svg",
+  "typing-race": "/game-art/typing-race.svg",
   "tic-tac-toe": "/game-art/tic-tac-toe.webp",
   caro: "/game-art/caro.webp",
   "tank-battle": "/game-art/tank-battle.webp",

@@ -2,6 +2,7 @@ import type {
   GameSnapshot,
   TankSnapshot,
   TicTacToeSnapshot,
+  TypingRaceSnapshot,
 } from "@/features/multiplayer/realtime/types";
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -94,6 +95,78 @@ function isTankSnapshot(value: unknown): value is TankSnapshot {
   return tanksValid && bulletsValid;
 }
 
+export function isTypingRaceSnapshot(value: unknown): value is TypingRaceSnapshot {
+  const snapshot = record(value);
+  if (
+    !snapshot ||
+    !Number.isSafeInteger(snapshot.sequence) ||
+    (snapshot.sequence as number) < 0 ||
+    typeof snapshot.passageId !== "string" ||
+    snapshot.passageId.length < 1 ||
+    snapshot.passageId.length > 64 ||
+    typeof snapshot.passage !== "string" ||
+    snapshot.passage.length < 1 ||
+    Array.from(snapshot.passage).length > 512 ||
+    typeof snapshot.startsAt !== "string" ||
+    typeof snapshot.deadline !== "string" ||
+    !Number.isFinite(Date.parse(snapshot.startsAt)) ||
+    !Number.isFinite(Date.parse(snapshot.deadline)) ||
+    Date.parse(snapshot.startsAt) >= Date.parse(snapshot.deadline) ||
+    !Array.isArray(snapshot.players) ||
+    snapshot.players.length !== 2 ||
+    typeof snapshot.draw !== "boolean" ||
+    typeof snapshot.terminal !== "boolean" ||
+    !optionalNullableString(snapshot.winnerId)
+  ) {
+    return false;
+  }
+  const passageLength = Array.from(snapshot.passage).length;
+  const userIds = new Set<string>();
+  const playersValid = snapshot.players.every((rawPlayer) => {
+    const player = record(rawPlayer);
+    if (!player || typeof player.userId !== "string" || userIds.has(player.userId)) return false;
+    userIds.add(player.userId);
+    const correctCharacters = player.correctCharacters as number;
+    const errors = player.errors as number;
+    const lastInputSequence = player.lastInputSequence as number;
+    return Boolean(
+      Number.isSafeInteger(player.progress) &&
+        (player.progress as number) >= 0 &&
+        (player.progress as number) <= passageLength &&
+        Number.isSafeInteger(player.correctCharacters) &&
+        player.correctCharacters === player.progress &&
+        Number.isSafeInteger(player.errors) &&
+        errors >= 0 &&
+        Number.isSafeInteger(player.combo) &&
+        (player.combo as number) >= 0 &&
+        Number.isSafeInteger(player.bestCombo) &&
+        (player.bestCombo as number) >= (player.combo as number) &&
+        (player.bestCombo as number) <= correctCharacters &&
+        Number.isSafeInteger(player.lastInputSequence) &&
+        lastInputSequence >= -1 &&
+        correctCharacters + errors === lastInputSequence + 1 &&
+        Number.isSafeInteger(player.wpm) &&
+        (player.wpm as number) >= 0 &&
+        (player.wpm as number) <= 2_000 &&
+        Number.isInteger(player.accuracyPercent) &&
+        (player.accuracyPercent as number) >= 0 &&
+        (player.accuracyPercent as number) <= 100 &&
+        typeof player.finished === "boolean" &&
+        player.finished === (player.progress === passageLength) &&
+        (player.finished
+          ? typeof player.finishedAt === "string" && Number.isFinite(Date.parse(player.finishedAt))
+          : player.finishedAt === null || player.finishedAt === undefined)
+    );
+  });
+  if (!playersValid) return false;
+  const winnerId = typeof snapshot.winnerId === "string" ? snapshot.winnerId : null;
+  return (
+    (!winnerId || userIds.has(winnerId)) &&
+    snapshot.terminal === Boolean(winnerId || snapshot.draw) &&
+    !(winnerId && snapshot.draw)
+  );
+}
+
 export function isSnapshotForGame(
   gameSlug: string,
   value: unknown,
@@ -101,6 +174,7 @@ export function isSnapshotForGame(
   if (gameSlug === "tic-tac-toe") return isTurnBoardSnapshot(value, 3);
   if (gameSlug === "caro") return isTurnBoardSnapshot(value, 15);
   if (gameSlug === "tank-battle") return isTankSnapshot(value);
+  if (gameSlug === "typing-race") return isTypingRaceSnapshot(value);
   return false;
 }
 

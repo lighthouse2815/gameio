@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" role="img" aria-labelledby="title description">
+  <title id="title">Type Rush technical keyboard race artwork</title>
+  <desc id="description">A graphite technical grid with two typing lanes, a mechanical keyboard, and one red highlighted key.</desc>
+  <rect width="1440" height="900" fill="#0a0a0a"/>
+  <g stroke="#35332f" stroke-width="2" opacity=".75">
+    <path d="M0 120h1440M0 240h1440M0 360h1440M0 480h1440M0 600h1440M0 720h1440M0 840h1440"/>
+    <path d="M120 0v900M240 0v900M360 0v900M480 0v900M600 0v900M720 0v900M840 0v900M960 0v900M1080 0v900M1200 0v900M1320 0v900"/>
+  </g>
+  <g fill="none" stroke="#eeeae3" stroke-width="8">
+    <path d="M140 250h1110"/>
+    <path d="M140 360h1110"/>
+  </g>
+  <g fill="#eeeae3">
+    <path d="M1150 214l70 36-70 36z"/>
+    <path d="M980 324l70 36-70 36z" opacity=".55"/>
+  </g>
+  <g transform="translate(180 490) skewX(-8)">
+    <rect width="1060" height="270" fill="#111" stroke="#67615a" stroke-width="8"/>
+    <g fill="#181818" stroke="#67615a" stroke-width="3">
+      <path d="M45 42h80v58H45zM140 42h80v58h-80zM235 42h80v58h-80zM330 42h80v58h-80zM425 42h80v58h-80zM520 42h80v58h-80zM615 42h80v58h-80zM710 42h80v58h-80zM805 42h80v58h-80zM900 42h110v58H900z"/>
+      <path d="M70 116h80v58H70zM165 116h80v58h-80zM260 116h80v58h-80zM355 116h80v58h-80zM450 116h80v58h-80zM545 116h80v58h-80zM640 116h80v58h-80zM735 116h80v58h-80zM830 116h80v58h-80zM925 116h85v58h-85z"/>
+      <path d="M105 190h80v48h-80zM200 190h80v48h-80zM295 190h80v48h-80zM390 190h80v48h-80zM485 190h80v48h-80zM580 190h80v48h-80zM675 190h80v48h-80zM770 190h80v48h-80zM865 190h145v48H865z"/>
+    </g>
+    <rect x="450" y="116" width="80" height="58" fill="#ed1c24" stroke="#eeeae3" stroke-width="5"/>
+  </g>
+  <g font-family="monospace" fill="#eeeae3">
+    <text x="140" y="108" font-size="24" letter-spacing="8">TYPE RUSH / 10-FINGER SIGNAL LAB</text>
+    <text x="140" y="205" font-size="18" fill="#97938d">LANE 01</text>
+    <text x="140" y="315" font-size="18" fill="#97938d">LANE 02</text>
+    <text x="1120" y="830" font-size="18" text-anchor="end">ACCURACY FIRST / SPEED FOLLOWS</text>
+  </g>
+  <path d="M90 70h24M102 58v24M1326 806h24M1338 794v24" stroke="#ed1c24" stroke-width="5"/>
+</svg>

@@ -12,6 +12,7 @@ import com.gameio.matchmaking.MatchmakingService;
 import com.gameio.multiplayer.RealtimeGameCoordinator;
 import com.gameio.multiplayer.RealtimeSessionRegistry;
 import com.gameio.multiplayer.GameStartPayload;
+import com.gameio.multiplayer.engine.GameInput;
 import com.gameio.multiplayer.invite.GameInviteService;
 import com.gameio.room.RoomResponse;
 import com.gameio.room.RoomPlayer;
@@ -73,6 +74,30 @@ class GameWebSocketHandlerTest {
 
         verify(sessions).toSession(eq("session-1"), eq("ERROR"), isNull(), any(), eq("request-1"));
         verify(coordinator, never()).input(any(), any(), any(), any());
+    }
+
+    @Test
+    void dispatchesOneTypingCharacterWithoutClientAuthoritativeMetrics() {
+        RealtimeSessionRegistry sessions = mock(RealtimeSessionRegistry.class);
+        RealtimeGameCoordinator coordinator = mock(RealtimeGameCoordinator.class);
+        RealtimeRateLimiter limiter = mock(RealtimeRateLimiter.class);
+        GameWebSocketHandler handler = new GameWebSocketHandler(
+                JsonMapper.builder().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build(),
+                sessions, mock(RoomService.class), mock(MatchmakingService.class), coordinator,
+                mock(GameInviteService.class), limiter, CLOCK);
+        UUID userId = UUID.randomUUID();
+        UUID roomId = UUID.randomUUID();
+        WebSocketSession session = session("typing-session", userId, NOW.plusSeconds(300));
+
+        handler.handleTextMessage(session, new TextMessage("""
+                {"type":"GAME_INPUT","requestId":"typing-1","roomId":"%s",
+                 "payload":{"action":"TYPE_CHARACTER","character":"a","sequence":0}}
+                """.formatted(roomId)));
+
+        verify(limiter).checkGameInput(eq(userId), any());
+        verify(sessions).requireBoundRoom("typing-session", roomId);
+        verify(coordinator).input(roomId, userId,
+                new GameInput("TYPE_CHARACTER", null, null, 0L, "a"), "typing-1");
     }
 
     @Test

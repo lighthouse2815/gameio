@@ -15,6 +15,10 @@ param(
     [uri] $Origin = "http://localhost:3000",
 
     [Parameter()]
+    [ValidateSet("tic-tac-toe", "typing-race")]
+    [string] $GameSlug = "tic-tac-toe",
+
+    [Parameter()]
     [ValidateRange(10, 600)]
     [int] $StartupTimeoutSeconds = 120,
 
@@ -69,6 +73,9 @@ if (-not [string]::IsNullOrEmpty($WsUrl.UserInfo) -or
 }
 if ($RestartBackendAfterFirstMove -and $SkipDockerServices) {
     throw "RestartBackendAfterFirstMove is supported only for the local Docker Compose backend."
+}
+if ($RestartBackendAfterFirstMove -and $GameSlug -ne "tic-tac-toe") {
+    throw "RestartBackendAfterFirstMove currently applies only to the Tic Tac Toe smoke path."
 }
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -537,15 +544,14 @@ try {
     $owner = Register-SmokePlayer -Session $ownerSession -Label "owner"
     $guest = Register-SmokePlayer -Session $guestSession -Label "guest"
 
-    Write-SmokeStep "Resolving the seeded Tic Tac Toe catalog entry"
-    $catalog = Invoke-ApiRequest -Session $ownerSession -Method GET -Path "/api/games?search=Tic%20Tac%20Toe&page=0&size=20" `
+    $gameLabel = if ($GameSlug -eq "typing-race") { "Type Rush" } else { "Tic Tac Toe" }
+    Write-SmokeStep "Resolving the seeded $gameLabel catalog entry"
+    $game = Invoke-ApiRequest -Session $ownerSession -Method GET -Path "/api/games/$GameSlug" `
         -BearerToken $owner.AccessToken
-    $games = @(Get-RequiredProperty $catalog "content" "Catalog")
-    $ticTacToe = @($games | Where-Object { [string] $_.slug -eq "tic-tac-toe" })
-    if ($ticTacToe.Count -ne 1) {
-        throw "Catalog did not contain exactly one enabled Tic Tac Toe entry."
+    if ([string] (Get-RequiredProperty $game "slug" "$gameLabel catalog") -ne $GameSlug) {
+        throw "Catalog resolved an unexpected game slug for $gameLabel."
     }
-    $gameId = [string] (Get-RequiredProperty $ticTacToe[0] "id" "Tic Tac Toe")
+    $gameId = [string] (Get-RequiredProperty $game "id" $gameLabel)
 
     Write-SmokeStep "Creating and joining a private two-player room"
     $room = Invoke-ApiRequest -Session $ownerSession -Method POST -Path "/api/rooms" `
@@ -587,64 +593,101 @@ try {
         throw "Players received different match identifiers."
     }
 
-    Write-SmokeStep "Playing a deterministic server-authoritative Tic Tac Toe win"
-    $moves = @(
-        [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 0 },
-        [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 0 },
-        [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 1 },
-        [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 1 },
-        [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 2 }
-    )
-    if ($RestartBackendAfterFirstMove) {
-        $firstMove = $moves[0]
-        $firstInputId = Send-WsEnvelope -Connection $firstMove.Connection -Type "GAME_INPUT" `
-            -RoomId $roomId -Payload @{
-                action = "PLACE_PIECE"
-                row = $firstMove.Row
-                column = $firstMove.Column
+    if ($GameSlug -eq "typing-race") {
+        Write-SmokeStep "Typing the complete shared passage through the authoritative Type Rush engine"
+        $initialState = Get-RequiredProperty $ownerStart.payload "state" "Type Rush GAME_START"
+        $passage = [string] (Get-RequiredProperty $initialState "passage" "Type Rush initial state")
+        $startsAt = [DateTimeOffset]::Parse(
+            [string] (Get-RequiredProperty $initialState "startsAt" "Type Rush initial state")
+        )
+        $countdownWait = [int] [Math]::Ceiling(($startsAt - [DateTimeOffset]::UtcNow).TotalMilliseconds) + 150
+        if ($countdownWait -gt 0) {
+            Start-Sleep -Milliseconds $countdownWait
+        }
+
+        $textElements = [System.Collections.Generic.List[string]]::new()
+        $enumerator = [System.Globalization.StringInfo]::GetTextElementEnumerator($passage)
+        while ($enumerator.MoveNext()) {
+            $textElements.Add([string] $enumerator.GetTextElement())
+        }
+        if ($textElements.Count -lt 1) {
+            throw "Type Rush supplied an empty passage."
+        }
+        for ($index = 0; $index -lt $textElements.Count; $index++) {
+            $inputId = Send-WsEnvelope -Connection $ownerSocket -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "TYPE_CHARACTER"
+                sequence = [long] $index
+                character = $textElements[$index]
             }
-        $null = Wait-ForWsEvent -Connection $firstMove.Connection -Type "GAME_STATE" -RequestId $firstInputId
-
-        Close-GameSocket -Connection $ownerSocket
-        Close-GameSocket -Connection $guestSocket
-        $ownerSocket = $null
-        $guestSocket = $null
-        Restart-ComposeBackend -Session $ownerSession
-
-        Write-SmokeStep "Reconnecting both players and validating the recovered board"
-        $ownerSocket = New-GameSocket -AccessToken $owner.AccessToken -Label "Owner"
-        $guestSocket = New-GameSocket -AccessToken $guest.AccessToken -Label "Guest"
-        $ownerRejoinId = Send-WsEnvelope -Connection $ownerSocket -Type "ROOM_JOIN" -RoomId $roomId
-        $guestRejoinId = Send-WsEnvelope -Connection $guestSocket -Type "ROOM_JOIN" -RoomId $roomId
-        $null = Wait-ForWsEvent -Connection $ownerSocket -Type "ROOM_STATE" -RequestId $ownerRejoinId
-        $null = Wait-ForWsEvent -Connection $guestSocket -Type "ROOM_STATE" -RequestId $guestRejoinId
-        $ownerRecovered = Wait-ForWsEvent -Connection $ownerSocket -Type "GAME_STATE"
-        $guestRecovered = Wait-ForWsEvent -Connection $guestSocket -Type "GAME_STATE"
-        $null = Wait-ForWsEvent -Connection $ownerSocket -Type "CONNECTED"
-        $null = Wait-ForWsEvent -Connection $guestSocket -Type "CONNECTED"
-
-        $guestId = [string] (Get-RequiredProperty $guest.User "id" "Guest")
-        foreach ($recovered in @($ownerRecovered, $guestRecovered)) {
-            $sequence = [long] (Get-RequiredProperty $recovered.payload "sequence" "Recovered GAME_STATE")
-            $turn = [string] (Get-RequiredProperty $recovered.payload "currentTurnPlayerId" "Recovered GAME_STATE")
-            if ($sequence -ne 1 -or [string] $recovered.payload.board[0][0] -ne "X" -or $turn -ne $guestId) {
-                throw "Recovered GAME_STATE did not preserve sequence, board and current turn."
+            $stateEvent = Wait-ForWsEvent -Connection $ownerSocket -Type "GAME_STATE" -RequestId $inputId
+            if ($index -eq $textElements.Count - 1 -and -not [bool] $stateEvent.payload.terminal) {
+                throw "Type Rush did not become terminal after the complete passage."
+            }
+            if ($index -lt $textElements.Count - 1) {
+                Start-Sleep -Milliseconds 25
             }
         }
+    }
+    else {
+        Write-SmokeStep "Playing a deterministic server-authoritative Tic Tac Toe win"
         $moves = @(
+            [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 0 },
             [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 0 },
             [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 1 },
             [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 1 },
             [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 2 }
         )
-    }
-    foreach ($move in $moves) {
-        $inputId = Send-WsEnvelope -Connection $move.Connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
-            action = "PLACE_PIECE"
-            row = $move.Row
-            column = $move.Column
+        if ($RestartBackendAfterFirstMove) {
+            $firstMove = $moves[0]
+            $firstInputId = Send-WsEnvelope -Connection $firstMove.Connection -Type "GAME_INPUT" `
+                -RoomId $roomId -Payload @{
+                    action = "PLACE_PIECE"
+                    row = $firstMove.Row
+                    column = $firstMove.Column
+                }
+            $null = Wait-ForWsEvent -Connection $firstMove.Connection -Type "GAME_STATE" -RequestId $firstInputId
+
+            Close-GameSocket -Connection $ownerSocket
+            Close-GameSocket -Connection $guestSocket
+            $ownerSocket = $null
+            $guestSocket = $null
+            Restart-ComposeBackend -Session $ownerSession
+
+            Write-SmokeStep "Reconnecting both players and validating the recovered board"
+            $ownerSocket = New-GameSocket -AccessToken $owner.AccessToken -Label "Owner"
+            $guestSocket = New-GameSocket -AccessToken $guest.AccessToken -Label "Guest"
+            $ownerRejoinId = Send-WsEnvelope -Connection $ownerSocket -Type "ROOM_JOIN" -RoomId $roomId
+            $guestRejoinId = Send-WsEnvelope -Connection $guestSocket -Type "ROOM_JOIN" -RoomId $roomId
+            $null = Wait-ForWsEvent -Connection $ownerSocket -Type "ROOM_STATE" -RequestId $ownerRejoinId
+            $null = Wait-ForWsEvent -Connection $guestSocket -Type "ROOM_STATE" -RequestId $guestRejoinId
+            $ownerRecovered = Wait-ForWsEvent -Connection $ownerSocket -Type "GAME_STATE"
+            $guestRecovered = Wait-ForWsEvent -Connection $guestSocket -Type "GAME_STATE"
+            $null = Wait-ForWsEvent -Connection $ownerSocket -Type "CONNECTED"
+            $null = Wait-ForWsEvent -Connection $guestSocket -Type "CONNECTED"
+
+            $guestId = [string] (Get-RequiredProperty $guest.User "id" "Guest")
+            foreach ($recovered in @($ownerRecovered, $guestRecovered)) {
+                $sequence = [long] (Get-RequiredProperty $recovered.payload "sequence" "Recovered GAME_STATE")
+                $turn = [string] (Get-RequiredProperty $recovered.payload "currentTurnPlayerId" "Recovered GAME_STATE")
+                if ($sequence -ne 1 -or [string] $recovered.payload.board[0][0] -ne "X" -or $turn -ne $guestId) {
+                    throw "Recovered GAME_STATE did not preserve sequence, board and current turn."
+                }
+            }
+            $moves = @(
+                [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 0 },
+                [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 1 },
+                [pscustomobject]@{ Connection = $guestSocket; Row = 1; Column = 1 },
+                [pscustomobject]@{ Connection = $ownerSocket; Row = 0; Column = 2 }
+            )
         }
-        $null = Wait-ForWsEvent -Connection $move.Connection -Type "GAME_STATE" -RequestId $inputId
+        foreach ($move in $moves) {
+            $inputId = Send-WsEnvelope -Connection $move.Connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "PLACE_PIECE"
+                row = $move.Row
+                column = $move.Column
+            }
+            $null = Wait-ForWsEvent -Connection $move.Connection -Type "GAME_STATE" -RequestId $inputId
+        }
     }
 
     $ownerOver = Wait-ForWsEvent -Connection $ownerSocket -Type "GAME_OVER"
@@ -693,5 +736,5 @@ finally {
 
 if ($flowCompleted) {
     $recoveryResult = if ($RestartBackendAfterFirstMove) { ", backend restart recovery" } else { "" }
-    Write-SmokeStep "WebSocket auth, room flow$recoveryResult, authoritative match, and persisted outcomes passed"
+    Write-SmokeStep "$GameSlug WebSocket auth, room flow$recoveryResult, authoritative match, and persisted outcomes passed"
 }

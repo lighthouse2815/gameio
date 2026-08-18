@@ -1,6 +1,6 @@
 # WebSocket protocol
 
-Gameio exposes one raw Spring WebSocket endpoint at `/ws`. The shared `GameSocketClient` uses it for lobby notifications, room lifecycle, Tic Tac Toe, Caro and Tank Battle.
+Gameio exposes one raw Spring WebSocket endpoint at `/ws`. The shared `GameSocketClient` uses it for lobby notifications, room lifecycle, Tic Tac Toe, Caro, Tank Battle and Type Rush.
 
 ## Authenticated handshake
 
@@ -89,6 +89,18 @@ The server checks membership, active turn, bounds, cell occupancy and terminal s
 
 Allowed actions are `MOVE_UP`, `MOVE_DOWN`, `MOVE_LEFT`, `MOVE_RIGHT`, `STOP` and `SHOOT`. `sequence` must increase for each player's input. The client never sends position, rotation, HP, bullet state, hit decisions or score.
 
+### Type Rush input
+
+```json
+{
+  "action": "TYPE_CHARACTER",
+  "character": "a",
+  "sequence": 17
+}
+```
+
+Type Rush accepts exactly one NFC-normalized Unicode code point per command. The sequence starts at `0` for each player and must increase by exactly one. The client never sends passage text, progress, WPM, accuracy, elapsed time, winner or score. The authoritative snapshot contains the shared server-selected passage, a three-second `startsAt` countdown, a 90-second `deadline`, and both players' server-derived progress. Input before the countdown or after terminal state is rejected. The first player to complete the passage wins; on timeout, higher progress wins, then fewer errors, otherwise the result is a draw.
+
 ## Server envelope
 
 ```json
@@ -170,4 +182,4 @@ validated input -> engine transition -> GAME_STATE broadcast
                 -> GAME_OVER broadcast
 ```
 
-The production-capable `scripts/realtime-smoke.ps1` exercises this contract with two independent accounts and sockets, including a persisted Tic Tac Toe win/loss pair.
+The production-capable `scripts/realtime-smoke.ps1` exercises this contract with two independent accounts and sockets. Its default path persists a Tic Tac Toe win/loss pair; `-GameSlug typing-race` completes the shared passage through genuine sequenced character inputs and verifies the persisted Type Rush win/loss pair.

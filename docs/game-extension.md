@@ -38,6 +38,8 @@ Register the title in `frontend/src/games/core/game-registry.tsx` with:
 
 For a multiplayer renderer, add its lazy mapping in `frontend/src/games/core/game-runtime.tsx`. Consume shared room/socket state; do not open another ad-hoc WebSocket from the game component.
 
+A hybrid game may expose a local practice component without public results and a separate authoritative room renderer under the same slug. Model both capabilities explicitly in the registry/runtime. Do not lower multiplayer `minPlayers` to one to represent practice, and do not send practice scores to a multiplayer leaderboard.
+
 Add optional artwork to `frontend/public/game-art/<slug>.webp` and map it in `frontend/src/games/core/artwork.ts`. Artwork must be a real optimized asset, not a broken URL or fake card field.
 
 All keyboard games need appropriate touch controls, and every game needs real loading, failure, restart/exit and terminal states. Multiplayer renderers also need connecting, opponent wait/disconnect and reconnect/room-expired states.
@@ -128,6 +130,8 @@ For multiplayer changes also run:
 
 ```powershell
 .\scripts\realtime-smoke.ps1
+# For Type Rush or another supported game-specific path:
+.\scripts\realtime-smoke.ps1 -GameSlug typing-race
 ```
 
 Finally use separate browser sessions to exercise the real start/input/terminal/reconnect flow and inspect console/network output. Update the API/protocol/architecture docs in the same change when a contract changes.

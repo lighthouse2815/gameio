@@ -64,7 +64,9 @@ export function GameDetailScreen({
   const detail = game.data;
   const artwork = getGameArtwork(detail.slug, detail.thumbnailUrl);
   const registration = getRegisteredGame(detail.slug);
-  const local = registration && registration.engine !== "server-multiplayer";
+  const local = Boolean(registration && (registration.engine === "react" || registration.engine === "phaser"));
+  const hybrid = registration?.engine === "hybrid";
+  const localStage = local || Boolean(hybrid && !roomId);
   const relatedCodes = relatedAchievementCodes(
     detail.slug,
     detail.gameType !== "SINGLE_PLAYER",
@@ -100,9 +102,9 @@ export function GameDetailScreen({
               {t(detail.description)}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {local || roomId ? (
+              {localStage || roomId ? (
                 <a href="#game-stage" className={buttonStyles("primary")}>
-                  {t(local ? "Start local engine" : "Open active match")}
+                  {t(roomId ? "Open active match" : hybrid ? "Start practice" : "Start local engine")}
                   <ArrowRight size={14} aria-hidden="true" />
                 </a>
               ) : (
@@ -114,6 +116,15 @@ export function GameDetailScreen({
                   <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               )}
+              {hybrid && !roomId ? (
+                <Link
+                  href={"/multiplayer?game=" + encodeURIComponent(detail.slug)}
+                  className={buttonStyles("secondary")}
+                >
+                  <Radio size={14} aria-hidden="true" />
+                  {t("Online duel")}
+                </Link>
+              ) : null}
               <Link href="/leaderboard" className={buttonStyles("secondary")}>
                 <Trophy size={14} aria-hidden="true" />
                 {t("View ranks")}
@@ -174,8 +185,10 @@ export function GameDetailScreen({
             <h2 className="mt-1 text-xl font-black uppercase tracking-[-0.04em]">{t("Run interface")}</h2>
           </div>
           <p className="font-telemetry flex items-center gap-2 text-[8px] text-[var(--muted)]">
-            {local ? <ShieldCheck size={13} aria-hidden="true" /> : <Radio size={13} aria-hidden="true" />}
-            {t(local ? "LOCAL RULE ENGINE" : "SERVER ROOM REQUIRED")}
+            {localStage ? <ShieldCheck size={13} aria-hidden="true" /> : <Radio size={13} aria-hidden="true" />}
+            {t(hybrid
+              ? roomId ? "SERVER-AUTHORITATIVE DUEL" : "LOCAL PRACTICE / SERVER DUEL AVAILABLE"
+              : local ? "LOCAL RULE ENGINE" : "SERVER ROOM REQUIRED")}
           </p>
         </header>
         <div className="p-3 sm:p-6 lg:p-8">

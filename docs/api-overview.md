@@ -164,7 +164,7 @@ Friend-to-game invitations use authenticated WebSocket commands rather than REST
 
 Same-room rematches use authenticated `ROOM_REMATCH` over WebSocket after `GAME_OVER`; the command resets ready state and returns the room to `WAITING`.
 
-Room codes are six characters. Tic Tac Toe and Caro accept exactly two players; Tank Battle accepts two to four. The backend validates requested capacity against the selected game's catalog limits.
+Room codes are six characters. Tic Tac Toe, Caro and Type Rush accept exactly two players; Tank Battle accepts two to four. The backend validates requested capacity against the selected game's catalog limits. Type Rush practice is local-only and does not create a room or verified result.
 
 REST create/join is followed by WebSocket `ROOM_JOIN` so the live connection is bound to broadcasts. Realtime `ROOM_LEAVE` produces correlated `ROOM_LEFT` on every socket for that user. The lobby's REST exit explicitly disconnects/reconnects the shared socket; any other direct REST caller must likewise close or clear its live room channel because the REST response alone does not unbind a WebSocket.
 

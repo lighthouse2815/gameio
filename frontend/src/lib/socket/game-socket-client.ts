@@ -59,10 +59,12 @@ export type GameInputPayload = {
     | "MOVE_LEFT"
     | "MOVE_RIGHT"
     | "STOP"
-    | "SHOOT";
+    | "SHOOT"
+    | "TYPE_CHARACTER";
   row?: number;
   column?: number;
   sequence?: number;
+  character?: string;
 };
 
 export type SocketStatus =
