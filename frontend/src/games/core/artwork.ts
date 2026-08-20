@@ -9,6 +9,9 @@ const GAME_ARTWORK: Record<string, string> = {
   "tic-tac-toe": "/game-art/tic-tac-toe.webp",
   caro: "/game-art/caro.webp",
   "tank-battle": "/game-art/tank-battle.webp",
+  "connect-four": "/game-art/connect-four.svg",
+  reversi: "/game-art/reversi.svg",
+  "rock-paper-scissors": "/game-art/rock-paper-scissors.svg",
 };
 
 export function getGameArtwork(

@@ -1,6 +1,6 @@
 # WebSocket protocol
 
-Gameio exposes one raw Spring WebSocket endpoint at `/ws`. The shared `GameSocketClient` uses it for lobby notifications, room lifecycle, Tic Tac Toe, Caro, Tank Battle and Type Rush.
+Gameio exposes one raw Spring WebSocket endpoint at `/ws`. The shared `GameSocketClient` uses it for lobby notifications, room lifecycle and every authoritative multiplayer title.
 
 ## Authenticated handshake
 
@@ -77,6 +77,34 @@ Tic Tac Toe uses coordinates `0..2`; Caro uses `0..14`:
 ```
 
 The server checks membership, active turn, bounds, cell occupancy and terminal state before publishing a new board.
+
+Connect Four sends only a zero-based column. The server chooses the landing row, applies gravity and evaluates horizontal, vertical and diagonal lines:
+
+```json
+{
+  "action": "DROP_DISC",
+  "column": 3
+}
+```
+
+Reversi sends one server-advertised legal cell. The server computes every captured line, flips discs, automatically keeps the turn when the rival is blocked, and scores territory when neither player has a legal move:
+
+```json
+{
+  "action": "PLACE_DISC",
+  "row": 2,
+  "column": 3
+}
+```
+
+Rock Paper Scissors encodes Rock, Paper and Scissors as columns `0`, `1` and `2`. A pending choice is checkpointed but omitted from the shared snapshot; only its `submitted` flag is visible. Both choices are revealed together after the second lock, and the first player to three round wins takes the match:
+
+```json
+{
+  "action": "SELECT_MOVE",
+  "column": 0
+}
+```
 
 ### Tank input
 
@@ -182,4 +210,4 @@ validated input -> engine transition -> GAME_STATE broadcast
                 -> GAME_OVER broadcast
 ```
 
-The production-capable `scripts/realtime-smoke.ps1` exercises this contract with two independent accounts and sockets. Its default path persists a Tic Tac Toe win/loss pair; `-GameSlug typing-race` completes the shared passage through genuine sequenced character inputs and verifies the persisted Type Rush win/loss pair.
+The production-capable `scripts/realtime-smoke.ps1` exercises this contract with two independent accounts and sockets. Its supported game paths complete Tic Tac Toe, Type Rush, Connect Four, Reversi and Rock Paper Scissors through genuine inputs, then verify the durable terminal outcomes.

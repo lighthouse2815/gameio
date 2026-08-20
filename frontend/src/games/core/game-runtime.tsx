@@ -22,6 +22,17 @@ const TypingRaceOnline = dynamic(
   () => import("@/games/typing-race/typing-race-online"),
   { ssr: false },
 );
+const ConnectFourGame = dynamic(
+  () => import("@/games/connect-four/connect-four-game"),
+  { ssr: false },
+);
+const ReversiGame = dynamic(() => import("@/games/reversi/reversi-game"), {
+  ssr: false,
+});
+const RockPaperScissorsGame = dynamic(
+  () => import("@/games/rock-paper-scissors/rock-paper-scissors-game"),
+  { ssr: false },
+);
 
 export function GameRuntime({
   slug,
@@ -55,6 +66,15 @@ export function GameRuntime({
       }
       if (slug === "tank-battle") {
         return <TankBattle roomId={roomId} spectator={spectator} />;
+      }
+      if (slug === "connect-four") {
+        return <ConnectFourGame roomId={roomId} spectator={spectator} />;
+      }
+      if (slug === "reversi") {
+        return <ReversiGame roomId={roomId} spectator={spectator} />;
+      }
+      if (slug === "rock-paper-scissors") {
+        return <RockPaperScissorsGame roomId={roomId} spectator={spectator} />;
       }
     }
     return (

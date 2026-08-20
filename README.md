@@ -19,9 +19,9 @@ The implementation deliberately keeps one application backend instead of introdu
 - Server-owned single-elimination tournaments for 4, 8 or 16 entrants, including registration, seeded brackets, private match rooms, automatic round advancement and champion records.
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
 - Read-only spectating for active public matches plus rate-limited fixed quick reactions; spectators never acquire membership or game-input authority.
-- A single authenticated WebSocket transport shared by Tic Tac Toe, Caro, Tank Battle and Type Rush. Clients send inputs; the server validates membership, turns, movement, typing progress, collisions, HP and terminal outcomes.
+- A single authenticated WebSocket transport shared by Tic Tac Toe, Caro, Connect Four, Reversi, Rock Paper Scissors, Tank Battle and Type Rush. Clients send minimal inputs; the server validates membership, turns, sealed choices, movement, typing progress, collisions, HP and terminal outcomes.
 - PostgreSQL/Flyway for durable data and Redis for TTL-bound room, queue, presence, active-match checkpoint and leaderboard-cache data.
-- Exact Redis checkpoints for active Tic Tac Toe, Caro, Tank and Type Rush state, allowing a restarted backend to resume sequence, turns, movement, bullets, cooldowns, typing passage/progress and reconnect timers.
+- Exact Redis checkpoints for every active multiplayer engine, allowing a restarted backend to resume boards, turns, sealed round choices, movement, bullets, cooldowns, typing passage/progress and reconnect timers.
 - Public health probes, token-protected Prometheus metrics and checksum-verified PostgreSQL backup/restore scripts.
 
 ### Games
@@ -38,6 +38,9 @@ The implementation deliberately keeps one application backend instead of introdu
 | Caro | Spring authoritative engine | Server validates turns and five-in-a-row on a 15 by 15 board |
 | Tank Battle | Phaser renderer + Spring tick engine | Client sends movement/shoot actions; server owns positions, rotation, bullets, HP and game over |
 | Type Rush | React practice renderer + Spring authoritative duel | Local practice is unranked; online clients send one character at a time while the server owns passage, countdown, progress, WPM and winner |
+| Connect Four | React snapshot renderer + Spring authoritative engine | Client selects a column; server owns gravity, turns and four-disc line detection |
+| Reversi | React snapshot renderer + Spring authoritative engine | Server supplies legal cells, applies every captured line, skips blocked turns and scores final territory |
+| Rock Paper Scissors | React snapshot renderer + Spring authoritative engine | Choices remain sealed until both players lock; server resolves each round and the first-to-three outcome |
 
 ## Architecture
 
@@ -187,7 +190,7 @@ See [deployment](docs/deployment.md) for the deployment order and complete prefl
 
 ## Database
 
-Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, ten catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
+Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, thirteen catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
 
 PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements, friendships and signed-in game preferences. Redis stores TTL-bound presence, queues, room metadata, active-match checkpoints, one-use game invitations and a 30-second versioned leaderboard response cache. Redis loss never erases completed player data, but it can end currently active rooms because their recovery checkpoints are intentionally transient. A leaderboard cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
 
@@ -242,10 +245,13 @@ docker compose up --build -d
 .\scripts\smoke.ps1
 .\scripts\realtime-smoke.ps1
 .\scripts\realtime-smoke.ps1 -GameSlug typing-race
+.\scripts\realtime-smoke.ps1 -GameSlug connect-four
+.\scripts\realtime-smoke.ps1 -GameSlug reversi
+.\scripts\realtime-smoke.ps1 -GameSlug rock-paper-scissors
 .\scripts\realtime-smoke.ps1 -RestartBackendAfterFirstMove
 ```
 
-The realtime smoke registers two unique users, negotiates two authenticated sockets and verifies persisted `WIN`/`LOSS` records. By default it plays a deterministic Tic Tac Toe win; `-GameSlug typing-race` types the shared server passage through the complete Type Rush race. Its optional local-Docker restart mode applies to Tic Tac Toe: it makes the first move, restarts the backend, reconnects both users, verifies the exact recovered sequence/board/turn, then finishes the same match ID. Both smoke scripts accept live URLs and avoid printing credentials; they create durable test accounts/results because no destructive account-delete API exists.
+The realtime smoke registers two unique users, negotiates two authenticated sockets and verifies durable terminal records. It can complete Tic Tac Toe, Type Rush, Connect Four, Reversi or Rock Paper Scissors through their real game inputs. Its optional local-Docker restart mode applies to Tic Tac Toe: it makes the first move, restarts the backend, reconnects both users, verifies the exact recovered sequence/board/turn, then finishes the same match ID. Both smoke scripts accept live URLs and avoid printing credentials; they create durable test accounts/results because no destructive account-delete API exists.
 
 GitHub Actions repeats Maven verification, frontend lint/typecheck/tests/build, Compose validation and container builds on pushes and pull requests.
 

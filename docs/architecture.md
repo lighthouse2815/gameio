@@ -80,11 +80,11 @@ Client command
   -> GAME_OVER broadcast
 ```
 
-Clients send `PLACE_PIECE`, direction, stop or shoot input. They cannot submit position, HP, score or another player's identity. The server enforces 120 messages and 60 game inputs per user plus 240 messages per source IP in a one-second window, 60 handshakes per source IP and 20 per resolved user per minute, a 60-second reconnect grace period, a five-minute idle match limit and a 30-minute maximum match duration.
+Clients send only the smallest action needed: a board coordinate, Connect Four column, sealed Rock Paper Scissors choice, typed character, direction, stop or shoot input. They cannot submit legal-move sets, flipped discs, positions, HP, score, outcome or another player's identity. The server enforces 120 messages and 60 game inputs per user plus 240 messages per source IP in a one-second window, 60 handshakes per source IP and 20 per resolved user per minute, a 60-second reconnect grace period, a five-minute idle match limit and a 30-minute maximum match duration.
 
 Spectators bind to the same broadcast channel only for active public rooms. The binding is flagged read-only and excluded from membership, active-player presence, capacity, disconnect forfeits and input authorization. Quick reactions use four fixed enum values, authenticated server identity and a separate four-per-five-seconds limit; there is no free-form chat surface.
 
-Every accepted engine transition is serialized with match identity, room metadata, activity time, disconnect timers and an exact game-specific snapshot. Tic Tac Toe and Caro retain board, turn and outcome state; Tank also retains positions, velocity, HP, kills, bullets, input sequence, shot cooldown and tick clock. Checkpoints expire no later than the room or 35 minutes after their latest write and are deleted after durable result completion.
+Every accepted engine transition is serialized with match identity, room metadata, activity time, disconnect timers and an exact game-specific checkpoint. Board engines retain cells, turn and outcome state; Reversi also retains territory and skip-turn continuity; Rock Paper Scissors retains sealed pending choices and round scores; Tank retains positions, velocity, HP, kills, bullets, input sequence, shot cooldown and tick clock. Checkpoints expire no later than the room or 35 minutes after their latest write and are deleted after durable result completion.
 
 After a process restart, the first reconnect or spectate request validates the checkpoint against the current `PLAYING` room, restores the registered engine and applies the normal 60-second player reconnect grace. A missing, expired, unreadable or incompatible checkpoint is discarded and yields `ROOM_EXPIRED`; the server never invents state. The in-memory process still owns tick scheduling and socket fan-out, so recovery supports restarts but not horizontal active/active ownership. Production therefore remains on one non-sleeping replica until distributed leasing/fencing and cross-replica delivery exist.
 
@@ -103,6 +103,9 @@ games/
 |-- memory-match/  seeded card-pair rules and responsive grid
 |-- tictactoe/     authoritative snapshot UI
 |-- caro/          authoritative snapshot UI
+|-- connect-four/  authoritative gravity-grid UI
+|-- reversi/       authoritative legal-move and flip UI
+|-- rock-paper-scissors/ sealed simultaneous-choice UI
 `-- tank/          Phaser snapshot renderer and input mapping
 ```
 

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Reversi</title>
+  <desc id="desc">A black and white Reversi board presented as a tactical server scan.</desc>
+  <rect width="960" height="360" fill="#0b0b0b"/>
+  <g stroke="#292929"><path d="M0 72H960M0 144H960M0 216H960M0 288H960"/><path d="M120 0V360M240 0V360M360 0V360M480 0V360M600 0V360M720 0V360M840 0V360"/></g>
+  <rect x="535" y="32" width="288" height="288" fill="#151515" stroke="#777" stroke-width="2"/>
+  <g stroke="#3b3b3b">
+    <path d="M571 32V320M607 32V320M643 32V320M679 32V320M715 32V320M751 32V320M787 32V320"/>
+    <path d="M535 68H823M535 104H823M535 140H823M535 176H823M535 212H823M535 248H823M535 284H823"/>
+  </g>
+  <g stroke-width="2">
+    <circle cx="661" cy="158" r="14" fill="#eeeeee" stroke="#999"/>
+    <circle cx="697" cy="158" r="14" fill="#f0442e" stroke="#f0442e"/>
+    <circle cx="661" cy="194" r="14" fill="#f0442e" stroke="#f0442e"/>
+    <circle cx="697" cy="194" r="14" fill="#eeeeee" stroke="#999"/>
+    <circle cx="625" cy="122" r="14" fill="#eeeeee" stroke="#999"/>
+    <circle cx="625" cy="158" r="14" fill="#eeeeee" stroke="#999"/>
+    <circle cx="625" cy="194" r="14" fill="#f0442e" stroke="#f0442e"/>
+    <circle cx="733" cy="230" r="14" fill="#f0442e" stroke="#f0442e"/>
+  </g>
+  <g fill="none" stroke="#f0442e" stroke-width="2"><path d="M607 104h36v36h-36z"/><path d="M715 212h36v36h-36z"/></g>
+  <g fill="#f2f2f2" font-family="Arial, sans-serif">
+    <text x="64" y="88" font-size="16" letter-spacing="5">TACTICAL FLIP ARRAY</text>
+    <text x="60" y="204" font-size="90" font-weight="900" letter-spacing="-7">REVERSI</text>
+    <text x="64" y="254" font-size="15" letter-spacing="4" fill="#f0442e">ENCLOSE / FLIP / CONTROL</text>
+    <text x="64" y="304" font-size="13" letter-spacing="3" fill="#8e8e8e">LEGAL CELLS CALCULATED BY SERVER</text>
+  </g>
+</svg>

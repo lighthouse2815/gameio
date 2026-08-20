@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  isConnectFourSnapshot,
+  isReversiSnapshot,
+  isRpsSnapshot,
   isSnapshotForGame,
   isTypingRaceSnapshot,
   isTurnBoardSnapshot,
@@ -78,6 +81,88 @@ describe("realtime payload validation", () => {
       players: [{ ...typing.players[0], lastInputSequence: 20 }, typing.players[1]],
     })).toBe(false);
     expect(isTypingRaceSnapshot({ ...typing, winnerId: "outsider", terminal: true })).toBe(false);
+  });
+
+  it("validates Connect Four dimensions, move count, and terminal ownership", () => {
+    const grid = Array.from({ length: 6 }, () => Array(7).fill(""));
+    grid[5][0] = "R";
+    const snapshot = {
+      sequence: 1,
+      board: grid,
+      currentTurnPlayerId: "user-2",
+      winnerId: null,
+      draw: false,
+      lastMoveRow: 5,
+      lastMoveColumn: 0,
+    };
+    expect(isConnectFourSnapshot(snapshot)).toBe(true);
+    expect(isSnapshotForGame("connect-four", snapshot)).toBe(true);
+    expect(isConnectFourSnapshot({ ...snapshot, sequence: 2 })).toBe(false);
+    expect(isConnectFourSnapshot({ ...snapshot, currentTurnPlayerId: null })).toBe(false);
+    expect(isConnectFourSnapshot({ ...snapshot, lastMoveColumn: 7 })).toBe(false);
+  });
+
+  it("validates Reversi counts and server-provided legal cells", () => {
+    const grid = board(8);
+    grid[3][3] = "W";
+    grid[3][4] = "B";
+    grid[4][3] = "B";
+    grid[4][4] = "W";
+    const snapshot = {
+      sequence: 0,
+      board: grid,
+      currentTurnPlayerId: "user-1",
+      winnerId: null,
+      draw: false,
+      blackCount: 2,
+      whiteCount: 2,
+      legalMoves: [{ row: 2, column: 3 }],
+      lastMoveRow: null,
+      lastMoveColumn: null,
+    };
+    expect(isReversiSnapshot(snapshot)).toBe(true);
+    expect(isSnapshotForGame("reversi", snapshot)).toBe(true);
+    expect(isReversiSnapshot({ ...snapshot, blackCount: 3 })).toBe(false);
+    expect(isReversiSnapshot({ ...snapshot, legalMoves: [{ row: 3, column: 3 }] })).toBe(false);
+  });
+
+  it("validates hidden simultaneous Rock Paper Scissors rounds", () => {
+    const waiting = {
+      sequence: 1,
+      round: 1,
+      targetWins: 3,
+      players: [
+        { userId: "user-1", wins: 0, submitted: true },
+        { userId: "user-2", wins: 0, submitted: false },
+      ],
+      winnerId: null,
+      draw: false,
+    };
+    expect(isRpsSnapshot(waiting)).toBe(true);
+    expect(isSnapshotForGame("rock-paper-scissors", waiting)).toBe(true);
+    const resolved = {
+      ...waiting,
+      sequence: 2,
+      round: 2,
+      players: waiting.players.map((player, index) => ({
+        ...player,
+        wins: index === 0 ? 1 : 0,
+        submitted: false,
+      })),
+      lastRound: {
+        round: 1,
+        firstChoice: "ROCK",
+        secondChoice: "SCISSORS",
+        winnerId: "user-1",
+        draw: false,
+      },
+    };
+    expect(isRpsSnapshot(resolved)).toBe(true);
+    expect(isRpsSnapshot({ ...resolved, sequence: 3 })).toBe(false);
+    expect(isRpsSnapshot({
+      ...resolved,
+      lastRound: { ...resolved.lastRound, winnerId: "outsider" },
+    })).toBe(false);
   });
 
   it("requires both room UUID and page game slug to match", () => {

@@ -60,7 +60,10 @@ export type GameInputPayload = {
     | "MOVE_RIGHT"
     | "STOP"
     | "SHOOT"
-    | "TYPE_CHARACTER";
+    | "TYPE_CHARACTER"
+    | "DROP_DISC"
+    | "PLACE_DISC"
+    | "SELECT_MOVE";
   row?: number;
   column?: number;
   sequence?: number;

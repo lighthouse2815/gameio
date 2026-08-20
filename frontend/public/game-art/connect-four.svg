@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Connect Four</title>
+  <desc id="desc">A technical seven-column Connect Four board with red and white discs.</desc>
+  <defs>
+    <pattern id="grid" width="38" height="38" patternUnits="userSpaceOnUse">
+      <path d="M38 0H0V38" fill="none" stroke="#282828" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="360" fill="#0b0b0b"/>
+  <rect width="960" height="360" fill="url(#grid)"/>
+  <path d="M0 36H960M0 324H960" stroke="#f0442e" stroke-width="2"/>
+  <g transform="translate(540 52)">
+    <rect width="340" height="256" fill="#131313" stroke="#7a7a7a" stroke-width="2"/>
+    <g fill="#080808" stroke="#343434">
+      <circle cx="34" cy="34" r="22"/><circle cx="79" cy="34" r="22"/><circle cx="124" cy="34" r="22"/><circle cx="169" cy="34" r="22"/><circle cx="214" cy="34" r="22"/><circle cx="259" cy="34" r="22"/><circle cx="304" cy="34" r="22"/>
+      <circle cx="34" cy="79" r="22"/><circle cx="79" cy="79" r="22"/><circle cx="124" cy="79" r="22"/><circle cx="169" cy="79" r="22"/><circle cx="214" cy="79" r="22"/><circle cx="259" cy="79" r="22"/><circle cx="304" cy="79" r="22"/>
+      <circle cx="34" cy="124" r="22"/><circle cx="79" cy="124" r="22"/><circle cx="124" cy="124" r="22"/><circle cx="169" cy="124" r="22"/><circle cx="214" cy="124" r="22"/><circle cx="259" cy="124" r="22"/><circle cx="304" cy="124" r="22"/>
+      <circle cx="34" cy="169" r="22"/><circle cx="79" cy="169" r="22"/><circle cx="124" cy="169" r="22"/><circle cx="169" cy="169" r="22"/><circle cx="214" cy="169" r="22"/><circle cx="259" cy="169" r="22"/><circle cx="304" cy="169" r="22"/>
+      <circle cx="34" cy="214" r="22"/><circle cx="79" cy="214" r="22"/><circle cx="124" cy="214" r="22"/><circle cx="169" cy="214" r="22"/><circle cx="214" cy="214" r="22"/><circle cx="259" cy="214" r="22"/><circle cx="304" cy="214" r="22"/>
+    </g>
+    <g fill="#f0442e"><circle cx="34" cy="214" r="18"/><circle cx="79" cy="169" r="18"/><circle cx="124" cy="124" r="18"/><circle cx="169" cy="79" r="18"/></g>
+    <g fill="#e8e8e8"><circle cx="79" cy="214" r="18"/><circle cx="124" cy="214" r="18"/><circle cx="124" cy="169" r="18"/><circle cx="169" cy="214" r="18"/></g>
+  </g>
+  <g fill="#f2f2f2" font-family="Arial, sans-serif">
+    <text x="64" y="92" font-size="16" letter-spacing="5">AUTHORITATIVE DROP GRID</text>
+    <text x="60" y="186" font-size="72" font-weight="900" letter-spacing="-5">CONNECT</text>
+    <text x="60" y="256" font-size="72" font-weight="900" letter-spacing="-5" fill="#f0442e">FOUR</text>
+    <text x="64" y="304" font-size="13" letter-spacing="3" fill="#8e8e8e">7 COLUMNS / 2 PLAYERS / 1 SERVER TRUTH</text>
+  </g>
+</svg>

@@ -152,6 +152,21 @@ export const GAME_REGISTRY: Readonly<Record<string, RegisteredGame>> = {
     engine: "server-multiplayer",
     controlProfile: "combat",
   },
+  "connect-four": {
+    slug: "connect-four",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
+  reversi: {
+    slug: "reversi",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
+  "rock-paper-scissors": {
+    slug: "rock-paper-scissors",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
 };
 
 export function getRegisteredGame(slug: string) {

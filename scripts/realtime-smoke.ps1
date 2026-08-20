@@ -15,7 +15,7 @@ param(
     [uri] $Origin = "http://localhost:3000",
 
     [Parameter()]
-    [ValidateSet("tic-tac-toe", "typing-race")]
+    [ValidateSet("tic-tac-toe", "typing-race", "connect-four", "reversi", "rock-paper-scissors")]
     [string] $GameSlug = "tic-tac-toe",
 
     [Parameter()]
@@ -544,7 +544,13 @@ try {
     $owner = Register-SmokePlayer -Session $ownerSession -Label "owner"
     $guest = Register-SmokePlayer -Session $guestSession -Label "guest"
 
-    $gameLabel = if ($GameSlug -eq "typing-race") { "Type Rush" } else { "Tic Tac Toe" }
+    $gameLabel = switch ($GameSlug) {
+        "typing-race" { "Type Rush" }
+        "connect-four" { "Connect Four" }
+        "reversi" { "Reversi" }
+        "rock-paper-scissors" { "Rock Paper Scissors" }
+        default { "Tic Tac Toe" }
+    }
     Write-SmokeStep "Resolving the seeded $gameLabel catalog entry"
     $game = Invoke-ApiRequest -Session $ownerSession -Method GET -Path "/api/games/$GameSlug" `
         -BearerToken $owner.AccessToken
@@ -592,6 +598,8 @@ try {
     if ([string] (Get-RequiredProperty $guestStart.payload "matchId" "GAME_START") -ne $matchId) {
         throw "Players received different match identifiers."
     }
+    $ownerId = [string] (Get-RequiredProperty $owner.User "id" "Owner")
+    $guestId = [string] (Get-RequiredProperty $guest.User "id" "Guest")
 
     if ($GameSlug -eq "typing-race") {
         Write-SmokeStep "Typing the complete shared passage through the authoritative Type Rush engine"
@@ -626,6 +634,65 @@ try {
             if ($index -lt $textElements.Count - 1) {
                 Start-Sleep -Milliseconds 25
             }
+        }
+    }
+    elseif ($GameSlug -eq "connect-four") {
+        Write-SmokeStep "Playing a deterministic server-authoritative Connect Four win"
+        $moves = @(
+            [pscustomobject]@{ Connection = $ownerSocket; Column = 0 },
+            [pscustomobject]@{ Connection = $guestSocket; Column = 0 },
+            [pscustomobject]@{ Connection = $ownerSocket; Column = 1 },
+            [pscustomobject]@{ Connection = $guestSocket; Column = 1 },
+            [pscustomobject]@{ Connection = $ownerSocket; Column = 2 },
+            [pscustomobject]@{ Connection = $guestSocket; Column = 2 },
+            [pscustomobject]@{ Connection = $ownerSocket; Column = 3 }
+        )
+        foreach ($move in $moves) {
+            $inputId = Send-WsEnvelope -Connection $move.Connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "DROP_DISC"
+                column = $move.Column
+            }
+            $null = Wait-ForWsEvent -Connection $move.Connection -Type "GAME_STATE" -RequestId $inputId
+        }
+    }
+    elseif ($GameSlug -eq "rock-paper-scissors") {
+        Write-SmokeStep "Playing a deterministic sealed first-to-three Rock Paper Scissors win"
+        foreach ($round in 1..3) {
+            $ownerInputId = Send-WsEnvelope -Connection $ownerSocket -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "SELECT_MOVE"
+                column = 0
+            }
+            $null = Wait-ForWsEvent -Connection $ownerSocket -Type "GAME_STATE" -RequestId $ownerInputId
+            $guestInputId = Send-WsEnvelope -Connection $guestSocket -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "SELECT_MOVE"
+                column = 2
+            }
+            $null = Wait-ForWsEvent -Connection $guestSocket -Type "GAME_STATE" -RequestId $guestInputId
+        }
+    }
+    elseif ($GameSlug -eq "reversi") {
+        Write-SmokeStep "Playing legal server-provided Reversi moves through terminal territory scoring"
+        $state = Get-RequiredProperty $ownerStart.payload "state" "Reversi GAME_START"
+        for ($turn = 0; $turn -lt 60 -and -not [bool] $state.draw -and -not $state.PSObject.Properties["winnerId"]; $turn++) {
+            $currentTurnPlayerId = [string] (Get-RequiredProperty $state "currentTurnPlayerId" "Reversi state")
+            $legalMoves = @(Get-RequiredProperty $state "legalMoves" "Reversi state")
+            if ($legalMoves.Count -lt 1) {
+                throw "Reversi active state did not provide a legal move."
+            }
+            $move = $legalMoves[0]
+            $connection = if ($currentTurnPlayerId -eq $ownerId) { $ownerSocket }
+                elseif ($currentTurnPlayerId -eq $guestId) { $guestSocket }
+                else { throw "Reversi named a non-member as current player." }
+            $inputId = Send-WsEnvelope -Connection $connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "PLACE_DISC"
+                row = [int] (Get-RequiredProperty $move "row" "Reversi legal move")
+                column = [int] (Get-RequiredProperty $move "column" "Reversi legal move")
+            }
+            $stateEvent = Wait-ForWsEvent -Connection $connection -Type "GAME_STATE" -RequestId $inputId
+            $state = $stateEvent.payload
+        }
+        if (-not [bool] $state.draw -and -not $state.PSObject.Properties["winnerId"]) {
+            throw "Reversi did not reach a terminal state within 60 legal moves."
         }
     }
     else {
@@ -665,7 +732,6 @@ try {
             $null = Wait-ForWsEvent -Connection $ownerSocket -Type "CONNECTED"
             $null = Wait-ForWsEvent -Connection $guestSocket -Type "CONNECTED"
 
-            $guestId = [string] (Get-RequiredProperty $guest.User "id" "Guest")
             foreach ($recovered in @($ownerRecovered, $guestRecovered)) {
                 $sequence = [long] (Get-RequiredProperty $recovered.payload "sequence" "Recovered GAME_STATE")
                 $turn = [string] (Get-RequiredProperty $recovered.payload "currentTurnPlayerId" "Recovered GAME_STATE")
@@ -696,22 +762,28 @@ try {
         [string] (Get-RequiredProperty $guestOver.payload "matchId" "Guest GAME_OVER") -ne $matchId) {
         throw "GAME_OVER did not identify the started match for both players."
     }
-    $winnerId = [string] (Get-RequiredProperty $ownerOver.payload.finalState "winnerId" "Final state")
-    $ownerId = [string] (Get-RequiredProperty $owner.User "id" "Owner")
-    if ($winnerId -ne $ownerId) {
+    $finalState = Get-RequiredProperty $ownerOver.payload "finalState" "Owner GAME_OVER"
+    $draw = [bool] (Get-RequiredProperty $finalState "draw" "Final state")
+    $winnerId = if ($finalState.PSObject.Properties["winnerId"]) { [string] $finalState.winnerId } else { $null }
+    if (-not $draw -and [string]::IsNullOrWhiteSpace($winnerId)) {
+        throw "The terminal match did not declare a winner or draw."
+    }
+    if ($GameSlug -ne "reversi" -and $winnerId -ne $ownerId) {
         throw "The deterministic match did not declare the expected owner win."
     }
 
-    Write-SmokeStep "Confirming durable WIN and LOSS history records"
+    Write-SmokeStep "Confirming durable terminal history records"
     $ownerHistory = Invoke-ApiRequest -Session $ownerSession -Method GET -Path "/api/game-results/me?page=0&size=20" `
         -BearerToken $owner.AccessToken
     $guestHistory = Invoke-ApiRequest -Session $guestSession -Method GET -Path "/api/game-results/me?page=0&size=20" `
         -BearerToken $guest.AccessToken
-    if ((Get-HistoryOutcome -History $ownerHistory -MatchId $matchId) -ne "WIN") {
-        throw "Owner history did not persist a WIN for the match."
+    $expectedOwnerResult = if ($draw) { "DRAW" } elseif ($winnerId -eq $ownerId) { "WIN" } else { "LOSS" }
+    $expectedGuestResult = if ($draw) { "DRAW" } elseif ($winnerId -eq $guestId) { "WIN" } else { "LOSS" }
+    if ((Get-HistoryOutcome -History $ownerHistory -MatchId $matchId) -ne $expectedOwnerResult) {
+        throw "Owner history did not persist the expected $expectedOwnerResult for the match."
     }
-    if ((Get-HistoryOutcome -History $guestHistory -MatchId $matchId) -ne "LOSS") {
-        throw "Guest history did not persist a LOSS for the match."
+    if ((Get-HistoryOutcome -History $guestHistory -MatchId $matchId) -ne $expectedGuestResult) {
+        throw "Guest history did not persist the expected $expectedGuestResult for the match."
     }
 
     $flowCompleted = $true

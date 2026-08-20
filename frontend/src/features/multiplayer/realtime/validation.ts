@@ -1,5 +1,8 @@
 import type {
+  ConnectFourSnapshot,
   GameSnapshot,
+  ReversiSnapshot,
+  RpsSnapshot,
   TankSnapshot,
   TicTacToeSnapshot,
   TypingRaceSnapshot,
@@ -49,6 +52,169 @@ export function isTurnBoardSnapshot(
 
 function finiteNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function integerBetween(value: unknown, minimum: number, maximum: number) {
+  return Number.isSafeInteger(value) &&
+    (value as number) >= minimum &&
+    (value as number) <= maximum;
+}
+
+function terminalPlayersValid(snapshot: Record<string, unknown>) {
+  const winnerId = typeof snapshot.winnerId === "string" ? snapshot.winnerId : null;
+  const draw = snapshot.draw === true;
+  const currentTurn = typeof snapshot.currentTurnPlayerId === "string";
+  return !(winnerId && draw) && (winnerId || draw ? !currentTurn : currentTurn);
+}
+
+function lastMoveValid(
+  snapshot: Record<string, unknown>,
+  rows: number,
+  columns: number,
+) {
+  const sequence = snapshot.sequence as number;
+  const rowMissing = snapshot.lastMoveRow === undefined || snapshot.lastMoveRow === null;
+  const columnMissing = snapshot.lastMoveColumn === undefined || snapshot.lastMoveColumn === null;
+  if (sequence === 0) return rowMissing && columnMissing;
+  return integerBetween(snapshot.lastMoveRow, 0, rows - 1) &&
+    integerBetween(snapshot.lastMoveColumn, 0, columns - 1);
+}
+
+export function isConnectFourSnapshot(value: unknown): value is ConnectFourSnapshot {
+  const snapshot = record(value);
+  if (
+    !snapshot ||
+    !integerBetween(snapshot.sequence, 0, 42) ||
+    !Array.isArray(snapshot.board) ||
+    snapshot.board.length !== 6 ||
+    typeof snapshot.draw !== "boolean" ||
+    !optionalNullableString(snapshot.currentTurnPlayerId) ||
+    !optionalNullableString(snapshot.winnerId) ||
+    !terminalPlayersValid(snapshot) ||
+    !lastMoveValid(snapshot, 6, 7)
+  ) {
+    return false;
+  }
+  let occupied = 0;
+  const boardValid = snapshot.board.every((row) =>
+    Array.isArray(row) &&
+    row.length === 7 &&
+    row.every((cell) => {
+      if (cell === "R" || cell === "Y") occupied++;
+      return cell === "" || cell === "R" || cell === "Y";
+    }),
+  );
+  return boardValid && occupied === snapshot.sequence;
+}
+
+export function isReversiSnapshot(value: unknown): value is ReversiSnapshot {
+  const snapshot = record(value);
+  if (
+    !snapshot ||
+    !integerBetween(snapshot.sequence, 0, 60) ||
+    !Array.isArray(snapshot.board) ||
+    snapshot.board.length !== 8 ||
+    !integerBetween(snapshot.blackCount, 0, 64) ||
+    !integerBetween(snapshot.whiteCount, 0, 64) ||
+    !Array.isArray(snapshot.legalMoves) ||
+    typeof snapshot.draw !== "boolean" ||
+    !optionalNullableString(snapshot.currentTurnPlayerId) ||
+    !optionalNullableString(snapshot.winnerId) ||
+    !terminalPlayersValid(snapshot) ||
+    !lastMoveValid(snapshot, 8, 8)
+  ) {
+    return false;
+  }
+  let black = 0;
+  let white = 0;
+  const reversiBoard = snapshot.board as unknown[][];
+  const boardValid = reversiBoard.every((row) =>
+    Array.isArray(row) &&
+    row.length === 8 &&
+    row.every((cell) => {
+      if (cell === "B") black++;
+      if (cell === "W") white++;
+      return cell === "" || cell === "B" || cell === "W";
+    }),
+  );
+  const legalMoveKeys = new Set<string>();
+  const legalMovesValid = snapshot.legalMoves.every((rawMove) => {
+    const move = record(rawMove);
+    if (!move || !integerBetween(move.row, 0, 7) || !integerBetween(move.column, 0, 7)) {
+      return false;
+    }
+    const key = `${move.row}:${move.column}`;
+    if (legalMoveKeys.has(key) || reversiBoard[move.row as number]?.[move.column as number] !== "") {
+      return false;
+    }
+    legalMoveKeys.add(key);
+    return true;
+  });
+  const terminal = Boolean(snapshot.winnerId || snapshot.draw);
+  return boardValid && legalMovesValid &&
+    black === snapshot.blackCount &&
+    white === snapshot.whiteCount &&
+    black + white === (snapshot.sequence as number) + 4 &&
+    (terminal ? snapshot.legalMoves.length === 0 : snapshot.legalMoves.length > 0);
+}
+
+export function isRpsSnapshot(value: unknown): value is RpsSnapshot {
+  const snapshot = record(value);
+  if (
+    !snapshot ||
+    !integerBetween(snapshot.sequence, 0, 10) ||
+    !integerBetween(snapshot.round, 1, 5) ||
+    snapshot.targetWins !== 3 ||
+    !Array.isArray(snapshot.players) ||
+    snapshot.players.length !== 2 ||
+    typeof snapshot.draw !== "boolean" ||
+    snapshot.draw ||
+    !optionalNullableString(snapshot.winnerId)
+  ) {
+    return false;
+  }
+  const userIds = new Set<string>();
+  let submitted = 0;
+  let totalWins = 0;
+  const playersValid = snapshot.players.every((rawPlayer) => {
+    const player = record(rawPlayer);
+    if (!player || typeof player.userId !== "string" || userIds.has(player.userId)
+      || !integerBetween(player.wins, 0, 3) || typeof player.submitted !== "boolean") {
+      return false;
+    }
+    userIds.add(player.userId);
+    if (player.submitted) submitted++;
+    totalWins += player.wins as number;
+    return true;
+  });
+  if (!playersValid) return false;
+  const winnerId = typeof snapshot.winnerId === "string" ? snapshot.winnerId : null;
+  const completedRounds = winnerId ? snapshot.round as number : (snapshot.round as number) - 1;
+  const winnerPlayer = winnerId
+    ? snapshot.players.find((player) => player.userId === winnerId)
+    : null;
+  if (
+    (winnerId && (!winnerPlayer || winnerPlayer.wins !== 3 || submitted !== 0)) ||
+    (!winnerId && snapshot.players.some((player) => player.wins === 3)) ||
+    totalWins > completedRounds ||
+    snapshot.sequence !== completedRounds * 2 + submitted
+  ) {
+    return false;
+  }
+  const lastRound = record(snapshot.lastRound);
+  if (completedRounds === 0) return !lastRound;
+  if (
+    !lastRound ||
+    lastRound.round !== completedRounds ||
+    !["ROCK", "PAPER", "SCISSORS"].includes(String(lastRound.firstChoice)) ||
+    !["ROCK", "PAPER", "SCISSORS"].includes(String(lastRound.secondChoice)) ||
+    typeof lastRound.draw !== "boolean" ||
+    !optionalNullableString(lastRound.winnerId)
+  ) {
+    return false;
+  }
+  const lastWinner = typeof lastRound.winnerId === "string" ? lastRound.winnerId : null;
+  return (lastRound.draw ? !lastWinner : Boolean(lastWinner && userIds.has(lastWinner)));
 }
 
 function isTankSnapshot(value: unknown): value is TankSnapshot {
@@ -175,6 +341,9 @@ export function isSnapshotForGame(
   if (gameSlug === "caro") return isTurnBoardSnapshot(value, 15);
   if (gameSlug === "tank-battle") return isTankSnapshot(value);
   if (gameSlug === "typing-race") return isTypingRaceSnapshot(value);
+  if (gameSlug === "connect-four") return isConnectFourSnapshot(value);
+  if (gameSlug === "reversi") return isReversiSnapshot(value);
+  if (gameSlug === "rock-paper-scissors") return isRpsSnapshot(value);
   return false;
 }
 

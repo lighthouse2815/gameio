@@ -19,6 +19,64 @@ export type CaroSnapshot = TicTacToeSnapshot & {
   boardSize: number;
 };
 
+export type ConnectFourMarker = "" | "R" | "Y";
+
+export type ConnectFourSnapshot = {
+  sequence: number;
+  board: ConnectFourMarker[][];
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  draw: boolean;
+  lastMoveRow?: number | null;
+  lastMoveColumn?: number | null;
+};
+
+export type ReversiMarker = "" | "B" | "W";
+
+export type ReversiMove = {
+  row: number;
+  column: number;
+};
+
+export type ReversiSnapshot = {
+  sequence: number;
+  board: ReversiMarker[][];
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  draw: boolean;
+  blackCount: number;
+  whiteCount: number;
+  legalMoves: ReversiMove[];
+  lastMoveRow?: number | null;
+  lastMoveColumn?: number | null;
+};
+
+export type RpsChoice = "ROCK" | "PAPER" | "SCISSORS";
+
+export type RpsPlayerSnapshot = {
+  userId: string;
+  wins: number;
+  submitted: boolean;
+};
+
+export type RpsRoundSnapshot = {
+  round: number;
+  firstChoice: RpsChoice;
+  secondChoice: RpsChoice;
+  winnerId?: string | null;
+  draw: boolean;
+};
+
+export type RpsSnapshot = {
+  sequence: number;
+  round: number;
+  targetWins: number;
+  players: RpsPlayerSnapshot[];
+  lastRound?: RpsRoundSnapshot | null;
+  winnerId?: string | null;
+  draw: boolean;
+};
+
 export type TankView = {
   userId: string;
   x: number;
@@ -76,6 +134,9 @@ export type TypingRaceSnapshot = {
 export type GameSnapshot =
   | TicTacToeSnapshot
   | CaroSnapshot
+  | ConnectFourSnapshot
+  | ReversiSnapshot
+  | RpsSnapshot
   | TankSnapshot
   | TypingRaceSnapshot;
 
