@@ -27,9 +27,13 @@ Set-Location ..
 docker compose config --quiet
 docker compose build
 git diff --check
+
+$releaseSha = git rev-parse HEAD
+$remoteMainSha = (git ls-remote origin refs/heads/main).Split()[0]
+if ($releaseSha -ne $remoteMainSha) { throw "Local HEAD is not the pushed main revision" }
 ```
 
-Do not deploy if any command fails. Record the reviewed commit SHA for rollback.
+Do not deploy if any command fails. Record `$releaseSha` as the reviewed immutable revision for both providers and for rollback.
 
 ## 2. Provision Railway data services
 
@@ -46,10 +50,15 @@ Railway's database templates are application services rather than a guarantee of
 
 ## 3. Deploy the Spring backend
 
-Use `backend` as the Railway service root. `backend/railway.toml` selects the Dockerfile, `/actuator/health`, a 180-second health timeout and bounded restart-on-failure behavior.
+The current Railway service builds from the repository root, not from `backend/`. Leave **Root Directory** empty (repository root, sometimes displayed as `/`). The root [Dockerfile](../Dockerfile) copies `backend/pom.xml` and `backend/src`, builds the Spring JAR, and produces the non-root Java runtime image. The root [railway.toml](../railway.toml) selects that Dockerfile, `/actuator/health`, a 180-second health timeout and bounded restart-on-failure behavior. `backend/railway.toml` supports a separate backend-only build context, but it is not the source path used by the current production service; do not mix the two contexts.
 
 Configure the service:
 
+- source repository: `lighthouse2815/gameio`;
+- production branch: `main`;
+- Root Directory: empty/repository root;
+- autodeploy: enabled;
+- Watch Paths: empty, or explicitly include `Dockerfile`, `railway.toml` and `backend/**`;
 - region: Singapore;
 - replicas: exactly one;
 - Serverless/sleep: disabled;
@@ -88,6 +97,48 @@ Invoke-RestMethod https://<railway-host>/actuator/health
 
 Expected result: `status` is `UP`, Flyway completed, and Railway reports the replica healthy.
 
+### Verify the deployed revision and recover autodeploy
+
+`railway.toml` describes how Railway builds and starts a revision; it does not create the GitHub source trigger. `.github/workflows/ci.yml` is a quality gate and does not deploy the backend. Cloudflare Workers Builds and Railway each use their own provider-native GitHub connection.
+
+In the Railway deployment details, confirm that the source commit equals the recorded `$releaseSha`. An `UP` health response proves only that some compatible process is running. It does not prove the process contains the current migrations or engines.
+
+A characteristic version-skew symptom is a current Cloudflare frontend showing new game renderers while Railway `/api/games` still returns an older catalog. To recover safely:
+
+1. compare the successful Cloudflare Workers Build SHA, Railway deployment SHA and `origin/main` SHA;
+2. in Railway **Settings → Source**, reconnect `lighthouse2815/gameio`, branch `main`, if the deployment SHA stopped advancing;
+3. restore the repository-root configuration and Watch Paths listed above;
+4. if **Wait for CI** is enabled, fix the failing GitHub jobs instead of bypassing the gate; if successful commits also produced no Railway deployment, reconnect the source trigger;
+5. deploy the reviewed `main` SHA and confirm Railway labels the new deployment with that exact SHA;
+6. retain the previous immutable deployment until the schema, catalog, smoke and browser checks below pass.
+
+Check Flyway from the Railway PostgreSQL query console:
+
+```sql
+select installed_rank, version, description, success
+from flyway_schema_history
+order by installed_rank desc
+limit 5;
+```
+
+For this release the newest successful migration must be `13`, `add online board game collection`. Then verify the backend catalog rather than inferring migration success from health:
+
+```powershell
+$backendOrigin = "https://<railway-host>"
+$catalog = Invoke-RestMethod "$backendOrigin/api/games?page=0&size=50"
+$expectedSlugs = @(
+  "2048", "breakout", "caro", "connect-four", "dots-and-boxes", "flappy-bird",
+  "hex", "mancala", "memory-match", "minesweeper", "reversi",
+  "rock-paper-scissors", "snake", "sos", "tank-battle", "tic-tac-toe",
+  "typing-race", "ultimate-tic-tac-toe"
+)
+$actualSlugs = @($catalog.content.slug)
+$missing = @($expectedSlugs | Where-Object { $_ -notin $actualSlugs })
+if ($catalog.totalElements -ne 18 -or $missing.Count) {
+  throw "Railway catalog is not the expected V13 catalog: missing $($missing -join ', ')"
+}
+```
+
 Verify the protected metrics endpoint without printing the token:
 
 ```powershell
@@ -100,6 +151,8 @@ Expected result: `200`. A missing or incorrect header returns `401`. The endpoin
 ## 4. Configure the Cloudflare/OpenNext frontend
 
 The frontend is not a static Pages export. OpenNext builds a Worker that serves Next.js and the same-origin API proxy.
+
+The current production frontend is the `gameio` Worker at `https://gameio.alexnguyena47.workers.dev`. Its routine releases come from Cloudflare Workers Builds connected to `lighthouse2815/gameio`, branch `main`, with `frontend` as the root directory. Keep that native source integration enabled so the Cloudflare deployment details retain the source commit SHA; that SHA must match the reviewed `$releaseSha`. The local `npm run deploy` command below is the manual recovery/equivalent path, not a replacement for the Git trigger.
 
 At build time set:
 
@@ -117,7 +170,9 @@ BACKEND_ORIGIN=https://<railway-host>
 
 `NEXT_PUBLIC_*` values are intentionally public browser configuration and are inlined during `next build`. `BACKEND_ORIGIN` is read only by the Worker route and must be a plain HTTPS origin without credentials, an application path, query or fragment. The proxy never accepts a caller-selected upstream.
 
-Build and deploy from `frontend`:
+`NEXT_PUBLIC_API_URL=/api` is deliberately relative. It therefore contributes no external host to CSP `connect-src`; same-origin API traffic is covered by `'self'`. The production CSP must contain the exact Railway WSS origin and Google Identity Services parent URL, and must not contain `http://localhost:8080`.
+
+For a deliberate manual recovery, build and deploy from `frontend`:
 
 ```powershell
 Set-Location frontend
@@ -128,6 +183,19 @@ npm run deploy
 ```
 
 Configure `BACKEND_ORIGIN` through the Worker environment before serving traffic. Keep preview and production bindings separate. A custom domain can be attached later, but the default `workers.dev` origin works with the same-origin BFF.
+
+After deploy, compare the BFF catalog and CSP with the direct backend result:
+
+```powershell
+$frontendOrigin = "https://<cloudflare-host>"
+$edgeCatalog = Invoke-RestMethod "$frontendOrigin/api/games?page=0&size=50"
+if ($edgeCatalog.totalElements -ne 18) { throw "Cloudflare BFF is not serving the V13 catalog" }
+
+$csp = (Invoke-WebRequest "$frontendOrigin/").Headers["Content-Security-Policy"]
+if (-not $csp -or $csp -match "http://localhost:8080") {
+  throw "Production CSP is missing or still allows the local backend origin"
+}
+```
 
 After the final Worker hostname is known, set Railway `CORS_ALLOWED_ORIGINS` to that exact HTTPS origin and redeploy/restart the backend if required. No wildcard, localhost or broad subdomain pattern belongs in the production allow-list.
 
@@ -170,9 +238,21 @@ The scripts call the backend directly so they verify its health, credentialed CO
   -WsUrl wss://<railway-host>/ws `
   -Origin https://<cloudflare-host> `
   -SkipDockerServices
+
+foreach ($slug in @(
+  "typing-race", "connect-four", "reversi", "rock-paper-scissors",
+  "ultimate-tic-tac-toe", "dots-and-boxes", "mancala", "hex", "sos"
+)) {
+  .\scripts\realtime-smoke.ps1 `
+    -GameSlug $slug `
+    -BaseUrl https://<railway-host> `
+    -WsUrl wss://<railway-host>/ws `
+    -Origin https://<cloudflare-host> `
+    -SkipDockerServices
+}
 ```
 
-The first script verifies health, registration, login, credentialed CORS, refresh-cookie rotation, logout and refresh rejection. The second uses two users and two sockets to verify JWT subprotocol negotiation, room create/join/ready/start, a deterministic authoritative Tic Tac Toe win and durable `WIN`/`LOSS` history.
+The first script verifies health, registration, login, credentialed CORS, refresh-cookie rotation, logout and refresh rejection. Each realtime run uses two users and two sockets to verify JWT subprotocol negotiation, room create/join/ready/start, genuine game-specific actions, the authoritative terminal state and durable outcomes. The default run covers Tic Tac Toe; the loop covers every other script-supported path.
 
 Both scripts create unique durable smoke accounts; the realtime script also creates match results. Use a production-safe test-account retention policy because Gameio intentionally has no destructive account-delete endpoint.
 
@@ -186,7 +266,7 @@ Use the deployed Cloudflare URL, not localhost, and verify all of the following:
 - no direct Railway REST call from the browser API client;
 - catalog, profiles, friends, rankings, light/dark mode and responsive navigation;
 - real 2048, Snake, Flappy Bird, Breakout, Minesweeper and Memory Match input on desktop/mobile controls, including offline and signed-in verified modes;
-- two isolated browser sessions completing Tic Tac Toe and Caro;
+- two isolated browser sessions completing Tic Tac Toe, Caro, Connect Four, Reversi, Rock Paper Scissors, Ultimate Tic Tac Toe, Dots and Boxes, Mancala, Hex and SOS;
 - Tank Battle movement/shoot/state updates with two sessions;
 - reconnect through a controlled backend restart, `ROOM_EXPIRED` fallback for a removed/corrupt checkpoint and no blank canvas on socket failure;
 - no console errors, failed mixed-content requests, CSP violations or unexpected cached authenticated responses.

@@ -1,16 +1,25 @@
 import { describe, expect, it } from "vitest";
 import {
   isConnectFourSnapshot,
+  isDotsAndBoxesSnapshot,
+  isHexSnapshot,
+  isMancalaSnapshot,
   isReversiSnapshot,
   isRpsSnapshot,
+  isSosSnapshot,
   isSnapshotForGame,
   isTypingRaceSnapshot,
   isTurnBoardSnapshot,
+  isUltimateTicTacToeSnapshot,
   roomPayloadMatches,
 } from "@/features/multiplayer/realtime/validation";
 
 function board(size: number) {
   return Array.from({ length: size }, () => Array(size).fill(""));
+}
+
+function matrix<T>(rows: number, columns: number, value: T) {
+  return Array.from({ length: rows }, () => Array(columns).fill(value));
 }
 
 describe("realtime payload validation", () => {
@@ -163,6 +172,155 @@ describe("realtime payload validation", () => {
       ...resolved,
       lastRound: { ...resolved.lastRound, winnerId: "outsider" },
     })).toBe(false);
+  });
+
+  it("validates every legal cell in an initial Ultimate Tic-Tac-Toe snapshot", () => {
+    const snapshot = {
+      sequence: 0,
+      board: board(9),
+      subBoards: board(3),
+      forcedBoardRow: null,
+      forcedBoardColumn: null,
+      legalMoves: Array.from({ length: 81 }, (_, index) => ({
+        row: Math.floor(index / 9),
+        column: index % 9,
+      })),
+      currentTurnPlayerId: "user-1",
+      winnerId: null,
+      draw: false,
+      lastMoveRow: null,
+      lastMoveColumn: null,
+    };
+    expect(isUltimateTicTacToeSnapshot(snapshot)).toBe(true);
+    expect(isSnapshotForGame("ultimate-tic-tac-toe", snapshot)).toBe(true);
+    expect(
+      isUltimateTicTacToeSnapshot({
+        ...snapshot,
+        legalMoves: snapshot.legalMoves.slice(1),
+      }),
+    ).toBe(false);
+    const falseSubBoards = board(3);
+    falseSubBoards[0][0] = "X";
+    expect(
+      isUltimateTicTacToeSnapshot({ ...snapshot, subBoards: falseSubBoards }),
+    ).toBe(false);
+  });
+
+  it("validates Dots and Boxes edge, box, score, and legal-move consistency", () => {
+    const legalMoves = [
+      ...Array.from({ length: 20 }, (_, index) => ({
+        orientation: "H",
+        row: Math.floor(index / 4),
+        column: index % 4,
+      })),
+      ...Array.from({ length: 20 }, (_, index) => ({
+        orientation: "V",
+        row: Math.floor(index / 5),
+        column: index % 5,
+      })),
+    ];
+    const snapshot = {
+      sequence: 0,
+      horizontalEdges: matrix(5, 4, false),
+      verticalEdges: matrix(4, 5, false),
+      boxes: matrix(4, 4, ""),
+      scores: [0, 0],
+      legalMoves,
+      lastEdge: null,
+      currentTurnPlayerId: "user-1",
+      winnerId: null,
+      draw: false,
+    };
+    expect(isDotsAndBoxesSnapshot(snapshot)).toBe(true);
+    expect(isSnapshotForGame("dots-and-boxes", snapshot)).toBe(true);
+    expect(
+      isDotsAndBoxesSnapshot({ ...snapshot, legalMoves: legalMoves.slice(1) }),
+    ).toBe(false);
+    const impossibleBoxes = matrix(4, 4, "");
+    impossibleBoxes[0][0] = "R";
+    expect(
+      isDotsAndBoxesSnapshot({ ...snapshot, boxes: impossibleBoxes, scores: [1, 0] }),
+    ).toBe(false);
+  });
+
+  it("validates Mancala stone preservation, stores, and relative legal pits", () => {
+    const snapshot = {
+      sequence: 0,
+      pits: [4, 4, 4, 4, 4, 4, 0, 4, 4, 4, 4, 4, 4, 0],
+      scores: [0, 0],
+      legalPits: [0, 1, 2, 3, 4, 5],
+      lastPit: null,
+      currentTurnPlayerId: "user-1",
+      winnerId: null,
+      draw: false,
+    };
+    expect(isMancalaSnapshot(snapshot)).toBe(true);
+    expect(isSnapshotForGame("mancala", snapshot)).toBe(true);
+    expect(isMancalaSnapshot({ ...snapshot, pits: snapshot.pits.with(0, 5) })).toBe(false);
+    expect(isMancalaSnapshot({ ...snapshot, legalPits: [0, 1, 1] })).toBe(false);
+  });
+
+  it("validates Hex paths with the engine's six-neighbor orientation", () => {
+    const initial = {
+      sequence: 0,
+      board: board(9),
+      currentTurnPlayerId: "user-1",
+      winnerId: null,
+      lastMoveRow: null,
+      lastMoveColumn: null,
+    };
+    expect(isHexSnapshot(initial)).toBe(true);
+    expect(isSnapshotForGame("hex", initial)).toBe(true);
+
+    const winningBoard = board(9);
+    for (let row = 0; row < 9; row++) winningBoard[row][0] = "R";
+    for (let column = 1; column < 9; column++) winningBoard[8][column] = "B";
+    const terminal = {
+      sequence: 17,
+      board: winningBoard,
+      currentTurnPlayerId: null,
+      winnerId: "user-1",
+      lastMoveRow: 8,
+      lastMoveColumn: 0,
+    };
+    expect(isHexSnapshot(terminal)).toBe(true);
+    expect(isHexSnapshot({ ...terminal, winnerId: null })).toBe(false);
+  });
+
+  it("validates SOS players, terminal scores, and full-board draw", () => {
+    const initial = {
+      sequence: 0,
+      board: board(6),
+      currentTurnPlayerId: "user-1",
+      players: [
+        { userId: "user-1", score: 0 },
+        { userId: "user-2", score: 0 },
+      ],
+      winnerId: null,
+      draw: false,
+      lastMoveRow: null,
+      lastMoveColumn: null,
+      lastMovePoints: 0,
+    };
+    expect(isSosSnapshot(initial)).toBe(true);
+    expect(isSnapshotForGame("sos", initial)).toBe(true);
+    const terminal = {
+      ...initial,
+      sequence: 36,
+      board: matrix(6, 6, "S"),
+      currentTurnPlayerId: null,
+      draw: true,
+      lastMoveRow: 5,
+      lastMoveColumn: 5,
+    };
+    expect(isSosSnapshot(terminal)).toBe(true);
+    expect(isSosSnapshot({ ...terminal, draw: false })).toBe(false);
+    expect(
+      isSosSnapshot({
+        ...initial,
+        currentTurnPlayerId: "outsider",
+      }),
+    ).toBe(false);
   });
 
   it("requires both room UUID and page game slug to match", () => {

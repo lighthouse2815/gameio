@@ -40,10 +40,10 @@ class CoreApiIntegrationTest {
     }
 
     @Test
-    void seededCatalogIsPublicSearchableAndContainsThirteenRealGames() throws Exception {
+    void seededCatalogIsPublicSearchableAndContainsEighteenRealGames() throws Exception {
         mockMvc.perform(get("/api/games").param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(13))
+                .andExpect(jsonPath("$.totalElements").value(18))
                 .andExpect(jsonPath("$.content[?(@.slug == '2048')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'flappy-bird')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'breakout')]").exists())
@@ -53,6 +53,11 @@ class CoreApiIntegrationTest {
                 .andExpect(jsonPath("$.content[?(@.slug == 'connect-four')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'reversi')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'rock-paper-scissors')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'ultimate-tic-tac-toe')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'dots-and-boxes')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'mancala')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'hex')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'sos')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'tank-battle')]").exists());
     }
 

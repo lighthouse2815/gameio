@@ -1,0 +1,78 @@
+INSERT INTO games (
+    id,
+    name,
+    slug,
+    description,
+    thumbnail_url,
+    category,
+    game_type,
+    min_players,
+    max_players,
+    enabled,
+    created_at
+) VALUES
+(
+    '10000000-0000-0000-0000-000000000014',
+    'Ultimate Tic Tac Toe',
+    'ultimate-tic-tac-toe',
+    'Win local grids while every move sends your rival to the next board in a larger tactical duel.',
+    NULL,
+    'STRATEGY',
+    'TURN_BASED_MULTIPLAYER',
+    2,
+    2,
+    TRUE,
+    CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000015',
+    'Dots and Boxes',
+    'dots-and-boxes',
+    'Claim edges, close boxes for extra turns, and control more territory than your rival.',
+    NULL,
+    'STRATEGY',
+    'TURN_BASED_MULTIPLAYER',
+    2,
+    2,
+    TRUE,
+    CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000016',
+    'Mancala',
+    'mancala',
+    'Sow stones around the Kalah board, set up captures, and finish with the stronger store.',
+    NULL,
+    'STRATEGY',
+    'TURN_BASED_MULTIPLAYER',
+    2,
+    2,
+    TRUE,
+    CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000017',
+    'Hex',
+    'hex',
+    'Build an unbroken path across a hexagonal grid before your rival connects the opposite edges.',
+    NULL,
+    'STRATEGY',
+    'TURN_BASED_MULTIPLAYER',
+    2,
+    2,
+    TRUE,
+    CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000018',
+    'SOS',
+    'sos',
+    'Place S or O, complete lines in every direction, and chain scoring turns on a shared board.',
+    NULL,
+    'STRATEGY',
+    'TURN_BASED_MULTIPLAYER',
+    2,
+    2,
+    TRUE,
+    CURRENT_TIMESTAMP
+);

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Dots and Boxes</title>
+  <desc id="desc">A four by four Dots and Boxes field with claimed squares and a highlighted final edge.</desc>
+  <rect width="960" height="360" fill="#0b0b0b"/>
+  <g stroke="#292929"><path d="M0 72H960M0 144H960M0 216H960M0 288H960"/><path d="M120 0V360M240 0V360M360 0V360M480 0V360M600 0V360M720 0V360M840 0V360"/></g>
+  <path d="M0 36H960M0 324H960" stroke="#f0442e" stroke-width="2"/>
+  <g transform="translate(594 62)">
+    <rect x="36" y="36" width="48" height="48" fill="#f0442e" opacity=".86"/>
+    <rect x="132" y="84" width="48" height="48" fill="#ededed" opacity=".92"/>
+    <rect x="84" y="132" width="48" height="48" fill="#f0442e" opacity=".86"/>
+    <g fill="none" stroke="#5a5a5a" stroke-width="5" stroke-linecap="square">
+      <path d="M12 12h48M108 12h48M156 12h48M12 60h48M60 60h48M108 60h48M156 60h48M12 108h48M60 108h48M108 108h48M156 108h48M12 156h48M60 156h48M108 156h48M156 156h48M12 204h48M60 204h48M108 204h48M156 204h48"/>
+      <path d="M12 12v48M60 12v48M108 12v48M156 12v48M204 12v48M12 60v48M60 60v48M108 60v48M156 60v48M204 60v48M12 108v48M60 108v48M108 108v48M156 108v48M204 108v48M12 156v48M60 156v48M108 156v48M156 156v48M204 156v48"/>
+    </g>
+    <path d="M60 108h48" stroke="#f0442e" stroke-width="8"/>
+    <g fill="#f2f2f2">
+      <circle cx="12" cy="12" r="7"/><circle cx="60" cy="12" r="7"/><circle cx="108" cy="12" r="7"/><circle cx="156" cy="12" r="7"/><circle cx="204" cy="12" r="7"/>
+      <circle cx="12" cy="60" r="7"/><circle cx="60" cy="60" r="7"/><circle cx="108" cy="60" r="7"/><circle cx="156" cy="60" r="7"/><circle cx="204" cy="60" r="7"/>
+      <circle cx="12" cy="108" r="7"/><circle cx="60" cy="108" r="7"/><circle cx="108" cy="108" r="7"/><circle cx="156" cy="108" r="7"/><circle cx="204" cy="108" r="7"/>
+      <circle cx="12" cy="156" r="7"/><circle cx="60" cy="156" r="7"/><circle cx="108" cy="156" r="7"/><circle cx="156" cy="156" r="7"/><circle cx="204" cy="156" r="7"/>
+      <circle cx="12" cy="204" r="7"/><circle cx="60" cy="204" r="7"/><circle cx="108" cy="204" r="7"/><circle cx="156" cy="204" r="7"/><circle cx="204" cy="204" r="7"/>
+    </g>
+    <g fill="#0b0b0b" font-family="Arial, sans-serif" font-size="22" font-weight="900"><text x="50" y="74">R</text><text x="145" y="122">B</text><text x="97" y="170">R</text></g>
+  </g>
+  <g fill="#f2f2f2" font-family="Arial, sans-serif">
+    <text x="64" y="82" font-size="16" letter-spacing="5">EDGE CLAIM PROTOCOL</text>
+    <text x="60" y="175" font-size="70" font-weight="900" letter-spacing="-5">DOTS &amp;</text>
+    <text x="60" y="240" font-size="70" font-weight="900" letter-spacing="-5" fill="#f0442e">BOXES</text>
+    <text x="64" y="292" font-size="13" letter-spacing="3" fill="#8e8e8e">CLOSE / CLAIM / KEEP THE TURN</text>
+  </g>
+</svg>

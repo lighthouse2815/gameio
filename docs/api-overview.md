@@ -66,6 +66,8 @@ Private email is returned only by the authenticated `/users/me` response, not by
 
 Each game response includes `onlinePlayers` from active Redis room metadata intersected with currently bound server sessions, and `playsCount` from durable PostgreSQL results. The frontend uses those values for online/popular surfaces; it does not invent ratings or player totals.
 
+Flyway V13 defines the current eighteen-title catalog. Its five newest two-player entries are `ultimate-tic-tac-toe`, `dots-and-boxes`, `mancala`, `hex` and `sos`; each is `TURN_BASED_MULTIPLAYER` with a minimum and maximum of two players. A deployed frontend card is not catalog evidence: production verification reads both the direct Railway `/api/games` response and the Cloudflare same-origin `/api/games` BFF response and requires `totalElements = 18` with all expected slugs.
+
 ## Verified results and history
 
 | Method | Route | Auth | Purpose |
@@ -164,7 +166,7 @@ Friend-to-game invitations use authenticated WebSocket commands rather than REST
 
 Same-room rematches use authenticated `ROOM_REMATCH` over WebSocket after `GAME_OVER`; the command resets ready state and returns the room to `WAITING`.
 
-Room codes are six characters. Tic Tac Toe, Caro, Type Rush, Connect Four, Reversi and Rock Paper Scissors accept exactly two players; Tank Battle accepts two to four. The backend validates requested capacity against the selected game's catalog limits. Type Rush practice is local-only and does not create a room or verified result.
+Room codes are six characters. Tic Tac Toe, Caro, Type Rush, Connect Four, Reversi, Rock Paper Scissors, Ultimate Tic Tac Toe, Dots and Boxes, Mancala, Hex and SOS accept exactly two players; Tank Battle accepts two to four. The backend validates requested capacity against the selected game's catalog limits. Type Rush practice is local-only and does not create a room or verified result.
 
 REST create/join is followed by WebSocket `ROOM_JOIN` so the live connection is bound to broadcasts. Realtime `ROOM_LEAVE` produces correlated `ROOM_LEFT` on every socket for that user. The lobby's REST exit explicitly disconnects/reconnects the shared socket; any other direct REST caller must likewise close or clear its live room channel because the REST response alone does not unbind a WebSocket.
 

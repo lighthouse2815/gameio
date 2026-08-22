@@ -51,6 +51,87 @@ export type ReversiSnapshot = {
   lastMoveColumn?: number | null;
 };
 
+export type GridMove = {
+  row: number;
+  column: number;
+};
+
+export type UltimateSubBoardMarker = BoardMarker | "D";
+
+export type UltimateTicTacToeSnapshot = {
+  sequence: number;
+  board: BoardMarker[][];
+  subBoards: UltimateSubBoardMarker[][];
+  forcedBoardRow?: number | null;
+  forcedBoardColumn?: number | null;
+  legalMoves: GridMove[];
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  draw: boolean;
+  lastMoveRow?: number | null;
+  lastMoveColumn?: number | null;
+};
+
+export type EdgeOrientation = "H" | "V";
+
+export type EdgeMove = {
+  orientation: EdgeOrientation;
+  row: number;
+  column: number;
+};
+
+export type DotsAndBoxesSnapshot = {
+  sequence: number;
+  horizontalEdges: boolean[][];
+  verticalEdges: boolean[][];
+  boxes: ("" | "R" | "B")[][];
+  scores: [number, number];
+  legalMoves: EdgeMove[];
+  lastEdge?: EdgeMove | null;
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  draw: boolean;
+};
+
+export type MancalaSnapshot = {
+  sequence: number;
+  pits: number[];
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  draw: boolean;
+  legalPits: number[];
+  lastPit?: number | null;
+  scores: [number, number];
+};
+
+export type HexMarker = "" | "R" | "B";
+
+export type HexSnapshot = {
+  sequence: number;
+  board: HexMarker[][];
+  currentTurnPlayerId: string | null;
+  winnerId: string | null;
+  lastMoveRow?: number | null;
+  lastMoveColumn?: number | null;
+};
+
+export type SosPlayerSnapshot = {
+  userId: string;
+  score: number;
+};
+
+export type SosSnapshot = {
+  sequence: number;
+  board: ("" | "S" | "O")[][];
+  currentTurnPlayerId: string | null;
+  players: [SosPlayerSnapshot, SosPlayerSnapshot];
+  winnerId: string | null;
+  draw: boolean;
+  lastMoveRow?: number | null;
+  lastMoveColumn?: number | null;
+  lastMovePoints: number;
+};
+
 export type RpsChoice = "ROCK" | "PAPER" | "SCISSORS";
 
 export type RpsPlayerSnapshot = {
@@ -136,6 +217,11 @@ export type GameSnapshot =
   | CaroSnapshot
   | ConnectFourSnapshot
   | ReversiSnapshot
+  | UltimateTicTacToeSnapshot
+  | DotsAndBoxesSnapshot
+  | MancalaSnapshot
+  | HexSnapshot
+  | SosSnapshot
   | RpsSnapshot
   | TankSnapshot
   | TypingRaceSnapshot;

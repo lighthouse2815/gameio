@@ -22,7 +22,7 @@ function absoluteOrigin(value: string | undefined) {
 
 const connectSources = new Set(["'self'"]);
 for (const candidate of [
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api",
+  process.env.NEXT_PUBLIC_API_URL ?? "/api",
   process.env.NEXT_PUBLIC_WS_URL ?? "ws://localhost:8080/ws",
 ]) {
   const origin = absoluteOrigin(candidate);

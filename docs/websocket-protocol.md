@@ -106,6 +106,61 @@ Rock Paper Scissors encodes Rock, Paper and Scissors as columns `0`, `1` and `2`
 }
 ```
 
+Ultimate Tic Tac Toe uses global coordinates `0..8`. The local coordinates of a mark select the sub-board where the opponent must play next. If that target sub-board is already won or drawn, the server releases the restriction and advertises every legal cell. Clients never choose the forced board or report a local-board result:
+
+```json
+{
+  "action": "PLACE_MARK",
+  "row": 4,
+  "column": 7
+}
+```
+
+Dots and Boxes uses a 5 by 5 dot lattice with 40 edges and 16 boxes. A horizontal edge uses row `0..4` and column `0..3`; a vertical edge uses row `0..3` and column `0..4`. Closing one or two boxes awards them to the current player and keeps that player's turn:
+
+```json
+{
+  "action": "DRAW_HORIZONTAL",
+  "row": 2,
+  "column": 1
+}
+```
+
+Use `DRAW_VERTICAL` with the same `row` and `column` fields for a vertical edge. The client does not submit captured boxes, score or whether another turn was earned.
+
+Mancala accepts one relative pit column `0..5` from the current player's side:
+
+```json
+{
+  "action": "SOW_PIT",
+  "column": 3
+}
+```
+
+The server owns the 14-position Kalah ring, skips the rival store, applies opposite-pit captures, grants a repeat turn when the final stone lands in the current player's store, sweeps the remaining side and compares store scores.
+
+Hex uses a 9 by 9 board and one cell coordinate. Player zero connects top to bottom; player one connects left to right. The server evaluates the six hexagonal neighbors after every accepted stone and Hex has no draw outcome:
+
+```json
+{
+  "action": "PLACE_STONE",
+  "row": 5,
+  "column": 4
+}
+```
+
+SOS uses coordinates `0..5` with either `PLACE_S` or `PLACE_O`:
+
+```json
+{
+  "action": "PLACE_O",
+  "row": 2,
+  "column": 2
+}
+```
+
+The server counts every newly completed `S-O-S` segment horizontally, vertically and on both diagonal axes. One placement can score several segments; scoring keeps the turn. The board must fill before the server compares scores and publishes `WIN`, `LOSS` or `DRAW`.
+
 ### Tank input
 
 ```json
@@ -210,4 +265,4 @@ validated input -> engine transition -> GAME_STATE broadcast
                 -> GAME_OVER broadcast
 ```
 
-The production-capable `scripts/realtime-smoke.ps1` exercises this contract with two independent accounts and sockets. Its supported game paths complete Tic Tac Toe, Type Rush, Connect Four, Reversi and Rock Paper Scissors through genuine inputs, then verify the durable terminal outcomes.
+The production-capable `scripts/realtime-smoke.ps1` exercises this contract with two independent accounts and sockets. Its supported game paths complete Tic Tac Toe, Type Rush, Connect Four, Reversi, Rock Paper Scissors, Ultimate Tic Tac Toe, Dots and Boxes, Mancala, Hex and SOS through genuine inputs, then verify the durable terminal outcomes.

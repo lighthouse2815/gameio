@@ -3,6 +3,7 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Radio, ShieldCheck } from "lucide-react";
+import type { ComponentType } from "react";
 import { buttonStyles } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/states";
 import { getRegisteredGame } from "@/games/core/game-registry";
@@ -33,6 +34,44 @@ const RockPaperScissorsGame = dynamic(
   () => import("@/games/rock-paper-scissors/rock-paper-scissors-game"),
   { ssr: false },
 );
+const UltimateTicTacToeGame = dynamic(
+  () => import("@/games/ultimate-tic-tac-toe/ultimate-tic-tac-toe-game"),
+  { ssr: false },
+);
+const DotsAndBoxesGame = dynamic(
+  () => import("@/games/dots-and-boxes/dots-and-boxes-game"),
+  { ssr: false },
+);
+const MancalaGame = dynamic(() => import("@/games/mancala/mancala-game"), {
+  ssr: false,
+});
+const HexGame = dynamic(() => import("@/games/hex/hex-game"), {
+  ssr: false,
+});
+const SosGame = dynamic(() => import("@/games/sos/sos-game"), {
+  ssr: false,
+});
+
+type ServerGameProps = {
+  roomId: string;
+  spectator?: boolean;
+};
+
+const SERVER_GAME_RENDERERS: Readonly<
+  Record<string, ComponentType<ServerGameProps>>
+> = {
+  "tic-tac-toe": TicTacToeGame,
+  caro: CaroGame,
+  "tank-battle": TankBattle,
+  "connect-four": ConnectFourGame,
+  reversi: ReversiGame,
+  "rock-paper-scissors": RockPaperScissorsGame,
+  "ultimate-tic-tac-toe": UltimateTicTacToeGame,
+  "dots-and-boxes": DotsAndBoxesGame,
+  mancala: MancalaGame,
+  hex: HexGame,
+  sos: SosGame,
+};
 
 export function GameRuntime({
   slug,
@@ -58,23 +97,9 @@ export function GameRuntime({
   }
   if (registration.engine === "server-multiplayer") {
     if (roomId) {
-      if (slug === "tic-tac-toe") {
-        return <TicTacToeGame roomId={roomId} spectator={spectator} />;
-      }
-      if (slug === "caro") {
-        return <CaroGame roomId={roomId} spectator={spectator} />;
-      }
-      if (slug === "tank-battle") {
-        return <TankBattle roomId={roomId} spectator={spectator} />;
-      }
-      if (slug === "connect-four") {
-        return <ConnectFourGame roomId={roomId} spectator={spectator} />;
-      }
-      if (slug === "reversi") {
-        return <ReversiGame roomId={roomId} spectator={spectator} />;
-      }
-      if (slug === "rock-paper-scissors") {
-        return <RockPaperScissorsGame roomId={roomId} spectator={spectator} />;
+      const ServerGame = SERVER_GAME_RENDERERS[slug];
+      if (ServerGame) {
+        return <ServerGame roomId={roomId} spectator={spectator} />;
       }
     }
     return (

@@ -19,7 +19,7 @@ The implementation deliberately keeps one application backend instead of introdu
 - Server-owned single-elimination tournaments for 4, 8 or 16 entrants, including registration, seeded brackets, private match rooms, automatic round advancement and champion records.
 - Private rooms, public room listing, join by code, ready/start/leave, quick matchmaking, reconnect handling and same-room rematches.
 - Read-only spectating for active public matches plus rate-limited fixed quick reactions; spectators never acquire membership or game-input authority.
-- A single authenticated WebSocket transport shared by Tic Tac Toe, Caro, Connect Four, Reversi, Rock Paper Scissors, Tank Battle and Type Rush. Clients send minimal inputs; the server validates membership, turns, sealed choices, movement, typing progress, collisions, HP and terminal outcomes.
+- A single authenticated WebSocket transport shared by Tic Tac Toe, Caro, Connect Four, Reversi, Rock Paper Scissors, Ultimate Tic Tac Toe, Dots and Boxes, Mancala, Hex, SOS, Tank Battle and Type Rush. Clients send minimal inputs; the server validates membership, turns, forced boards, edge and territory claims, sowing/captures, connection paths, chained scoring, sealed choices, movement, typing progress, collisions, HP and terminal outcomes.
 - PostgreSQL/Flyway for durable data and Redis for TTL-bound room, queue, presence, active-match checkpoint and leaderboard-cache data.
 - Exact Redis checkpoints for every active multiplayer engine, allowing a restarted backend to resume boards, turns, sealed round choices, movement, bullets, cooldowns, typing passage/progress and reconnect timers.
 - Public health probes, token-protected Prometheus metrics and checksum-verified PostgreSQL backup/restore scripts.
@@ -41,6 +41,11 @@ The implementation deliberately keeps one application backend instead of introdu
 | Connect Four | React snapshot renderer + Spring authoritative engine | Client selects a column; server owns gravity, turns and four-disc line detection |
 | Reversi | React snapshot renderer + Spring authoritative engine | Server supplies legal cells, applies every captured line, skips blocked turns and scores final territory |
 | Rock Paper Scissors | React snapshot renderer + Spring authoritative engine | Choices remain sealed until both players lock; server resolves each round and the first-to-three outcome |
+| Ultimate Tic Tac Toe | React snapshot renderer + Spring authoritative engine | Server owns the 9 by 9 board, closed local boards, forced next board, legal cells and macro-board outcome |
+| Dots and Boxes | React snapshot renderer + Spring authoritative engine | Client selects one edge; server owns closed boxes, multi-box captures, extra turns and final territory score |
+| Mancala | React snapshot renderer + Spring authoritative engine | Client selects one relative pit; server owns sowing, skipped rival store, captures, extra turns, sweeping and store score |
+| Hex | React snapshot renderer + Spring authoritative engine | Client selects one cell; server owns turns and six-neighbor path detection from top to bottom or left to right |
+| SOS | React snapshot renderer + Spring authoritative engine | Client chooses S or O for one cell; server counts every new horizontal, vertical and diagonal SOS, chains scoring turns and compares final scores |
 
 ## Architecture
 
@@ -190,7 +195,7 @@ See [deployment](docs/deployment.md) for the deployment order and complete prefl
 
 ## Database
 
-Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, thirteen catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
+Flyway migrations under `backend/src/main/resources/db/migration` create the schema, indexes, eighteen catalog games, achievements, friendships and authoritative multiplayer result linkage. Hibernate uses `ddl-auto=validate`; it never recreates production tables.
 
 PostgreSQL is the source of truth for accounts, refresh-token hashes, catalog metadata, results, challenge participation, progression, achievements, friendships and signed-in game preferences. Redis stores TTL-bound presence, queues, room metadata, active-match checkpoints, one-use game invitations and a 30-second versioned leaderboard response cache. Redis loss never erases completed player data, but it can end currently active rooms because their recovery checkpoints are intentionally transient. A leaderboard cache miss/failure reads PostgreSQL; committed results bump the global and affected-game cache generations.
 
@@ -248,12 +253,19 @@ docker compose up --build -d
 .\scripts\realtime-smoke.ps1 -GameSlug connect-four
 .\scripts\realtime-smoke.ps1 -GameSlug reversi
 .\scripts\realtime-smoke.ps1 -GameSlug rock-paper-scissors
+.\scripts\realtime-smoke.ps1 -GameSlug ultimate-tic-tac-toe
+.\scripts\realtime-smoke.ps1 -GameSlug dots-and-boxes
+.\scripts\realtime-smoke.ps1 -GameSlug mancala
+.\scripts\realtime-smoke.ps1 -GameSlug hex
+.\scripts\realtime-smoke.ps1 -GameSlug sos
 .\scripts\realtime-smoke.ps1 -RestartBackendAfterFirstMove
 ```
 
-The realtime smoke registers two unique users, negotiates two authenticated sockets and verifies durable terminal records. It can complete Tic Tac Toe, Type Rush, Connect Four, Reversi or Rock Paper Scissors through their real game inputs. Its optional local-Docker restart mode applies to Tic Tac Toe: it makes the first move, restarts the backend, reconnects both users, verifies the exact recovered sequence/board/turn, then finishes the same match ID. Both smoke scripts accept live URLs and avoid printing credentials; they create durable test accounts/results because no destructive account-delete API exists.
+The realtime smoke registers two unique users, negotiates two authenticated sockets and verifies durable terminal records. It can complete Tic Tac Toe, Type Rush, Connect Four, Reversi, Rock Paper Scissors, Ultimate Tic Tac Toe, Dots and Boxes, Mancala, Hex or SOS through their real game inputs. Its optional local-Docker restart mode applies to Tic Tac Toe: it makes the first move, restarts the backend, reconnects both users, verifies the exact recovered sequence/board/turn, then finishes the same match ID. Both smoke scripts accept live URLs and avoid printing credentials; they create durable test accounts/results because no destructive account-delete API exists.
 
 GitHub Actions repeats Maven verification, frontend lint/typecheck/tests/build, Compose validation and container builds on pushes and pull requests.
+
+Production deploys use provider-native source integrations: Cloudflare Workers Builds deploys the frontend, while Railway must remain connected to `main` with the repository root as its service root. GitHub Actions is a quality gate, not a backend deploy job. A healthy Railway URL is not proof that it runs the current commit; verify the provider-reported SHA, Flyway V13 and all eighteen catalog slugs as described in the [deployment runbook](docs/deployment.md).
 
 ## Visuals
 

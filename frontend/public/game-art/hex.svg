@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Hex</title>
+  <desc id="desc">A tactical Hex connection field with red and white paths crossing a rhombus board.</desc>
+  <defs>
+    <path id="hex-cell" d="M12 0h24l12 21-12 21H12L0 21Z"/>
+  </defs>
+  <rect width="960" height="360" fill="#0b0b0b"/>
+  <g stroke="#292929"><path d="M0 60H960M0 120H960M0 180H960M0 240H960M0 300H960"/><path d="M120 0V360M240 0V360M360 0V360M480 0V360M600 0V360M720 0V360M840 0V360"/></g>
+  <path d="M0 34H960M0 326H960" stroke="#f0442e" stroke-width="2"/>
+  <g transform="translate(570 36) scale(.78)" fill="#121212" stroke="#555" stroke-width="2">
+    <g transform="translate(0 0)"><use href="#hex-cell" x="0"/><use href="#hex-cell" x="50"/><use href="#hex-cell" x="100"/><use href="#hex-cell" x="150"/><use href="#hex-cell" x="200"/><use href="#hex-cell" x="250"/></g>
+    <g transform="translate(25 44)"><use href="#hex-cell" x="0"/><use href="#hex-cell" x="50"/><use href="#hex-cell" x="100"/><use href="#hex-cell" x="150"/><use href="#hex-cell" x="200"/><use href="#hex-cell" x="250"/></g>
+    <g transform="translate(50 88)"><use href="#hex-cell" x="0"/><use href="#hex-cell" x="50"/><use href="#hex-cell" x="100"/><use href="#hex-cell" x="150"/><use href="#hex-cell" x="200"/><use href="#hex-cell" x="250"/></g>
+    <g transform="translate(75 132)"><use href="#hex-cell" x="0"/><use href="#hex-cell" x="50"/><use href="#hex-cell" x="100"/><use href="#hex-cell" x="150"/><use href="#hex-cell" x="200"/><use href="#hex-cell" x="250"/></g>
+    <g transform="translate(100 176)"><use href="#hex-cell" x="0"/><use href="#hex-cell" x="50"/><use href="#hex-cell" x="100"/><use href="#hex-cell" x="150"/><use href="#hex-cell" x="200"/><use href="#hex-cell" x="250"/></g>
+    <g transform="translate(125 220)"><use href="#hex-cell" x="0"/><use href="#hex-cell" x="50"/><use href="#hex-cell" x="100"/><use href="#hex-cell" x="150"/><use href="#hex-cell" x="200"/><use href="#hex-cell" x="250"/></g>
+    <g fill="#f0442e" stroke="#f0442e"><use href="#hex-cell" x="0" y="0"/><use href="#hex-cell" x="75" y="132"/><use href="#hex-cell" x="150" y="176"/><use href="#hex-cell" x="225" y="220"/></g>
+    <g fill="#ededed" stroke="#ededed"><use href="#hex-cell" x="125" y="44"/><use href="#hex-cell" x="200" y="88"/><use href="#hex-cell" x="275" y="132"/></g>
+  </g>
+  <g fill="#f2f2f2" font-family="Arial, sans-serif">
+    <text x="64" y="83" font-size="16" letter-spacing="5">CONNECTION ROUTING FIELD</text>
+    <text x="60" y="211" font-size="118" font-weight="900" letter-spacing="-8">HEX</text>
+    <text x="64" y="258" font-size="15" letter-spacing="4" fill="#f0442e">EDGE TO EDGE / NO DRAWS</text>
+    <text x="64" y="305" font-size="13" letter-spacing="3" fill="#8e8e8e">ONE PATH / TWO NETWORKS / SERVER VERDICT</text>
+  </g>
+</svg>

@@ -78,7 +78,7 @@ class PostgresCatalogIntegrationTest {
     void productionCatalogWorksWithAbsentSearchAndReportsPostgresPlayCount() throws Exception {
         MvcResult catalog = mockMvc.perform(get("/api/games").param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(13))
+                .andExpect(jsonPath("$.totalElements").value(18))
                 .andExpect(jsonPath("$.content[?(@.slug == 'flappy-bird')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'breakout')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'minesweeper')]").exists())
@@ -87,6 +87,11 @@ class PostgresCatalogIntegrationTest {
                 .andExpect(jsonPath("$.content[?(@.slug == 'connect-four' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'reversi' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
                 .andExpect(jsonPath("$.content[?(@.slug == 'rock-paper-scissors' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'ultimate-tic-tac-toe' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'dots-and-boxes' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'mancala' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'hex' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
+                .andExpect(jsonPath("$.content[?(@.slug == 'sos' && @.gameType == 'TURN_BASED_MULTIPLAYER')]").exists())
                 .andReturn();
 
         List<Map<String, Object>> snakeEntries = JsonPath.read(

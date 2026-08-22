@@ -77,13 +77,16 @@ Implement `AuthoritativeEngine` and an `AuthoritativeEngineFactory` for the slug
 ```java
 public interface AuthoritativeEngine {
     Object snapshot();
+    Object checkpoint();
     EngineUpdate input(UUID userId, GameInput input, Instant now);
     EngineUpdate tick(Instant now);
     boolean requiresServerTick();
+    boolean terminal();
+    List<EngineOutcome> outcomes();
 }
 ```
 
-The real interface supplies no-op defaults for the last two methods, so turn-based engines need only `snapshot` and `input`. The factory validates the player count and returns an isolated engine instance. Spring auto-registers factories in `EngineRegistry`; room/matchmaking/WebSocket transport remains shared.
+The real interface supplies no-op defaults for tick scheduling, terminal state and outcomes, while every recoverable engine supplies an exact checkpoint. The factory validates player count, creates an isolated engine and restores only its current versioned checkpoint. Spring auto-registers factories in `EngineRegistry`; room/matchmaking/WebSocket transport remains shared.
 
 The engine must:
 
@@ -92,7 +95,9 @@ The engine must:
 3. validate turn, coordinates, monotonic input and cooldowns as applicable;
 4. own all authoritative timing/state;
 5. emit immutable public snapshots with a monotonic sequence;
-6. return terminal `EngineOutcome` values for every player exactly once.
+6. checkpoint every state required to resume the same board, turn, score, timers and sealed/private choices;
+7. reject unsupported, corrupt or player-incompatible checkpoint versions instead of inventing state;
+8. return terminal `EngineOutcome` values for every player exactly once.
 
 Do not put a custom `userId` in the payload. Do not accept client positions, HP, hits, winners or scores. Extend the shared `GameInput` DTO only when the new field is a genuine input and add unknown-field rejection tests.
 
@@ -130,8 +135,12 @@ For multiplayer changes also run:
 
 ```powershell
 .\scripts\realtime-smoke.ps1
-# For Type Rush or another supported game-specific path:
-.\scripts\realtime-smoke.ps1 -GameSlug typing-race
+foreach ($slug in @(
+  "typing-race", "connect-four", "reversi", "rock-paper-scissors",
+  "ultimate-tic-tac-toe", "dots-and-boxes", "mancala", "hex", "sos"
+)) {
+  .\scripts\realtime-smoke.ps1 -GameSlug $slug
+}
 ```
 
 Finally use separate browser sessions to exercise the real start/input/terminal/reconnect flow and inspect console/network output. Update the API/protocol/architecture docs in the same change when a contract changes.

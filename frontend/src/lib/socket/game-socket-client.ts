@@ -63,7 +63,14 @@ export type GameInputPayload = {
     | "TYPE_CHARACTER"
     | "DROP_DISC"
     | "PLACE_DISC"
-    | "SELECT_MOVE";
+    | "SELECT_MOVE"
+    | "PLACE_MARK"
+    | "DRAW_HORIZONTAL"
+    | "DRAW_VERTICAL"
+    | "SOW_PIT"
+    | "PLACE_STONE"
+    | "PLACE_S"
+    | "PLACE_O";
   row?: number;
   column?: number;
   sequence?: number;

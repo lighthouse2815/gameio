@@ -167,6 +167,31 @@ export const GAME_REGISTRY: Readonly<Record<string, RegisteredGame>> = {
     engine: "server-multiplayer",
     controlProfile: "turn-grid",
   },
+  "ultimate-tic-tac-toe": {
+    slug: "ultimate-tic-tac-toe",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
+  "dots-and-boxes": {
+    slug: "dots-and-boxes",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
+  mancala: {
+    slug: "mancala",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
+  hex: {
+    slug: "hex",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
+  sos: {
+    slug: "sos",
+    engine: "server-multiplayer",
+    controlProfile: "turn-grid",
+  },
 };
 
 export function getRegisteredGame(slug: string) {

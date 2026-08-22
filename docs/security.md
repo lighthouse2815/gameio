@@ -49,7 +49,7 @@ Run this checklist for production and every internet-accessible preview. Preview
 ## Frontend response headers
 
 - [ ] Verify production responses include CSP, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Content-Type-Options: nosniff`, frame denial, opener/resource policies and a restrictive Permissions Policy.
-- [ ] Confirm production CSP `connect-src` includes only self, the exact WSS backend origin required by the build and the Google Identity Services parent URL; restrict Google `script-src`, `style-src` and `frame-src` allowances to the documented GIS endpoints.
+- [ ] Confirm production CSP `connect-src` includes only self, the exact WSS backend origin required by the build and the Google Identity Services parent URL. Because `NEXT_PUBLIC_API_URL=/api` is same-origin, it must not add `http://localhost:8080` or another REST origin. Restrict Google `script-src`, `style-src` and `frame-src` allowances to the documented GIS endpoints.
 - [ ] Keep `object-src 'none'`, `frame-ancestors 'none'`, `base-uri 'self'` and `form-action 'self'`.
 - [ ] `unsafe-eval` is permitted only during development. Next.js currently requires an inline-script/style allowance; do not broaden other directives to compensate for a CSP error.
 - [ ] Keep `Cross-Origin-Opener-Policy: same-origin-allow-popups` while the GIS popup fallback is supported, and test Phaser, local fonts, Web Workers, images, Next hydration and the Google account chooser under the deployed headers.
@@ -88,7 +88,7 @@ Run this checklist for production and every internet-accessible preview. Preview
 - [ ] Require `.github/workflows/ci.yml`: backend Maven `verify`, frontend `npm run check`, Cloudflare build, Compose validation and container build.
 - [ ] Enable dependency/container alerts and review major runtime/base-image changes.
 - [ ] Protect the production branch and keep deployment credentials out of pull-request CI.
-- [ ] Map every deployment to an immutable reviewed commit and retain the previous rollback target.
+- [ ] Map every deployment to an immutable reviewed commit and retain the previous rollback target. Confirm Railway's source SHA equals `origin/main`; `/actuator/health = UP` alone is not revision evidence.
 
 ## Release verification
 
@@ -117,5 +117,5 @@ Live direct-backend checks:
 
 - [ ] Confirm both scripts pass without printing credentials. They create durable smoke users/results; apply the documented retention policy.
 - [ ] In the deployed browser, verify BFF cookie persistence/rotation, logout, CORS, CSP, mixed-content behavior and console/network output.
-- [ ] Complete real 2048/Snake/Breakout/Minesweeper/Memory Match input, Flappy Bird offline/verified input, and two-session Tic Tac Toe, Caro and Tank flows.
-- [ ] Record successful timestamp, frontend/backend URLs, commit, Flyway version, screenshots and rollback target without recording secrets.
+- [ ] Complete real 2048/Snake/Breakout/Minesweeper/Memory Match input, Flappy Bird offline/verified input, and two-session Tic Tac Toe, Caro, Connect Four, Reversi, Rock Paper Scissors, Ultimate Tic Tac Toe, Dots and Boxes, Mancala, Hex, SOS and Tank flows.
+- [ ] Record successful timestamp, frontend/backend URLs, provider-reported commit SHA, Flyway version, eighteen-slug catalog proof, screenshots and rollback target without recording secrets.

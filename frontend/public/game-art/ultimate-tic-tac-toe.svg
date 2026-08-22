@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">Ultimate Tic-Tac-Toe</title>
+  <desc id="desc">A technical nine by nine Ultimate Tic-Tac-Toe matrix with a highlighted forced sub-board.</desc>
+  <defs>
+    <pattern id="scan-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#252525" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="360" fill="#0b0b0b"/>
+  <rect width="960" height="360" fill="url(#scan-grid)"/>
+  <path d="M0 34H960M0 326H960" stroke="#f0442e" stroke-width="2"/>
+  <g transform="translate(610 45)">
+    <rect width="270" height="270" fill="#121212" stroke="#777" stroke-width="2"/>
+    <rect x="90" y="90" width="90" height="90" fill="#201412" stroke="#f0442e" stroke-width="2"/>
+    <g stroke="#393939" stroke-width="1">
+      <path d="M30 0V270M60 0V270M120 0V270M150 0V270M210 0V270M240 0V270"/>
+      <path d="M0 30H270M0 60H270M0 120H270M0 150H270M0 210H270M0 240H270"/>
+    </g>
+    <g stroke="#d8d8d8" stroke-width="3">
+      <path d="M90 0V270M180 0V270M0 90H270M0 180H270"/>
+    </g>
+    <g fill="none" stroke-linecap="square" stroke-width="5">
+      <path d="M11 11l17 17m0-17L11 28M101 101l17 17m0-17l-17 17M131 131l17 17m0-17l-17 17M221 191l17 17m0-17l-17 17" stroke="#f0442e"/>
+      <circle cx="45" cy="15" r="9" stroke="#ededed"/><circle cx="165" cy="105" r="9" stroke="#ededed"/><circle cx="195" cy="225" r="9" stroke="#ededed"/><circle cx="255" cy="255" r="9" stroke="#ededed"/>
+    </g>
+    <path d="M96 84h-12v12M174 84h12v12M96 186H84v-12M174 186h12v-12" fill="none" stroke="#f0442e" stroke-width="2"/>
+  </g>
+  <g fill="#f2f2f2" font-family="Arial, sans-serif">
+    <text x="64" y="79" font-size="16" letter-spacing="5">NESTED WIN MATRIX</text>
+    <text x="60" y="172" font-size="66" font-weight="900" letter-spacing="-5">ULTIMATE</text>
+    <text x="60" y="235" font-size="58" font-weight="900" letter-spacing="-4" fill="#f0442e">TIC-TAC-TOE</text>
+    <text x="64" y="288" font-size="13" letter-spacing="3" fill="#8e8e8e">9 BOARDS / FORCED TARGET / SERVER TRUTH</text>
+  </g>
+</svg>

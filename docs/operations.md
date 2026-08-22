@@ -147,7 +147,11 @@ For a real recovery into an existing target:
 For every backend release:
 
 ```powershell
+$releaseSha = git rev-parse HEAD
+# Confirm the Railway deployment details show this exact source SHA before testing.
 Invoke-RestMethod https://<railway-host>/actuator/health
+$catalog = Invoke-RestMethod "https://<railway-host>/api/games?page=0&size=50"
+if ($catalog.totalElements -ne 18) { throw "Expected the Flyway V13 catalog with 18 games" }
 .\scripts\smoke.ps1 `
   -BaseUrl https://<railway-host> `
   -Origin https://<cloudflare-host> `
@@ -157,7 +161,21 @@ Invoke-RestMethod https://<railway-host>/actuator/health
   -WsUrl wss://<railway-host>/ws `
   -Origin https://<cloudflare-host> `
   -SkipDockerServices
+
+foreach ($slug in @(
+  "typing-race", "connect-four", "reversi", "rock-paper-scissors",
+  "ultimate-tic-tac-toe", "dots-and-boxes", "mancala", "hex", "sos"
+)) {
+  .\scripts\realtime-smoke.ps1 `
+    -GameSlug $slug `
+    -BaseUrl https://<railway-host> `
+    -WsUrl wss://<railway-host>/ws `
+    -Origin https://<cloudflare-host> `
+    -SkipDockerServices
+}
 ```
+
+Also query `flyway_schema_history` through the Railway PostgreSQL console and require successful migration V13. Compare the Cloudflare BFF catalog with the direct Railway catalog, then inspect the frontend CSP: `/api` must remain same-origin, `connect-src` must include the exact Railway WSS origin and must not contain `http://localhost:8080`. A healthy process serving an old catalog is a stale deployment, not a successful release; follow the autodeploy recovery procedure in [deployment.md](deployment.md#verify-the-deployed-revision-and-recover-autodeploy).
 
 Then verify one controlled active-match restart in a non-production environment, confirm a `success` restore metric, and check that neither backend nor browser logs contain credentials, cookies, JWT subprotocol values or metrics tokens. The smoke scripts create durable test users/results; apply the documented retention policy.
 

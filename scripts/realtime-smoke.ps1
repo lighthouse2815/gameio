@@ -15,7 +15,18 @@ param(
     [uri] $Origin = "http://localhost:3000",
 
     [Parameter()]
-    [ValidateSet("tic-tac-toe", "typing-race", "connect-four", "reversi", "rock-paper-scissors")]
+    [ValidateSet(
+        "tic-tac-toe",
+        "typing-race",
+        "connect-four",
+        "reversi",
+        "rock-paper-scissors",
+        "ultimate-tic-tac-toe",
+        "dots-and-boxes",
+        "mancala",
+        "hex",
+        "sos"
+    )]
     [string] $GameSlug = "tic-tac-toe",
 
     [Parameter()]
@@ -525,6 +536,19 @@ function Get-HistoryOutcome {
     return [string] (Get-RequiredProperty $match[0] "result" "History result")
 }
 
+function Test-TerminalGameState {
+    param([Parameter(Mandatory)][object] $State)
+
+    if ($State.PSObject.Properties["draw"] -and [bool] $State.draw) {
+        return $true
+    }
+    if ($State.PSObject.Properties["winnerId"] -and
+        -not [string]::IsNullOrWhiteSpace([string] $State.winnerId)) {
+        return $true
+    }
+    return $false
+}
+
 $ownerSession = New-ApiSession
 $guestSession = New-ApiSession
 $ownerSocket = $null
@@ -549,6 +573,11 @@ try {
         "connect-four" { "Connect Four" }
         "reversi" { "Reversi" }
         "rock-paper-scissors" { "Rock Paper Scissors" }
+        "ultimate-tic-tac-toe" { "Ultimate Tic Tac Toe" }
+        "dots-and-boxes" { "Dots and Boxes" }
+        "mancala" { "Mancala" }
+        "hex" { "Hex" }
+        "sos" { "SOS" }
         default { "Tic Tac Toe" }
     }
     Write-SmokeStep "Resolving the seeded $gameLabel catalog entry"
@@ -695,6 +724,125 @@ try {
             throw "Reversi did not reach a terminal state within 60 legal moves."
         }
     }
+    elseif ($GameSlug -eq "ultimate-tic-tac-toe") {
+        Write-SmokeStep "Playing server-provided legal Ultimate Tic Tac Toe moves through terminal state"
+        $state = Get-RequiredProperty $ownerStart.payload "state" "Ultimate Tic Tac Toe GAME_START"
+        for ($turn = 0; $turn -lt 81 -and -not (Test-TerminalGameState -State $state); $turn++) {
+            $currentTurnPlayerId = [string] (
+                Get-RequiredProperty $state "currentTurnPlayerId" "Ultimate Tic Tac Toe state"
+            )
+            $legalMoves = @(Get-RequiredProperty $state "legalMoves" "Ultimate Tic Tac Toe state")
+            if ($legalMoves.Count -lt 1) {
+                throw "Ultimate Tic Tac Toe active state did not provide a legal move."
+            }
+            $move = $legalMoves[0]
+            $connection = if ($currentTurnPlayerId -eq $ownerId) { $ownerSocket }
+                elseif ($currentTurnPlayerId -eq $guestId) { $guestSocket }
+                else { throw "Ultimate Tic Tac Toe named a non-member as current player." }
+            $inputId = Send-WsEnvelope -Connection $connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "PLACE_MARK"
+                row = [int] (Get-RequiredProperty $move "row" "Ultimate Tic Tac Toe legal move")
+                column = [int] (Get-RequiredProperty $move "column" "Ultimate Tic Tac Toe legal move")
+            }
+            $stateEvent = Wait-ForWsEvent -Connection $connection -Type "GAME_STATE" -RequestId $inputId
+            $state = $stateEvent.payload
+        }
+        if (-not (Test-TerminalGameState -State $state)) {
+            throw "Ultimate Tic Tac Toe did not reach terminal state within 81 legal moves."
+        }
+    }
+    elseif ($GameSlug -eq "dots-and-boxes") {
+        Write-SmokeStep "Drawing server-provided legal Dots and Boxes edges through terminal scoring"
+        $state = Get-RequiredProperty $ownerStart.payload "state" "Dots and Boxes GAME_START"
+        for ($turn = 0; $turn -lt 40 -and -not (Test-TerminalGameState -State $state); $turn++) {
+            $currentTurnPlayerId = [string] (
+                Get-RequiredProperty $state "currentTurnPlayerId" "Dots and Boxes state"
+            )
+            $legalMoves = @(Get-RequiredProperty $state "legalMoves" "Dots and Boxes state")
+            if ($legalMoves.Count -lt 1) {
+                throw "Dots and Boxes active state did not provide a legal edge."
+            }
+            $move = $legalMoves[0]
+            $orientation = [string] (Get-RequiredProperty $move "orientation" "Dots and Boxes legal edge")
+            $action = if ($orientation -eq "H") { "DRAW_HORIZONTAL" }
+                elseif ($orientation -eq "V") { "DRAW_VERTICAL" }
+                else { throw "Dots and Boxes provided an unsupported edge orientation." }
+            $connection = if ($currentTurnPlayerId -eq $ownerId) { $ownerSocket }
+                elseif ($currentTurnPlayerId -eq $guestId) { $guestSocket }
+                else { throw "Dots and Boxes named a non-member as current player." }
+            $inputId = Send-WsEnvelope -Connection $connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = $action
+                row = [int] (Get-RequiredProperty $move "row" "Dots and Boxes legal edge")
+                column = [int] (Get-RequiredProperty $move "column" "Dots and Boxes legal edge")
+            }
+            $stateEvent = Wait-ForWsEvent -Connection $connection -Type "GAME_STATE" -RequestId $inputId
+            $state = $stateEvent.payload
+        }
+        if (-not (Test-TerminalGameState -State $state)) {
+            throw "Dots and Boxes did not reach terminal state after all 40 edges."
+        }
+    }
+    elseif ($GameSlug -eq "mancala") {
+        Write-SmokeStep "Sowing server-provided legal Mancala pits through terminal store scoring"
+        $state = Get-RequiredProperty $ownerStart.payload "state" "Mancala GAME_START"
+        for ($turn = 0; $turn -lt 512 -and -not (Test-TerminalGameState -State $state); $turn++) {
+            $currentTurnPlayerId = [string] (Get-RequiredProperty $state "currentTurnPlayerId" "Mancala state")
+            $legalPits = @(Get-RequiredProperty $state "legalPits" "Mancala state")
+            if ($legalPits.Count -lt 1) {
+                throw "Mancala active state did not provide a legal pit."
+            }
+            $connection = if ($currentTurnPlayerId -eq $ownerId) { $ownerSocket }
+                elseif ($currentTurnPlayerId -eq $guestId) { $guestSocket }
+                else { throw "Mancala named a non-member as current player." }
+            $inputId = Send-WsEnvelope -Connection $connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "SOW_PIT"
+                column = [int] $legalPits[0]
+            }
+            $stateEvent = Wait-ForWsEvent -Connection $connection -Type "GAME_STATE" -RequestId $inputId
+            $state = $stateEvent.payload
+        }
+        if (-not (Test-TerminalGameState -State $state)) {
+            throw "Mancala did not reach terminal state within 512 legal moves."
+        }
+    }
+    elseif ($GameSlug -eq "hex") {
+        Write-SmokeStep "Playing a deterministic Hex connection from top to bottom"
+        $moves = [System.Collections.Generic.List[object]]::new()
+        for ($row = 0; $row -lt 9; $row++) {
+            $null = $moves.Add([pscustomobject]@{ Connection = $ownerSocket; Row = $row; Column = 0 })
+            if ($row -lt 8) {
+                $null = $moves.Add([pscustomobject]@{ Connection = $guestSocket; Row = 8; Column = $row + 1 })
+            }
+        }
+        foreach ($move in $moves) {
+            $inputId = Send-WsEnvelope -Connection $move.Connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "PLACE_STONE"
+                row = $move.Row
+                column = $move.Column
+            }
+            $null = Wait-ForWsEvent -Connection $move.Connection -Type "GAME_STATE" -RequestId $inputId
+        }
+    }
+    elseif ($GameSlug -eq "sos") {
+        Write-SmokeStep "Filling SOS with S-only legal moves to produce a deterministic zero-score draw"
+        $state = Get-RequiredProperty $ownerStart.payload "state" "SOS GAME_START"
+        for ($index = 0; $index -lt 36 -and -not (Test-TerminalGameState -State $state); $index++) {
+            $currentTurnPlayerId = [string] (Get-RequiredProperty $state "currentTurnPlayerId" "SOS state")
+            $connection = if ($currentTurnPlayerId -eq $ownerId) { $ownerSocket }
+                elseif ($currentTurnPlayerId -eq $guestId) { $guestSocket }
+                else { throw "SOS named a non-member as current player." }
+            $inputId = Send-WsEnvelope -Connection $connection -Type "GAME_INPUT" -RoomId $roomId -Payload @{
+                action = "PLACE_S"
+                row = [int] [Math]::Floor($index / 6)
+                column = $index % 6
+            }
+            $stateEvent = Wait-ForWsEvent -Connection $connection -Type "GAME_STATE" -RequestId $inputId
+            $state = $stateEvent.payload
+        }
+        if (-not (Test-TerminalGameState -State $state)) {
+            throw "SOS did not reach terminal state after filling all 36 cells."
+        }
+    }
     else {
         Write-SmokeStep "Playing a deterministic server-authoritative Tic Tac Toe win"
         $moves = @(
@@ -763,13 +911,34 @@ try {
         throw "GAME_OVER did not identify the started match for both players."
     }
     $finalState = Get-RequiredProperty $ownerOver.payload "finalState" "Owner GAME_OVER"
-    $draw = [bool] (Get-RequiredProperty $finalState "draw" "Final state")
+    $draw = if ($finalState.PSObject.Properties["draw"]) { [bool] $finalState.draw } else { $false }
     $winnerId = if ($finalState.PSObject.Properties["winnerId"]) { [string] $finalState.winnerId } else { $null }
     if (-not $draw -and [string]::IsNullOrWhiteSpace($winnerId)) {
         throw "The terminal match did not declare a winner or draw."
     }
-    if ($GameSlug -ne "reversi" -and $winnerId -ne $ownerId) {
+    $expectedOwnerWin = @(
+        "tic-tac-toe",
+        "typing-race",
+        "connect-four",
+        "rock-paper-scissors",
+        "hex"
+    ) -contains $GameSlug
+    if ($expectedOwnerWin -and ($draw -or $winnerId -ne $ownerId)) {
         throw "The deterministic match did not declare the expected owner win."
+    }
+    if ($GameSlug -eq "sos" -and -not $draw) {
+        throw "The deterministic S-only SOS match did not finish as a draw."
+    }
+    if ($GameSlug -eq "sos") {
+        $sosPlayers = @(Get-RequiredProperty $finalState "players" "SOS final state")
+        if ($sosPlayers.Count -ne 2) {
+            throw "The terminal SOS state did not contain exactly two player scores."
+        }
+        foreach ($playerState in $sosPlayers) {
+            if ([int] (Get-RequiredProperty $playerState "score" "SOS final player") -ne 0) {
+                throw "The deterministic S-only SOS match unexpectedly awarded a point."
+            }
+        }
     }
 
     Write-SmokeStep "Confirming durable terminal history records"

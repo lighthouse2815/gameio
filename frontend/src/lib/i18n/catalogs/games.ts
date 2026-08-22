@@ -341,4 +341,125 @@ export const gameVietnameseMessages = {
   HIDDEN: "ĐANG ẨN",
   "The server records a sealed choice and reveals both only after the second lock.":
     "Máy chủ ghi lựa chọn đã niêm phong và chỉ mở cả hai sau lượt chốt thứ hai.",
+  "Ultimate Tic Tac Toe": "Cờ Ca-rô Tối thượng",
+  "ultimate-tic-tac-toe": "Cờ Ca-rô Tối thượng",
+  "Win local grids while every move sends your rival to the next board in a larger tactical duel.":
+    "Chiếm các bàn cờ con trong khi mỗi nước đi đẩy đối thủ sang một bàn kế tiếp của trận đấu chiến thuật lớn.",
+  "Ultimate Tic-Tac-Toe / 9×9": "Cờ Ca-rô Tối thượng / 9×9",
+  "Your mark": "Quân của bạn",
+  "Any open sub-board": "Bất kỳ bàn con còn mở",
+  "Forced sub-board {row}-{column}": "Bắt buộc bàn con {row}-{column}",
+  "Authoritative Ultimate Tic-Tac-Toe board":
+    "Bàn Cờ Ca-rô Tối thượng do máy chủ điều khiển",
+  "Ultimate row {row}, column {column}: {mark}":
+    "Cờ tối thượng hàng {row}, cột {column}: {mark}",
+  "Legal Ultimate move at row {row}, column {column}":
+    "Nước cờ tối thượng hợp lệ tại hàng {row}, cột {column}",
+  "Empty Ultimate cell at row {row}, column {column}":
+    "Ô cờ tối thượng trống tại hàng {row}, cột {column}",
+  "[ NESTED GRID TELEMETRY ]": "[ THÔNG SỐ BÀN CỜ LỒNG NHAU ]",
+  "You won the ultimate grid": "Bạn đã thắng bàn cờ tối thượng",
+  "Rival won the ultimate grid": "Đối thủ đã thắng bàn cờ tối thượng",
+  "Ultimate grid draw": "Bàn cờ tối thượng hòa",
+  "Choose a legal cell": "Chọn một ô hợp lệ",
+  "Sub-board results": "Kết quả các bàn con",
+  "Sub-board {row}-{column}: {result}": "Bàn con {row}-{column}: {result}",
+  open: "đang mở",
+  "Your move sends the rival to its matching sub-board. The server validates both grids.":
+    "Nước đi của bạn đưa đối thủ tới bàn con tương ứng. Máy chủ xác thực cả hai cấp bàn cờ.",
+  "Dots and Boxes": "Chấm và Ô",
+  "dots-and-boxes": "Chấm và Ô",
+  "Claim edges, close boxes for extra turns, and control more territory than your rival.":
+    "Chiếm cạnh, khép ô để được đi tiếp và kiểm soát nhiều lãnh thổ hơn đối thủ.",
+  "Dots and Boxes / 4×4": "Chấm và Ô / 4×4",
+  "Authoritative Dots and Boxes board": "Bàn Chấm và Ô do máy chủ điều khiển",
+  "Horizontal edge row {row}, column {column}: {state}":
+    "Cạnh ngang hàng {row}, cột {column}: {state}",
+  "Vertical edge row {row}, column {column}: {state}":
+    "Cạnh dọc hàng {row}, cột {column}: {state}",
+  drawn: "đã vẽ",
+  available: "có thể chọn",
+  unavailable: "không thể chọn",
+  "Box row {row}, column {column}: {owner}":
+    "Ô hàng {row}, cột {column}: {owner}",
+  "Red player": "người chơi đỏ",
+  "Blue player": "người chơi xanh",
+  unclaimed: "chưa được chiếm",
+  "[ EDGE TELEMETRY ]": "[ THÔNG SỐ CẠNH ]",
+  "You claimed the grid": "Bạn đã chiếm nhiều ô nhất",
+  "Rival claimed the grid": "Đối thủ đã chiếm nhiều ô nhất",
+  "Box grid draw": "Bàn ô hòa",
+  "Draw an edge": "Vẽ một cạnh",
+  Red: "Đỏ",
+  Blue: "Xanh",
+  "Your box": "Ký hiệu ô của bạn",
+  "Legal edges": "Cạnh hợp lệ",
+  "Claimed boxes": "Ô đã chiếm",
+  "Close a box to claim it and keep the turn. Every edge and score is owned by the server.":
+    "Khép một ô để chiếm nó và giữ lượt. Mọi cạnh cùng điểm số đều do máy chủ quản lý.",
+  Mancala: "Mancala",
+  mancala: "Mancala",
+  "Sow stones around the Kalah board, set up captures, and finish with the stronger store.":
+    "Rải đá quanh bàn Kalah, tạo thế bắt đá và kết thúc với kho nhiều đá hơn.",
+  "Mancala / Kalah": "Mancala / Kalah",
+  "Opponent side": "Phía đối thủ",
+  "Sow counter-clockwise": "Rải ngược chiều kim đồng hồ",
+  "Your side": "Phía của bạn",
+  "Authoritative Mancala board": "Bàn Mancala do máy chủ điều khiển",
+  "Opponent store": "Kho đối thủ",
+  "Opponent pit {pit}: {stones} stones": "Hố đối thủ {pit}: {stones} viên đá",
+  "Sow your pit {pit} with {stones} stones":
+    "Rải hố {pit} của bạn với {stones} viên đá",
+  "Your store": "Kho của bạn",
+  "[ SOWING TELEMETRY ]": "[ THÔNG SỐ RẢI ĐÁ ]",
+  "You harvested the board": "Bạn đã thu được nhiều đá hơn",
+  "Rival harvested the board": "Đối thủ đã thu được nhiều đá hơn",
+  "Mancala draw": "Mancala hòa",
+  "Choose your pit": "Chọn một hố của bạn",
+  "Legal pits": "Hố hợp lệ",
+  "Last landing pit": "Hố đáp cuối",
+  "Choose only from your six pits. The server owns sowing, captures, bonus turns, and scoring.":
+    "Chỉ chọn trong sáu hố của bạn. Máy chủ quản lý việc rải đá, bắt đá, lượt thưởng và điểm số.",
+  Hex: "Cờ Hex",
+  hex: "Cờ Hex",
+  "Build an unbroken path across a hexagonal grid before your rival connects the opposite edges.":
+    "Tạo một đường liền mạch qua lưới lục giác trước khi đối thủ nối được hai cạnh đối diện.",
+  "Hex / 9×9": "Cờ Hex / 9×9",
+  "Blue edge": "Cạnh xanh",
+  "Red edge": "Cạnh đỏ",
+  "Authoritative Hex board": "Bàn Hex do máy chủ điều khiển",
+  "Hex row {row}, column {column}: {stone}":
+    "Hex hàng {row}, cột {column}: {stone}",
+  "Place Hex stone at row {row}, column {column}":
+    "Đặt quân Hex tại hàng {row}, cột {column}",
+  "Red connects top to bottom. Blue connects left to right.":
+    "Đỏ nối từ trên xuống dưới. Xanh nối từ trái sang phải.",
+  "[ CONNECTION TELEMETRY ]": "[ THÔNG SỐ KẾT NỐI ]",
+  "You connected the edges": "Bạn đã nối hai cạnh",
+  "Rival connected the edges": "Đối thủ đã nối hai cạnh",
+  "Place a stone": "Đặt một quân",
+  "Your stone": "Quân của bạn",
+  "Open cells": "Ô còn trống",
+  "Every stone and six-direction connection check is validated by the server.":
+    "Mọi quân cờ và phép kiểm tra kết nối sáu hướng đều được máy chủ xác thực.",
+  SOS: "SOS",
+  sos: "SOS",
+  "Place S or O, complete lines in every direction, and chain scoring turns on a shared board.":
+    "Đặt S hoặc O, hoàn thành các đường theo mọi hướng và nối tiếp lượt ghi điểm trên một bàn chung.",
+  "SOS / 6×6": "SOS / 6×6",
+  "Choose S or O": "Chọn S hoặc O",
+  "Authoritative SOS board": "Bàn SOS do máy chủ điều khiển",
+  "SOS row {row}, column {column}: {letter}":
+    "SOS hàng {row}, cột {column}: {letter}",
+  "Place {letter} at SOS row {row}, column {column}":
+    "Đặt {letter} tại bàn SOS hàng {row}, cột {column}",
+  "[ PATTERN TELEMETRY ]": "[ THÔNG SỐ MẪU ]",
+  "You scored the most SOS lines": "Bạn đã tạo nhiều đường SOS nhất",
+  "Rival scored the most SOS lines": "Đối thủ đã tạo nhiều đường SOS nhất",
+  "SOS draw": "SOS hòa",
+  "Complete an SOS": "Hoàn thành một đường SOS",
+  "Selected letter": "Chữ đang chọn",
+  "Last move points": "Điểm nước vừa đi",
+  "Create SOS horizontally, vertically, or diagonally. Scoring keeps the turn.":
+    "Tạo SOS theo hàng ngang, dọc hoặc chéo. Ghi điểm sẽ được giữ lượt.",
 } satisfies MessageCatalog;
